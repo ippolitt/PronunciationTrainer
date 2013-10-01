@@ -1,0 +1,210 @@
+﻿body
+{
+    font-size: xx-large;
+}
+
+.navigationRow
+{
+    margin-bottom: 10px;
+}
+input
+{
+    font-size: 1em;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+#txtSearch
+{
+    width: 60%;
+}
+#txtInterval
+{
+    width: 10%;
+    text-align: right;
+}
+
+#searchContainer
+{
+    position: absolute;
+    width: 100%;
+    top: 50%;
+    left: 10%;
+}
+
+.word
+{
+    border: 1px solid;
+    padding: 10px 10px 0px;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+.word_name
+{
+    color: purple;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+.word_link
+{
+    color: purple;
+    font-weight: bold;
+}
+.word_usage
+{
+    float: right;
+    font-size: 0.8em;
+}
+.previous_word, .next_word
+{
+    padding-left: 1em;
+}
+.word_audio
+{
+    margin-left: 1em;
+}
+
+.entry
+{
+    padding-left: 1em;
+    padding-bottom: 1em;
+}
+.entry_number
+{
+    font-style: italic;
+    margin-left: -0.5em;
+    margin-right: 1em;
+    font-size: 1.2em;
+}
+
+.entry_text strong
+{
+    font-size: 1.2em;
+}
+
+.forms, .collocations, .notes
+{
+    margin-top: 1em;
+    padding: 5px;
+    border: 1px solid;
+}
+
+.forms
+{
+    border-color: green;
+}
+
+.collocations
+{
+    border-color: blue;
+}
+
+.audio_uk
+{
+    background-color: #C6CFA5;
+}
+.audio_us
+{
+    background-color: #A8E0E0;
+}
+.audio_button
+{
+    font-weight: bold;
+    margin-left: 1em;
+    padding-left: 1em;
+    padding-right: 1em;
+    font-size: 0.7em;
+    border-radius: 10px;
+}
+.word_audio .audio_button, .entry_audio .audio_button
+{
+    margin-left: 0px;
+    margin-right: 1em; 
+    margin-top: 20px;
+    margin-bottom: 10px; 
+    font-size: 1em;
+}
+
+.pron, .pron_us
+{
+    font-weight: bold;
+    color: blue;
+    font-size: 1.2em;
+}
+.pron em, .pron_us em
+{
+    font-weight: normal;
+    color: blue;
+}
+.pron_us:before, .pron_us_alt:before
+{
+    content: "AmE ";
+    font-weight: bold;
+    font-style:italic;
+    color: green;
+}
+.pron_other
+{
+    color: default;
+}
+.pron_other:before
+{
+    content: "[";
+}
+.pron_other:after
+{
+    content: "]";
+}
+
+.stress_low:before
+{
+    content: "ˬ";
+    font-weight: bold;
+    color: green;
+}
+.stress_up:before
+{
+    content: "ˆ";
+    font-weight: bold;
+    color: green;
+}
+.stress_shift:before
+{
+    content: "◂";
+    font-weight: bold;
+    color: green;
+}
+
+.lang 
+{
+    font-style:italic;
+    color: green;
+}
+
+.sample 
+{
+    color: maroon;
+}
+
+.poll_image
+{
+    display:block;
+}
+
+.topword_items
+{
+    margin-top: 2em;
+    margin-bottom: 5em;  
+}
+.topword_number
+{
+    font-weight: bold;
+    font-size: 1em;
+}
+.topword_item .word_link
+{
+    font-size: 1.5em;
+}
+.page_scroll
+{
+    float: right;
+}

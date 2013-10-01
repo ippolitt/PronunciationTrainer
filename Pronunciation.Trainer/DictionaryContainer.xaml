@@ -1,0 +1,50 @@
+﻿<UserControl x:Class="Pronunciation.Trainer.DictionaryContainer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Pronunciation.Trainer"
+             mc:Ignorable="d" 
+             d:DesignHeight="528" d:DesignWidth="826" Initialized="UserControl_Initialized" Loaded="UserControl_Loaded" PreviewKeyDown="UserControl_PreviewKeyDown">
+    <UserControl.Resources>
+        <Style x:Key="GreyedImage" TargetType="Image">
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.5" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+    <DockPanel Name="rootPanel">
+        <local:AudioPanel DockPanel.Dock="Top" Height="32" x:Name="audioPanel" />
+        <Grid DockPanel.Dock="Top" Height="32"  Name="grid1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="511*" />
+                <ColumnDefinition Width="0*" />
+                <ColumnDefinition Width="62" />
+                <ColumnDefinition Width="130" />
+                <ColumnDefinition Width="61" />
+                <ColumnDefinition Width="31" />
+                <ColumnDefinition Width="31" />
+            </Grid.ColumnDefinitions>
+            <Border Name="borderSearch" Background="White" Height="23" Margin="0,0,10,0" Grid.Column="0">
+                <DockPanel>
+                    <Image DockPanel.Dock="Left" Source="Resources/SearchWord.png" Stretch="None" />
+                    <TextBox Name="txtSearch" BorderThickness="0" TextChanged="txtSearch_TextChanged" KeyDown="txtSearch_KeyDown" PreviewKeyDown="txtSearch_PreviewKeyDown" />
+                </DockPanel>
+            </Border>
+            <TextBlock Grid.Column="2" Height="23" HorizontalAlignment="Left" Name="textBlock2" Text="Word lists:" Margin="0,6,0,0" />
+            <ComboBox Height="23" Name="cboWordLists" DropDownClosed="cboWordLists_DropDownClosed" Grid.Column="3" Margin="0,0,10,0" />
+            <TextBlock Height="23" Name="textBlock1" Text="History:" Grid.Column="4" Margin="0,6,0,0" />
+            <Button Height="23" Name="btnForward" Click="btnForward_Click" HorizontalAlignment="Stretch" Grid.Column="6">
+                <Image Source="Resources/ArrowForward.png" Stretch="None" Style="{StaticResource GreyedImage}" />
+            </Button>
+            <Button Height="23" Name="btnBack" Click="btnBack_Click" HorizontalAlignment="Stretch" Grid.Column="5">
+                <Image Source="Resources/ArrowBack.png" Stretch="None" Style="{StaticResource GreyedImage}" />
+            </Button>
+        </Grid>
+        <ListBox Name="lstSuggestions" DockPanel.Dock="Left" Width="123" Margin="0,5,0,0" MouseLeftButtonUp="lstSuggestions_MouseLeftButtonUp" PreviewKeyDown="lstSuggestions_PreviewKeyDown" />
+        <ListBox Name="lstRecentWords" DockPanel.Dock="Right" Width="123" Margin="10,5,0,0" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown" />       
+        <WebBrowser Name="browser" LoadCompleted="browser_LoadCompleted" />
+    </DockPanel>
+</UserControl>

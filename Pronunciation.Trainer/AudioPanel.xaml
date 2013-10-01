@@ -1,0 +1,31 @@
+﻿<UserControl x:Class="Pronunciation.Trainer.AudioPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Pronunciation.Trainer"
+             mc:Ignorable="d" BorderBrush="Black" d:DesignHeight="27" d:DesignWidth="748" 
+             Initialized="UserControl_Initialized">
+    <UserControl.Resources>
+        <Style x:Key="RecordingActive" TargetType="{x:Type Button}">
+            <Setter Property="Foreground" Value="Red">
+            </Setter>
+        </Style>
+        <Style x:Key="RecordingStopped" TargetType="{x:Type Button}">
+            <Setter Property="Foreground" Value="Black">
+            </Setter>
+        </Style>        
+    </UserControl.Resources>
+    <Canvas Name="rootPanel">
+        <local:ActionButton Canvas.Left="0" Canvas.Top="0" Content="Pl_ay reference" StopText="_Stop" Height="23" x:Name="btnPlayReference" Width="99" SupportsAbort="True" DataContext="{Binding}" />
+        <local:ActionButton Canvas.Left="105" Canvas.Top="0" Content="Play re_corded" StopText="_Stop" Height="23" x:Name="btnPlayRecorded" Width="99" SupportsAbort="True" />
+        <local:ActionButton Canvas.Left="210" Canvas.Top="0" Content="_Record" StopText="_Stop" Height="23" x:Name="btnRecord" Width="99" SupportsAbort="True" />
+        <Canvas Name="autoStopPanel">
+            <Label Canvas.Left="320" Canvas.Top="4" Content="Auto stop recording in" Height="23" Name="label1" Width="124" VerticalContentAlignment="Top" Padding="0" />
+            <TextBox Canvas.Left="445" Canvas.Top="1" Height="23" Name="txtAutoStop" Width="40" HorizontalContentAlignment="Right"
+                Text="{Binding Source={x:Static local:AppSettings.Instance}, Path=RecordingInterval}" />
+            <Label Canvas.Left="491" Canvas.Top="4" Content="s." Height="23" Name="label2" Padding="0" VerticalContentAlignment="Top" Width="17" />
+            <Label Canvas.Left="503" Canvas.Top="4" Content="Recording, 10 seconds left" Height="23" Name="lblSecondsLeft" Padding="0" VerticalContentAlignment="Top" Width="148" />
+        </Canvas>
+    </Canvas>
+</UserControl>

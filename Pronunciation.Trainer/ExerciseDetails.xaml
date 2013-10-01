@@ -1,0 +1,94 @@
+﻿<Window x:Class="Pronunciation.Trainer.ExerciseDetails"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Pronunciation.Trainer"
+        xmlns:my="clr-namespace:Pronunciation.Core.Database;assembly=Pronunciation.Core" 
+        Title="ExerciseDetails" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+        UseLayoutRounding="True"
+        Initialized="Window_Initialized" Loaded="Window_Loaded" Closing="Window_Closing" Height="576" Width="782">
+    <DockPanel Name="rootPanel" Margin="10">
+        <local:AudioPanel DockPanel.Dock="Top" Height="32" x:Name="audioPanel" />
+        <Canvas Name="footer" Height="35" DockPanel.Dock="Bottom">
+            <Button Canvas.Right="161" Canvas.Top="6" Content="OK" Height="23" Name="btnOK" IsDefault="true" Width="75" Click="btnOK_Click" TabIndex="110" />
+            <Button Canvas.Right="0" Canvas.Top="6" Content="Cancel" Height="23" Name="btnCancel" IsCancel="True" Width="75" Click="btnCancel_Click" TabIndex="120" />
+            <Button Canvas.Right="80" Canvas.Top="6" Content="Apply" Height="23" Name="btnApply" TabIndex="115" Width="75" Click="btnApply_Click" />
+        </Canvas>
+        <Canvas Name="details" DataContext="{Binding RelativeSource={RelativeSource FindAncestor, 
+            AncestorType={x:Type Window}}, Path=ActiveRecord}">
+            <Label Canvas.Left="0" Canvas.Top="6" Content="Book:" />
+            <ComboBox Canvas.Left="100" Canvas.Top="6"  Height="23"
+                      Name="bookIdComboBox" SelectedValue="{Binding Path=BookId, Mode=TwoWay}" 
+                      DisplayMemberPath="Author" SelectedValuePath="BookId" TabIndex="10" Width="161"
+                      ItemsSource="{Binding ElementName=rootPanel, Path=DataContext.Books}">
+                <ComboBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </ComboBox.ItemsPanel>
+            </ComboBox>
+            <Label Canvas.Left="274" Canvas.Top="6" Content="Topic:" HorizontalAlignment="Left" VerticalAlignment="Center" />
+            <ComboBox Canvas.Left="321" Canvas.Top="6" Height="23" HorizontalAlignment="Left" 
+                      Name="topicIdComboBox" VerticalAlignment="Center" Width="272" TabIndex="20"
+                      DisplayMemberPath="TopicNameExt" SelectedValuePath="TopicId" 
+                      ItemsSource="{Binding ElementName=bookIdComboBox, Path=SelectedItem.Topics}"
+                      SelectedValue="{Binding Path=TopicId, Mode=TwoWay}">
+                <!-- ItemsSource="{Binding ElementName=rootPanel, Path=DataContext.Topics}"-->
+                <ComboBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </ComboBox.ItemsPanel>
+            </ComboBox>
+            <Label Canvas.Left="0" Canvas.Top="36" Content="Title:" HorizontalAlignment="Left"  VerticalAlignment="Center" />
+            <TextBox Canvas.Left="100" Canvas.Top="36" Height="23" HorizontalAlignment="Left" Name="titleTextBox" 
+                     VerticalAlignment="Center" Width="642"
+                     Text="{Binding Path=Title, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" TabIndex="50" />
+            <Label Canvas.Left="0" Canvas.Top="63" Content="Exercise type:" HorizontalAlignment="Left" VerticalAlignment="Center" />
+            <ComboBox Name="exerciseTypeIdComboBox" DisplayMemberPath="ExerciseTypeName" SelectedValuePath="ExerciseTypeId" 
+                      SelectedValue="{Binding Path=ExerciseTypeId, Mode=TwoWay}" 
+                      ItemsSource="{Binding ElementName=rootPanel, Path=DataContext.ExerciseTypes }"
+                      Height="23" HorizontalAlignment="Left" VerticalAlignment="Center" Width="161" 
+                      Canvas.Left="100" Canvas.Top="66" TabIndex="70">
+                <ComboBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </ComboBox.ItemsPanel>
+            </ComboBox>
+            <Label Canvas.Left="599" Canvas.Top="4" Content="CD:" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+            <TextBox Canvas.Left="631" Canvas.Top="6" Height="23" HorizontalAlignment="Left" HorizontalContentAlignment="Right" Name="sourceCDTextBox" VerticalAlignment="Center" Width="35" 
+                     Text="{Binding Path=SourceCD, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" TabIndex="30" />
+            <Label Canvas.Left="615" Canvas.Top="61" Content="Page number:" HorizontalAlignment="Left" VerticalAlignment="Center" Width="84" />
+            <TextBox Canvas.Left="705" Canvas.Top="63" Height="23" HorizontalAlignment="Left" HorizontalContentAlignment="Right" Name="sourcePageTextBox" VerticalAlignment="Center" Width="35"
+                     Text="{Binding Path=SourcePage, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" TabIndex="80" />
+            <Label Canvas.Left="669" Canvas.Top="4" Content="Track:" HorizontalAlignment="Left" VerticalAlignment="Center" />
+            <TextBox Canvas.Left="707" Canvas.Top="6" Height="23" HorizontalAlignment="Left" HorizontalContentAlignment="Right" Name="sourceTrackTextBox" VerticalAlignment="Center" Width="35"
+                     Text="{Binding Path=SourceTrack, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" TabIndex="40" />
+            <Label Canvas.Left="264" Canvas.Top="63" Content="Sounds:" HorizontalAlignment="Left" VerticalAlignment="Center" />
+            <TextBox Canvas.Left="321" Canvas.Top="63" Height="23" HorizontalAlignment="Left" Name="targetSoundTextBox"
+                     VerticalAlignment="Center" Width="273"
+                     Text="{Binding Path=TargetSound, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" TabIndex="72" />
+            <TextBox Canvas.Left="100" Canvas.Top="93" Height="41" Name="txtNotes" Width="640" TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="False" 
+                     Text="{Binding Path=ExecutionNotes, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" TabIndex="90" AllowDrop="False" />
+            <Border Canvas.Left="0" Canvas.Top="160" Width="650" Height="285" BorderBrush="Black" BorderThickness="2" 
+                    Padding="10" CornerRadius="10">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                    HorizontalContentAlignment="Left" VerticalContentAlignment="Top" BorderBrush="Black" OpacityMask="{x:Null}">
+                    <Image Name="imgContent" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                </ScrollViewer>
+            </Border>
+            <!-- SnapsToDevicePixels="True" 
+            RenderOptions.BitmapScalingMode="NearestNeighbor" - works bad for jpeg  
+            RenderOptions.EdgeMode="Aliased"
+            UseLayoutRounding="True" (in Window)
+            -->
+            <local:AudioList Canvas.Left="661" Canvas.Top="160" Height="285" x:Name="lstRecords" Width="81" 
+                     SelectionChanged="lstRecords_SelectionChanged" TabIndex="100" />
+            <!--<Rectangle Canvas.Left="0" Canvas.Top="96" Height="302" Name="rectangle1" Stroke="Black" Width="742" RadiusX="10" RadiusY="10" />-->
+            <Label Canvas.Left="0" Canvas.Top="134" Content="Exercise data:" />
+            <Label Canvas.Left="661" Canvas.Top="134" Content="Audio:" />
+            <Label Canvas.Left="0" Canvas.Top="93" Content="Execution notes:" />
+        </Canvas>
+    </DockPanel>
+</Window>

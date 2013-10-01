@@ -1,0 +1,23 @@
+﻿<Window x:Class="Pronunciation.Trainer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Pronunciation.Trainer"
+        Title="Pronunciation Trainer" Height="571" Width="827" Loaded="Window_Loaded" Activated="Window_Activated" Closing="Window_Closing">
+    <TabControl Name="tabRoot" TabStripPlacement="Top">
+        <TabItem Header="Dictionary" Name="tabDictionary">
+            <local:DictionaryContainer x:Name="dictionary" Margin="10" />
+        </TabItem>
+        <TabItem Header="Recorder" Name="tabRecorder">
+            <local:Recorder x:Name="recorder" Margin="10"  />
+        </TabItem>
+        <TabItem Header="Exercises" Name="tabTraining">
+            <local:ExerciseList x:Name="exersises" Margin="10" />
+        </TabItem>
+        <TabItem Header="Settings" Name="tabSettings" >
+            <local:SettingsPanel x:Name="settings" Margin="10" />
+        </TabItem>
+        <TabItem Header="Data import" Name="tabImport">
+            <local:DataImporter x:Name="dataImporter" />
+        </TabItem>
+    </TabControl>
+</Window>

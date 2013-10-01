@@ -1,0 +1,19 @@
+﻿<UserControl x:Class="Pronunciation.Trainer.Recorder"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Pronunciation.Trainer"
+             mc:Ignorable="d" 
+             d:DesignHeight="355" d:DesignWidth="870" Initialized="UserControl_Initialized" Loaded="UserControl_Loaded">
+    <DockPanel Name="rootPanel">
+        <local:AudioPanel DockPanel.Dock="Top" Height="32" x:Name="audioPanel" />
+        <Canvas Name="detailsPanel">
+            <local:AudioList Canvas.Left="0" Canvas.Top="17" Height="258" x:Name="lstRecordings" Width="204" 
+                     MouseDoubleClick="lstRecordings_MouseDoubleClick" SelectionChanged="lstRecordings_SelectionChanged" SelectionMode="Extended" />
+            <TextBlock Canvas.Left="0" Canvas.Top="0" Height="23" Name="textBlock1" Text="Recordings list:" Width="87" />
+            <Button Canvas.Left="0" Canvas.Top="281" Content="Delete all" Height="23" Name="btnClear" Width="97" Click="btnClear_Click" />
+            <Button Canvas.Left="107" Canvas.Top="281" Content="Delete selected" Height="23" Name="btnDeleteSelected" Width="97" Click="btnDeleteSelected_Click" />
+        </Canvas>
+    </DockPanel>
+</UserControl>
