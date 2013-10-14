@@ -19,11 +19,12 @@ namespace Pronunciation.Core.Actions
 
     public class ActionResult<TResult> : ActionResult
     {
-        public TResult Result { get; private set; }
+        public TResult ReturnValue { get; private set; }
 
-        public ActionResult(bool isSuccess, Exception error, TResult result) : base(isSuccess, error)
+        public ActionResult(bool isSuccess, Exception error, TResult returnValue)
+            : base(isSuccess, error)
         {
-            Result = result;
+            ReturnValue = returnValue;
         }
     }
 }

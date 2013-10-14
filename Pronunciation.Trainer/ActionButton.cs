@@ -12,26 +12,24 @@ namespace Pronunciation.Trainer
 {
     public class ActionButton : Button
     {
-        private string _originalText;
+        private object _originalContent;
         private BackgroundAction _target;
 
         public string StopText { get; set; }
         public bool SupportsAbort { get; set; }
 
-        private const string DefaultStopText = "Stop";
+        public static readonly DependencyProperty IsRunningProperty = DependencyProperty.Register(
+            "IsRunning", typeof(bool), typeof(ActionButton));
+
+        public bool IsRunning
+        {
+            get { return (bool)GetValue(IsRunningProperty); }
+            set { SetValue(IsRunningProperty, value); }
+        }
 
         public ActionButton()
         {
-            //AccessKeyManager.AddAccessKeyPressedHandler(this, ActionButton_AccessKeyPressed);
-        }
-
-        protected override void OnAccessKey(AccessKeyEventArgs e)
-        {
-            // Ignore access keys pressed without Alt modifier
-            if ((Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt)
-            {
-                base.OnAccessKey(e);
-            }
+            DataContext = this;
         }
 
         [Browsable(false)]
@@ -57,23 +55,23 @@ namespace Pronunciation.Trainer
 
         private void Target_ActionStarted(BackgroundAction action)
         {
-            _originalText = (string)Content;
-
-            if (SupportsAbort)
+            IsRunning = true;
+            IsEnabled = SupportsAbort;
+            if (SupportsAbort && !string.IsNullOrEmpty(StopText))
             {
-                Content = string.IsNullOrWhiteSpace(StopText) ? DefaultStopText : StopText;
-                IsEnabled = true;
-            }
-            else
-            {
-                IsEnabled = false;
+                _originalContent = Content;
+                Content = StopText;
             }
         }
 
         private void Target_ActionCompleted(BackgroundAction action)
         {
+            IsRunning = false;
             IsEnabled = true;
-            Content = _originalText;
+            if (_originalContent != null)
+            {
+                Content = _originalContent;
+            }
         }
 
         protected override void OnClick()

@@ -7,19 +7,30 @@ using Pronunciation.Core.Audio;
 
 namespace Pronunciation.Trainer.AudioActions
 {
-    public class PlayAudioAction : BackgroundActionWithArgs<PlaybackArgs>
+    public class PlayAudioAction : BackgroundActionWithArgs<PlaybackArgs, PlaybackResult>
     {
         private readonly Mp3Player _player;
 
         public PlayAudioAction(Func<ActionContext, ActionArgs<PlaybackArgs>> argsBuilder,
-            Action<ActionContext, ActionResult> resultProcessor) 
+            Action<ActionContext, ActionResult<PlaybackResult>> resultProcessor) 
             : base(argsBuilder, null, resultProcessor)
         {
             base.Worker = PlayAudio;
-            _player = new Mp3Player(false);
+            _player = new Mp3Player(true);
         }
 
-        private void PlayAudio(ActionContext context, PlaybackArgs args)
+        public TimeSpan AudioPosition
+        {
+            get { return _player.CurrentPosition; }
+            set { _player.CurrentPosition = value; }
+        }
+
+        public TimeSpan AudioLength
+        {
+            get { return _player.TotalLength; }
+        }
+
+        private PlaybackResult PlayAudio(ActionContext context, PlaybackArgs args)
         {
             // We can only decrease the volume so we treat positive values as negative ones
             float volumeDb = args.PlaybackVolumeDb <= 0 ? args.PlaybackVolumeDb : -args.PlaybackVolumeDb;
@@ -27,21 +38,14 @@ namespace Pronunciation.Trainer.AudioActions
             PlaybackResult result;
             if (args.IsFilePath)
             {
-                result = _player.PlayFile(args.PlaybackData, volumeDb);
+                result = _player.PlayFile(args.PlaybackData, volumeDb, args.SkipMs);
             }
             else
             {
-                result = _player.PlayRawData(args.PlaybackData, volumeDb);
+                result = _player.PlayRawData(args.PlaybackData, volumeDb, args.SkipMs);
             }
 
-            if (args.IsReferenceAudio)
-            {
-                //_playbackCache.LastReferencePlay = result;
-            }
-            else
-            {
-                //_playbackCache.LastRecordedPlay = result;
-            }
+            return result;
         }
 
         public override void RequestAbort(bool isSoftAbort)

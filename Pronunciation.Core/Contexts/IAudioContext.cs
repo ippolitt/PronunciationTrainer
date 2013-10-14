@@ -22,7 +22,6 @@ namespace Pronunciation.Core.Contexts
         PlaybackSettings GetReferenceAudio();
         PlaybackSettings GetRecordedAudio();
         RecordingSettings GetRecordingSettings();
-        bool AutoStopRecording { get; }
         event AudioContextChangedHandler ContextChanged;
     }
 }

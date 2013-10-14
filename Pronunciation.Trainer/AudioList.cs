@@ -32,11 +32,9 @@ namespace Pronunciation.Trainer
             switch (e.Key)
             {
                 case Key.Left:
-                case Key.Z:
                     _audioPanel.PlayReferenceAudio();
                     break;
                 case Key.Right:
-                case Key.C:
                     _audioPanel.PlayRecordedAudio();
                     break;
                 case Key.X:
@@ -62,10 +60,6 @@ namespace Pronunciation.Trainer
                         _isRecording = false;
                         _audioPanel.StopAction(true);
                     }
-                    break;
-
-                case Key.Space:
-                    _audioPanel.StopAction(true);
                     break;
             }
         }

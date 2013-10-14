@@ -11,14 +11,14 @@
     <Setting Name="ReferenceDataVolume" Type="System.Single" Scope="User">
       <Value Profile="(Default)">0</Value>
     </Setting>
-    <Setting Name="RecordingInterval" Type="System.Single" Scope="User">
-      <Value Profile="(Default)">2</Value>
-    </Setting>
     <Setting Name="BaseFolder" Type="System.String" Scope="Application">
       <Value Profile="(Default)">D:\DOCS\Языки\English\Pronunciation\Trainer</Value>
     </Setting>
     <Setting Name="SampleRate" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">16000</Value>
+    </Setting>
+    <Setting Name="SkipRecordedAudioMs" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">200</Value>
     </Setting>
   </Settings>
 </SettingsFile>

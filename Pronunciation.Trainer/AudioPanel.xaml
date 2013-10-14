@@ -1,31 +1,75 @@
-﻿<UserControl x:Class="Pronunciation.Trainer.AudioPanel"
+﻿<local:UserControlExt x:Class="Pronunciation.Trainer.AudioPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Pronunciation.Trainer"
-             mc:Ignorable="d" BorderBrush="Black" d:DesignHeight="27" d:DesignWidth="748" 
+             mc:Ignorable="d" d:DesignHeight="32" d:DesignWidth="588" 
              Initialized="UserControl_Initialized">
     <UserControl.Resources>
-        <Style x:Key="RecordingActive" TargetType="{x:Type Button}">
-            <Setter Property="Foreground" Value="Red">
-            </Setter>
+        <Style x:Key="PlayImageRef" TargetType="Image">
+            <Setter Property="Source" Value="Resources/AudioPlayRef.png" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Path=IsRunning}" Value="True">
+                    <Setter Property="Source" Value="Resources/AudioStopPlaying.png" />
+                </DataTrigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.5" />
+                </Trigger>
+            </Style.Triggers>
         </Style>
-        <Style x:Key="RecordingStopped" TargetType="{x:Type Button}">
-            <Setter Property="Foreground" Value="Black">
-            </Setter>
-        </Style>        
+        <Style x:Key="PlayImageRec" TargetType="Image">
+            <Setter Property="Source" Value="Resources/AudioPlayRec.png" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Path=IsRunning}" Value="True">
+                    <Setter Property="Source" Value="Resources/AudioStopPlaying.png" />
+                </DataTrigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.5" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="RecordImage" TargetType="Image">
+            <Setter Property="Source" Value="Resources/AudioStartRecording.png" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Path=IsRunning}" Value="True">
+                    <Setter Property="Source" Value="Resources/AudioStopRecording.png" />
+                </DataTrigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.5" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
-    <Canvas Name="rootPanel">
-        <local:ActionButton Canvas.Left="0" Canvas.Top="0" Content="Pl_ay reference" StopText="_Stop" Height="23" x:Name="btnPlayReference" Width="99" SupportsAbort="True" DataContext="{Binding}" />
-        <local:ActionButton Canvas.Left="105" Canvas.Top="0" Content="Play re_corded" StopText="_Stop" Height="23" x:Name="btnPlayRecorded" Width="99" SupportsAbort="True" />
-        <local:ActionButton Canvas.Left="210" Canvas.Top="0" Content="_Record" StopText="_Stop" Height="23" x:Name="btnRecord" Width="99" SupportsAbort="True" />
-        <Canvas Name="autoStopPanel">
-            <Label Canvas.Left="320" Canvas.Top="4" Content="Auto stop recording in" Height="23" Name="label1" Width="124" VerticalContentAlignment="Top" Padding="0" />
-            <TextBox Canvas.Left="445" Canvas.Top="1" Height="23" Name="txtAutoStop" Width="40" HorizontalContentAlignment="Right"
-                Text="{Binding Source={x:Static local:AppSettings.Instance}, Path=RecordingInterval}" />
-            <Label Canvas.Left="491" Canvas.Top="4" Content="s." Height="23" Name="label2" Padding="0" VerticalContentAlignment="Top" Width="17" />
-            <Label Canvas.Left="503" Canvas.Top="4" Content="Recording, 10 seconds left" Height="23" Name="lblSecondsLeft" Padding="0" VerticalContentAlignment="Top" Width="148" />
-        </Canvas>
-    </Canvas>
-</UserControl>
+    <Grid Name="gridPanel" Margin="2">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="29" />
+            <ColumnDefinition Width="29" />
+            <ColumnDefinition Width="29" />
+            <ColumnDefinition Width="251*" />
+            <ColumnDefinition Width="250*" />
+        </Grid.ColumnDefinitions>
+        <!-- For some reason action button, when clicked, locks keyboard focus -->
+        <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnPlayReference" SupportsAbort="True" Grid.Column="0"
+            Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+            ToolTip="Play reference audio">
+            <Image Style="{StaticResource PlayImageRef}" Stretch="None" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </local:ActionButton>
+        <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23"  x:Name="btnPlayRecorded" SupportsAbort="True" Grid.Column="1"
+            Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+            ToolTip="Play recorded audio">
+            <Image Style="{StaticResource PlayImageRec}" Stretch="None" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </local:ActionButton>
+        <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnRecord" SupportsAbort="True" Grid.Column="2"                  
+            Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+            ToolTip="Start recording audio">
+            <Image Style="{StaticResource RecordImage}" Stretch="None" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </local:ActionButton>
+        <Border BorderBrush="{x:Static SystemColors.ControlLightBrush}" CornerRadius="5" BorderThickness="1" Grid.Column="3" Margin="2,0,2,0">
+            <local:WaveForm x:Name="waveReference" />
+        </Border>
+        <Border BorderBrush="{x:Static SystemColors.ControlLightBrush}" CornerRadius="5" BorderThickness="1" Grid.Column="4" Margin="2,0,2,0">
+            <local:WaveForm x:Name="waveRecorded" />
+        </Border>        
+    </Grid>
+</local:UserControlExt>

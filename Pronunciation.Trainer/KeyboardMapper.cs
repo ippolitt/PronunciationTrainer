@@ -29,7 +29,8 @@ namespace Pronunciation.Trainer
                 Key.Escape,
                 Key.Delete,
                 Key.Back,
-                Key.System
+                Key.System,
+                Key.Tab
             };
         }
 

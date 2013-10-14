@@ -97,10 +97,10 @@ namespace Pronunciation.Core.Actions
 
         public void ReportProgress(object progress)
         {
-            if (_progressReporter == null)
-                throw new ArgumentNullException();
-
-            _worker.ReportProgress(0, progress);
+            if (_worker.WorkerReportsProgress)
+            {
+                _worker.ReportProgress(0, progress);
+            }
         }
 
         public Action<object> ProgressReporter

@@ -38,11 +38,20 @@ namespace Pronunciation.Trainer
             }
         }
 
+        //private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        //{
+        //    var focus = FocusManager.GetFocusedElement(this);
+        //    System.IO.File.AppendAllText(@"d:\focus.txt", 
+        //        "F: " + (focus == null ? "null" : focus.ToString()) +
+        //        " K: " + (Keyboard.FocusedElement == null ? "null" : Keyboard.FocusedElement.ToString()) + Environment.NewLine );
+        //}
+
         private void Window_Activated(object sender, EventArgs e)
         {
-            if (dictionary.IsVisible)
+            TabItemExt activeTab = tabsRoot.SelectedItem as TabItemExt;
+            if (activeTab != null)
             {
-                dictionary.Focus();
+                activeTab.CaptureKeyboardFocus();
             }
         }
     }

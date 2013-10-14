@@ -21,7 +21,7 @@ namespace Pronunciation.Trainer
     /// <summary>
     /// Interaction logic for Recorder.xaml
     /// </summary>
-    public partial class Recorder : UserControl
+    public partial class Recorder : UserControlExt, ISupportsKeyboardFocus
     {
         private RecorderProvider _provider;
         private RecorderAudioContext _audioContext;
@@ -46,6 +46,16 @@ namespace Pronunciation.Trainer
             lstRecordings.AttachPanel(audioPanel);
 
             lstRecordings.ItemsSource = _provider.GetRecordingsList();
+            if (lstRecordings.Items.Count > 0)
+            {
+                lstRecordings.SelectedIndex = 0;
+                lstRecordings.Focus();
+            }
+        }
+
+        public void CaptureKeyboardFocus()
+        {
+            lstRecordings.Focus();
         }
 
         private void AudioPanel_RecordingCompleted(string recordedFilePath)

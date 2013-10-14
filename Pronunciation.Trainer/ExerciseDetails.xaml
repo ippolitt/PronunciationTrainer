@@ -76,13 +76,13 @@
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                     HorizontalContentAlignment="Left" VerticalContentAlignment="Top" BorderBrush="Black" OpacityMask="{x:Null}">
                     <Image Name="imgContent" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                    <!-- SnapsToDevicePixels="True" 
+                    RenderOptions.BitmapScalingMode="NearestNeighbor" - works bad for jpeg  
+                    RenderOptions.EdgeMode="Aliased"
+                    UseLayoutRounding="True" (in Window)
+                    -->
                 </ScrollViewer>
             </Border>
-            <!-- SnapsToDevicePixels="True" 
-            RenderOptions.BitmapScalingMode="NearestNeighbor" - works bad for jpeg  
-            RenderOptions.EdgeMode="Aliased"
-            UseLayoutRounding="True" (in Window)
-            -->
             <local:AudioList Canvas.Left="661" Canvas.Top="160" Height="285" x:Name="lstRecords" Width="81" 
                      SelectionChanged="lstRecords_SelectionChanged" TabIndex="100" />
             <!--<Rectangle Canvas.Left="0" Canvas.Top="96" Height="302" Name="rectangle1" Stroke="Black" Width="742" RadiusX="10" RadiusY="10" />-->

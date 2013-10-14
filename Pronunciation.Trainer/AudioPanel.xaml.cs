@@ -20,13 +20,14 @@ using Pronunciation.Core.Actions;
 using Pronunciation.Core.Audio;
 using Pronunciation.Trainer.AudioActions;
 using Pronunciation.Core.Contexts;
+using Pronunciation.Trainer.Commands;
 
 namespace Pronunciation.Trainer
 {
     /// <summary>
     /// Interaction logic for AudioPanel.xaml
     /// </summary>
-    public partial class AudioPanel : UserControl
+    public partial class AudioPanel : UserControlExt
     {
         public delegate void RecordingCompletedHandler(string recordedFilePath);
 
@@ -35,15 +36,22 @@ namespace Pronunciation.Trainer
             public BackgroundAction Target;
         }
 
-        private DispatcherTimer _delayedActionTimer;
+        private readonly DispatcherTimer _delayedActionTimer = new DispatcherTimer();
+        private readonly DispatcherTimer _paintWaveformTimer = new DispatcherTimer();
         private DelayedActionArgs _delayedActionContext;
 
         private IAudioContext _audioContext;
         private BackgroundAction _activeAction;
-        private ActionButton[] _actionButtons; 
+        private ActionButton[] _actionButtons;
+
+        private ExecuteActionCommand _playReferenceCommand;
+        private ExecuteActionCommand _playRecordedCommand;
+        private ExecuteActionCommand _startRecordingCommand;
+        private ExecuteActionCommand _pauseCommand;
 
         private const string _recordProgressTemplate = "Recording, {0} seconds left..";
         private const int DelayedPlayIntervalMs = 500;
+        private const int PaintWaveformIntervalMs = 100;
 
         public event RecordingCompletedHandler RecordingCompleted;
 
@@ -54,15 +62,20 @@ namespace Pronunciation.Trainer
 
         private void UserControl_Initialized(object sender, EventArgs e)
         {
-            _delayedActionTimer = new DispatcherTimer();
-            _delayedActionTimer.Tick += DelayedActionTimer_Tick;
-            _delayedActionTimer.Interval = new TimeSpan(0, 0, 0, 0, DelayedPlayIntervalMs);
+            _delayedActionTimer.Tick += _delayedActionTimer_Tick;
+            _delayedActionTimer.Interval = TimeSpan.FromMilliseconds(DelayedPlayIntervalMs);
 
-            lblSecondsLeft.Content = null;
+            _paintWaveformTimer.Tick += _paintWaveformTimer_Tick;
+            _paintWaveformTimer.Interval = TimeSpan.FromMilliseconds(PaintWaveformIntervalMs);
 
-            btnPlayReference.Target = new PlayAudioAction(PrepareReferencePlaybackArgs, ProcessPlaybackResult);
-            btnPlayRecorded.Target = new PlayAudioAction(PrepareRecordedPlaybackArgs, ProcessPlaybackResult);
-            btnRecord.Target = new RecordAudioAction(PrepareRecordingArgs, ProcessRecordingResult, ReportRecordingProgress);
+            _playReferenceCommand = new ExecuteActionCommand(PlayReferenceAudio, false);
+            _playRecordedCommand = new ExecuteActionCommand(PlayRecordedAudio, false);
+            _startRecordingCommand = new ExecuteActionCommand(StartRecording, false);
+            _pauseCommand = new ExecuteActionCommand(PauseAudio, false);
+
+            btnPlayReference.Target = new PlayAudioAction(PrepareReferencePlaybackArgs, (x, y) => ProcessPlaybackResult(x, y, true));
+            btnPlayRecorded.Target = new PlayAudioAction(PrepareRecordedPlaybackArgs, (x, y) => ProcessPlaybackResult(x, y, false));
+            btnRecord.Target = new RecordAudioAction(PrepareRecordingArgs, ProcessRecordingResult);
 
             _actionButtons = new[] { btnPlayReference, btnPlayRecorded, btnRecord };
             foreach (var actionButton in _actionButtons)
@@ -72,23 +85,46 @@ namespace Pronunciation.Trainer
             }
         }
 
+        protected override void OnVisualTreeBuilt(bool isFirstBuild)
+        {
+            base.OnVisualTreeBuilt(isFirstBuild);
+
+            if (isFirstBuild)
+            {
+                var container = ControlsHelper.GetContainer(this);
+                container.InputBindings.Add(new KeyBinding(_playReferenceCommand, KeyGestures.PlayReference));
+                container.InputBindings.Add(new KeyBinding(_playRecordedCommand, KeyGestures.PlayRecorded));
+                container.InputBindings.Add(new KeyBinding(_startRecordingCommand, KeyGestures.StartRecording));
+                container.InputBindings.Add(new KeyBinding(_pauseCommand, KeyGestures.PauseAudio));
+
+                container.PreviewKeyDown += container_PreviewKeyDown;
+
+                btnPlayReference.ToolTip += KeyGestures.PlayReference.GetTooltipString();
+                btnPlayRecorded.ToolTip += KeyGestures.PlayRecorded.GetTooltipString();
+                btnRecord.ToolTip += KeyGestures.StartRecording.GetTooltipString();
+            }
+        }
+
+        private void container_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyboardDevice.Modifiers == ModifierKeys.None && e.Key == Key.Space)
+            {
+                PauseAudio();
+            }
+        }
+
         public void AttachContext(IAudioContext audioContext)
         {
             _audioContext = audioContext;
             _audioContext.ContextChanged -= AudioContext_ContextChanged;
             _audioContext.ContextChanged += AudioContext_ContextChanged;
 
-            if (!_audioContext.AutoStopRecording)
-            {
-                autoStopPanel.Visibility = System.Windows.Visibility.Collapsed;
-            }
-
             SetupControlsState();
         }
 
         public bool HasKeyboardFocus
         {
-            get { return txtAutoStop.IsKeyboardFocusWithin; }
+            get { return false; }
         }
 
         public void PlayReferenceAudio()
@@ -115,6 +151,14 @@ namespace Pronunciation.Trainer
             }
         }
 
+        private void PauseAudio()
+        {
+            if (_activeAction != null)
+            {
+                _activeAction.RequestAbort(true);
+            }
+        }
+
         public void StopAction(bool isSoftAbort)
         {
             if (_activeAction != null)
@@ -126,13 +170,20 @@ namespace Pronunciation.Trainer
         private void SetupControlsState()
         {
             btnPlayReference.IsEnabled = _audioContext.IsReferenceAudioExists;
+            _playReferenceCommand.UpdateState(_audioContext.IsReferenceAudioExists);
+
             btnPlayRecorded.IsEnabled = _audioContext.IsRecordedAudioExists;
+            _playRecordedCommand.UpdateState(_audioContext.IsRecordedAudioExists);
+
             btnRecord.IsEnabled = _audioContext.IsRecordingAllowed;
+            _startRecordingCommand.UpdateState(_audioContext.IsRecordingAllowed);
         }
 
         private void AudioContext_ContextChanged(PlayAudioMode playMode)
         {
             _delayedActionContext = null;
+            waveReference.Clear();
+            waveRecorded.Clear();
 
             BackgroundAction target = null;
             if (playMode == PlayAudioMode.PlayReference && _audioContext.IsReferenceAudioExists)
@@ -155,6 +206,12 @@ namespace Pronunciation.Trainer
         {
             _activeAction = action;
             _delayedActionContext = null;
+
+            _pauseCommand.UpdateState(true);
+            _playReferenceCommand.UpdateState(false);
+            _playRecordedCommand.UpdateState(false);
+            _startRecordingCommand.UpdateState(false);
+
             foreach (var actionButton in _actionButtons)
             {
                 if (!ReferenceEquals(actionButton.Target, action))
@@ -167,10 +224,17 @@ namespace Pronunciation.Trainer
         private void ActionButton_ActionCompleted(BackgroundAction action)
         {
             _activeAction = null;
+            _pauseCommand.UpdateState(false);
+
+            if (_paintWaveformTimer.IsEnabled)
+            {
+                _paintWaveformTimer.Stop();
+            }
+
             SetupControlsState();
         }
 
-        private void DelayedActionTimer_Tick(object sender, EventArgs e)
+        private void _delayedActionTimer_Tick(object sender, EventArgs e)
         {
             _delayedActionTimer.Stop();
 
@@ -181,12 +245,23 @@ namespace Pronunciation.Trainer
             }
         }
 
+        private void _paintWaveformTimer_Tick(object sender, EventArgs e)
+        {
+            var playAction = _activeAction as PlayAudioAction;
+            if (playAction == null)
+            {
+                _paintWaveformTimer.Stop();
+                return;
+            }
+        }
+
         private ActionArgs<PlaybackArgs> PrepareReferencePlaybackArgs(ActionContext context)
         {
             PlaybackSettings args = _audioContext.GetReferenceAudio();
             if (args == null)
                 return null;
 
+            waveReference.Clear();
             return new ActionArgs<PlaybackArgs>(new PlaybackArgs
             {
                 IsReferenceAudio = true,
@@ -202,11 +277,13 @@ namespace Pronunciation.Trainer
             if (args == null)
                 return null;
 
+            waveRecorded.Clear();
             return new ActionArgs<PlaybackArgs>(new PlaybackArgs
             {
                 IsReferenceAudio = false,
                 IsFilePath = args.IsFilePath,
-                PlaybackData = args.PlaybackData
+                PlaybackData = args.PlaybackData,
+                SkipMs = AppSettings.Instance.SkipRecordedAudioMs
             });
         }
 
@@ -215,15 +292,6 @@ namespace Pronunciation.Trainer
             var args = _audioContext.GetRecordingSettings();
             if (args == null)
                 return null;
-
-            btnRecord.Style = (Style)(this.Resources["RecordingActive"]);
-            float recordDuration = 0;
-            if (autoStopPanel.IsVisible)
-            {
-                recordDuration = float.Parse(txtAutoStop.Text, System.Globalization.CultureInfo.InvariantCulture);
-                lblSecondsLeft.Foreground = Brushes.Red;
-                lblSecondsLeft.Content = string.Format(_recordProgressTemplate, txtAutoStop.Text);
-            }
 
             BackgroundAction[] postActions;
             switch (AppSettings.Instance.RecordedMode)
@@ -245,34 +313,26 @@ namespace Pronunciation.Trainer
 
             return new ActionArgs<RecordingArgs>(new RecordingArgs
             {
-                Duration = recordDuration,
                 FilePath = args.OutputFilePath
             });
         }
 
-        private void ReportRecordingProgress(object progress)
-        {
-            int secondsLeft = (int)Math.Round((float)progress / 1000);
-            lblSecondsLeft.Content = string.Format(_recordProgressTemplate, secondsLeft);
-        }
-
-        private void ProcessPlaybackResult(ActionContext context, ActionResult result)
+        private void ProcessPlaybackResult(ActionContext context, ActionResult<PlaybackResult> result, bool isReferenceAudio)
         {
             if (result.Error != null)
                 throw new Exception(string.Format("There was an error during audio playback: {0}", result.Error.Message));
+
+            //(isReferenceAudio ? waveReference : waveRecorded).DrawWaveForm(result.ReturnValue.Samples);
         }
 
         private void ProcessRecordingResult(ActionContext context, ActionResult<string> result)
         {
-            btnRecord.Style = (Style)(this.Resources["RecordingStopped"]);
-            lblSecondsLeft.Content = null;
-
             if (result.Error != null)
                 throw new Exception(string.Format("There was an error during audio recording: {0}", result.Error.Message));
 
             if (RecordingCompleted != null)
             {
-                RecordingCompleted(result.Result);
+                RecordingCompleted(result.ReturnValue);
             }
         }
 

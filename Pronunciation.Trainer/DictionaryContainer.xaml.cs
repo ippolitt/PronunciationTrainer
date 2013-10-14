@@ -19,13 +19,14 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Collections;
 using System.Diagnostics;
+using Pronunciation.Trainer.Commands;
 
 namespace Pronunciation.Trainer
 {
     /// <summary>
     /// Interaction logic for DictionaryContainer.xaml
     /// </summary>
-    public partial class DictionaryContainer : UserControl
+    public partial class DictionaryContainer : UserControlExt, ISupportsKeyboardFocus
     {
         private class SearchTextComparer : IComparer<string>
         {
@@ -81,6 +82,9 @@ namespace Pronunciation.Trainer
         private DictionaryAudioContext _audioContext;
         private KeyTextPair<string>[] _words;
 
+        private ExecuteActionCommand _commandBack;
+        private ExecuteActionCommand _commandForward;
+
         private const int MaxNumberOfSuggestions = 50;
         private const string MoreSuggestionsKey = "...";
 
@@ -92,7 +96,10 @@ namespace Pronunciation.Trainer
         private void UserControl_Initialized(object sender, EventArgs e)
         {
             _provider = new LPDProvider(AppSettings.Instance.BaseFolder);
+            
             _audioContext = new DictionaryAudioContext(_provider, GetPageAudioData);
+            audioPanel.AttachContext(_audioContext);
+            browser.ObjectForScripting = _audioContext;
 
             _words = _provider.GetWords().OrderBy(x => x.Text).ToArray();
 
@@ -104,18 +111,44 @@ namespace Pronunciation.Trainer
 
             borderSearch.BorderBrush = txtSearch.BorderBrush;
             borderSearch.BorderThickness = new Thickness(1);
+
+            _commandBack = new ExecuteActionCommand(GoBack, false);
+            _commandForward = new ExecuteActionCommand(GoForward, false);
+
+            btnBack.Command = _commandBack;
+            btnForward.Command = _commandForward;
+
+            this.InputBindings.Add(new KeyBinding(_commandBack, KeyGestures.NavigateBack));
+            this.InputBindings.Add(new KeyBinding(_commandForward, KeyGestures.NavigateForward));
+        }
+
+        protected override void OnVisualTreeBuilt(bool isFirstBuild)
+        {
+            base.OnVisualTreeBuilt(isFirstBuild);
+
+            if (isFirstBuild)
+            {
+                btnBack.ToolTip += KeyGestures.NavigateBack.GetTooltipString();
+                btnForward.ToolTip += KeyGestures.NavigateForward.GetTooltipString();
+            }
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            audioPanel.AttachContext(_audioContext);
-            browser.ObjectForScripting = _audioContext;
-
             SetupControlsState();
-            if (!txtSearch.IsKeyboardFocusWithin)
+            if (string.IsNullOrEmpty(txtSearch.Text) && !txtSearch.IsKeyboardFocusWithin)
             {
                 txtSearch.Focus();
             }
+            else
+            {
+                CaptureKeyboardFocus();
+            }
+        }
+
+        public void CaptureKeyboardFocus()
+        {
+            lstSuggestions.Focus();
         }
 
         private void browser_LoadCompleted(object sender, NavigationEventArgs e)
@@ -136,15 +169,28 @@ namespace Pronunciation.Trainer
                 {
                     RegisterRecentWord(item);
                 }
+                // Move keyboard focus to another control
                 if (txtSearch.IsKeyboardFocusWithin)
                 {
-                    browser.Focus();
+                    CaptureKeyboardFocus();
                 }
 
                 cboWordLists.SelectedItem = null;
             }
 
             SetupControlsState();
+        }
+
+        private void UserControl_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (KeyboardMapper.IsRegularKey(e) && e.Key != Key.Space)
+            {
+                if (!txtSearch.IsKeyboardFocusWithin && !audioPanel.HasKeyboardFocus)
+                {
+                    txtSearch.Text = null;
+                    txtSearch.Focus();
+                }
+            }
         }
 
         private void RegisterRecentWord(KeyTextPair<string> wordItem)
@@ -162,11 +208,11 @@ namespace Pronunciation.Trainer
 
         private void SetupControlsState()
         {
-            btnBack.IsEnabled = browser.CanGoBack;
-            btnForward.IsEnabled = browser.CanGoForward;
+            _commandBack.UpdateState(browser.CanGoBack);
+            _commandForward.UpdateState(browser.CanGoForward);
         }
 
-        private void btnBack_Click(object sender, RoutedEventArgs e)
+        private void GoBack()
         {
             if (browser.CanGoBack)
             {
@@ -174,7 +220,7 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void btnForward_Click(object sender, RoutedEventArgs e)
+        private void GoForward()
         {
             if (browser.CanGoForward)
             {
@@ -228,6 +274,7 @@ namespace Pronunciation.Trainer
                 }
                 else
                 {
+                    lstSuggestions.SelectedIndex = 0;
                     NavigateWord(((KeyTextPair<string>)lstSuggestions.Items[0]).Key);
                 }
             }
@@ -255,18 +302,6 @@ namespace Pronunciation.Trainer
             }
 
             return query.OrderBy(x => x.Text, new SearchTextComparer(searchText)).ToList();
-        }
-
-        private void UserControl_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (KeyboardMapper.IsRegularKey(e))
-            {
-                if (!txtSearch.IsKeyboardFocusWithin && !audioPanel.HasKeyboardFocus)
-                {
-                    txtSearch.Text = null;
-                    txtSearch.Focus();
-                }
-            }
         }
 
         private void lstSuggestions_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)

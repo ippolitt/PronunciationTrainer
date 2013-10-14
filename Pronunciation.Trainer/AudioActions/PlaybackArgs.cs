@@ -11,5 +11,6 @@ namespace Pronunciation.Trainer.AudioActions
         public bool IsFilePath;
         public string PlaybackData;
         public float PlaybackVolumeDb;
+        public int SkipMs;
     }
 }

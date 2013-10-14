@@ -12,11 +12,10 @@ namespace Pronunciation.Trainer.AudioActions
     public class RecordAudioAction : BackgroundActionWithArgs<RecordingArgs, string>
     {
         public RecordAudioAction(Func<ActionContext, ActionArgs<RecordingArgs>> argsBuilder,
-            Action<ActionContext, ActionResult<string>> resultProcessor, Action<object> progressReporter)
+            Action<ActionContext, ActionResult<string>> resultProcessor)
             : base(argsBuilder, null, resultProcessor)
         {
             base.Worker = RecordAudio;
-            base.ProgressReporter = progressReporter;
         }
 
         private string RecordAudio(ActionContext context, RecordingArgs args)

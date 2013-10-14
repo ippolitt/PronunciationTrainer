@@ -36,6 +36,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>App.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="EntityFramework">
       <HintPath>..\packages\EntityFramework.5.0.0\lib\net40\EntityFramework.dll</HintPath>
@@ -70,9 +73,14 @@
     <Compile Include="AudioContexts\TrainingAudioContext.cs" />
     <Compile Include="AudioList.cs" />
     <Compile Include="BindingErrorTraceListener.cs" />
+    <Compile Include="Commands\ExecuteActionCommand.cs" />
+    <Compile Include="ControlsHelper.cs" />
+    <Compile Include="TabItemExt.cs" />
     <Compile Include="DataImporter.xaml.cs">
       <DependentUpon>DataImporter.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ISupportsKeyboardFocus.cs" />
+    <Compile Include="KeyGestures.cs" />
     <Compile Include="PronunciationDbContext.cs" />
     <Compile Include="DictionaryContainer.xaml.cs">
       <DependentUpon>DictionaryContainer.xaml</DependentUpon>
@@ -94,6 +102,11 @@
     <Compile Include="TextBoxWithIcon.xaml.cs">
       <DependentUpon>TextBoxWithIcon.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UserControlExt.cs" />
+    <Compile Include="WaveForm.xaml.cs">
+      <DependentUpon>WaveForm.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WaveFormBuilder.cs" />
     <Page Include="AudioPanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -144,6 +157,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="WaveForm.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -188,6 +205,13 @@
       <Link>lame.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Resource Include="App.ico" />
+    <Resource Include="Resources\AudioStopPlaying.png" />
+    <Resource Include="Resources\AudioStopRecording.png" />
+    <Resource Include="Resources\AudioPlayRef.png" />
+    <Resource Include="Resources\AudioPlayRec.png" />
+    <Resource Include="Resources\AudioPause.png" />
+    <Resource Include="Resources\AudioStartRecording.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

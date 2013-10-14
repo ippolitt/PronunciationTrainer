@@ -59,11 +59,6 @@ namespace Pronunciation.Trainer.AudioContexts
             get { return _currentPage; }
         }
 
-        public bool AutoStopRecording
-        {
-            get { return true; }
-        }
-
         public bool IsReferenceAudioExists
         {
             get { return IsWord; }

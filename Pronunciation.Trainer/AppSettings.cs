@@ -26,10 +26,10 @@ namespace Pronunciation.Trainer
     {
         public string BaseFolder { get; private set; }
         public int SampleRate { get; private set; }
+        public int SkipRecordedAudioMs { get; private set; }
 
         public StartupPlayMode StartupMode { get; set; }
         public RecordedPlayMode RecordedMode { get; set; }
-        public float RecordingInterval { get; set; }
         public float ReferenceDataVolume { get; set; }
 
         private readonly static Lazy<AppSettings> _instance = new Lazy<AppSettings>(() => new AppSettings());
@@ -45,15 +45,14 @@ namespace Pronunciation.Trainer
             SampleRate = Settings.Default.SampleRate;
             StartupMode = (StartupPlayMode)Settings.Default.StartupMode;
             RecordedMode = (RecordedPlayMode)Settings.Default.RecordedMode;
-            RecordingInterval = Settings.Default.RecordingInterval;
             ReferenceDataVolume = Settings.Default.ReferenceDataVolume;
+            SkipRecordedAudioMs = Settings.Default.SkipRecordedAudioMs;
         }
 
         public void Save()
         {
             Settings.Default.StartupMode = (int)StartupMode;
             Settings.Default.RecordedMode = (int)RecordedMode;
-            Settings.Default.RecordingInterval = RecordingInterval;
             Settings.Default.ReferenceDataVolume = ReferenceDataVolume;
             Settings.Default.Save();
         }

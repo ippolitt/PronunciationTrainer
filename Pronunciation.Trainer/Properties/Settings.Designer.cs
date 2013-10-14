@@ -59,18 +59,6 @@ namespace Pronunciation.Trainer.Properties {
             }
         }
         
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2")]
-        public float RecordingInterval {
-            get {
-                return ((float)(this["RecordingInterval"]));
-            }
-            set {
-                this["RecordingInterval"] = value;
-            }
-        }
-        
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("D:\\DOCS\\Языки\\English\\Pronunciation\\Trainer")]
@@ -86,6 +74,15 @@ namespace Pronunciation.Trainer.Properties {
         public int SampleRate {
             get {
                 return ((int)(this["SampleRate"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("200")]
+        public int SkipRecordedAudioMs {
+            get {
+                return ((int)(this["SkipRecordedAudioMs"]));
             }
         }
     }

@@ -35,11 +35,6 @@ namespace Pronunciation.Trainer.AudioContexts
             get { return _recordingName; }
         }
 
-        public bool AutoStopRecording
-        {
-            get { return false; }
-        }
-
         public bool IsReferenceAudioExists
         {
             get { return false; }
