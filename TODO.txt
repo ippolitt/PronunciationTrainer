@@ -1,0 +1,45 @@
+Adding new exercises:
+- Вырезать серединку в парах слов
+
+Top:
+- Resizing of detailed dialog
+- When detailed dialog is activated put focus to a list
+- Add shortcut for playing ref and rec sounds simultaneosuly
+- Make image in detailed dialog non-focusable
+- Make notes textbox higher
+- Allow to set the position to start playing from
+
+Waveforms:
+- Clip pauses at the end and at the beginning in the Waveform
+- Normalize my recording Waveform to the length of the reference one (don't stretch it)
+- Return waveforms to compare length (also move them)
+
+- Allow to replay certain phrase highlighted on the waveform
+- Pause (instead of stop) with space when possible (Do I really need a pause functionality?)
+- Add playback slider and ability to pause (at least pause the play) and scroll to a certain place
+- Add special signs explanation (LPD or Amazon)
+- generate html for pronunciation notes (from dictionary CD)
+- Get rid of SQL server - use XML files
+- "Press and hold" while recording shouldn't be the only option because sometimes we have our hands busy
+- Create base MessageBox with predefined captions
+- Allow to record when the application is not active
+- Add validation of the value entered in Duration textbox
+- Don't load all tabs on startup
+- Open detailed dialogs as tabs of the Exercise list (as in MVVM article)
+- Add a button to remember/highlight a record in Recorder
+- Add text to exercises to enable full text search
+- Add recording duration to recordings list
+- Add control to increase/decrease timeout
+- add slowdown for playback
+- add word name to last played audio
+- ensure Waveform displays correct data
+- real time waveform
+- ability to compare my recordings
+- 'pause' transcript is incorrect in Lingvo
+- Save best recordings with the date so that I was able to compare them over time to check my progress
+- Compare different reference pronunciation or different recorded ones
+- Play any word in the dictionary when I double click on it
+
+Generation of the pages:
+- check errors in "don't" - AmE is not separated 
+- don't combine similar words together?

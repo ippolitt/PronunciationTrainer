@@ -8,22 +8,18 @@ namespace Pronunciation.Core.Actions
     public class ActionContext
     {
         private readonly BackgroundAction _action;
-        private readonly object _contextData;
 
-        public ActionContext(BackgroundAction action, object contextData)
+        public object ContextData {get; set;}
+        public BackgroundActionSequence ActiveSequence { get; set; }
+
+        internal ActionContext(BackgroundAction action)
         {
             _action = action;
-            _contextData = contextData;
         }
 
         public BackgroundAction ActiveAction
         {
             get { return _action; }
-        } 
-
-        public object ContextData
-        {
-            get { return _contextData; }
         }
     }
 }

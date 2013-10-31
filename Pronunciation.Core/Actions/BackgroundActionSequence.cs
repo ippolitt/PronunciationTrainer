@@ -16,15 +16,12 @@ namespace Pronunciation.Core.Actions
             _actions = actions;
         }
 
-        public void StartNextAction()
+        public void StartNextAction(object contextData)
         {
             if (_isAborted || _currentIndex >= _actions.Length)
                 return;
 
-            var nextAction = _actions[_currentIndex];
-            nextAction.ActionSequence = this;
-
-            _isAborted = !nextAction.StartAction();
+            _isAborted = !_actions[_currentIndex].StartAction(contextData, this);
             _currentIndex++;
         }
     }

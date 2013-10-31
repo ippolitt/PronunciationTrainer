@@ -32,7 +32,6 @@ namespace Pronunciation.Core.Actions
         private readonly BackgroundWorker _worker;
         private Action<object> _progressReporter;
         private Action _aborter;
-        private BackgroundActionSequence _actionSequence;
         private AbortRequest _abortRequest;
         private bool _isRunning;
 
@@ -61,16 +60,22 @@ namespace Pronunciation.Core.Actions
 
         public bool StartAction()
         {
-            return StartAction(null);
+            return StartAction(null, null);
         }
 
-        public bool StartAction(object contextData)
+        public bool StartAction(object contextData, BackgroundActionSequence actionSequence)
         {
             if (_isRunning)
                 return false;
 
             _abortRequest = AbortRequest.None;
-            ActionContext context = new ActionContext(this, contextData);
+
+            ActionContext context = new ActionContext(this)
+            {
+                ContextData = contextData,
+                ActiveSequence = actionSequence
+            };
+
             ActionArgs<object> actionArgs = PrepareArgs(context);
             if (actionArgs == null || !actionArgs.IsAllowed)
                 return false;
@@ -122,12 +127,6 @@ namespace Pronunciation.Core.Actions
             set { _aborter = value; }
         }
 
-        public BackgroundActionSequence ActionSequence
-        {
-            get { return _actionSequence; }
-            set { _actionSequence = value; }
-        }
-
         private void DoWork(object sender, DoWorkEventArgs e)
         {
             ExecutionInfo info = (ExecutionInfo)e.Argument;
@@ -166,9 +165,9 @@ namespace Pronunciation.Core.Actions
                 }
             }
 
-            if (isSuccess && _actionSequence != null)
+            if (isSuccess && info.Context != null && info.Context.ActiveSequence != null)
             {
-                _actionSequence.StartNextAction();
+                info.Context.ActiveSequence.StartNextAction(info.Context.ContextData);
             }
         }
     }

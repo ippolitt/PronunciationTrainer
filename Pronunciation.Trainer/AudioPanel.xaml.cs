@@ -71,7 +71,7 @@ namespace Pronunciation.Trainer
             _playReferenceCommand = new ExecuteActionCommand(PlayReferenceAudio, false);
             _playRecordedCommand = new ExecuteActionCommand(PlayRecordedAudio, false);
             _startRecordingCommand = new ExecuteActionCommand(StartRecording, false);
-            _pauseCommand = new ExecuteActionCommand(PauseAudio, false);
+            _pauseCommand = new ExecuteActionCommand(() => PauseAudio(), false);
 
             btnPlayReference.Target = new PlayAudioAction(PrepareReferencePlaybackArgs, (x, y) => ProcessPlaybackResult(x, y, true));
             btnPlayRecorded.Target = new PlayAudioAction(PrepareRecordedPlaybackArgs, (x, y) => ProcessPlaybackResult(x, y, false));
@@ -109,7 +109,11 @@ namespace Pronunciation.Trainer
         {
             if (e.KeyboardDevice.Modifiers == ModifierKeys.None && e.Key == Key.Space)
             {
-                PauseAudio();
+                // Prevent other controls from handling a Space if playback/recording is in progress
+                if (PauseAudio())
+                {
+                    e.Handled = true;
+                }
             }
         }
 
@@ -151,12 +155,15 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void PauseAudio()
+        private bool PauseAudio()
         {
             if (_activeAction != null)
             {
                 _activeAction.RequestAbort(true);
+                return true;
             }
+
+            return false;
         }
 
         public void StopAction(bool isSoftAbort)
@@ -208,9 +215,9 @@ namespace Pronunciation.Trainer
             _delayedActionContext = null;
 
             _pauseCommand.UpdateState(true);
-            _playReferenceCommand.UpdateState(false);
-            _playRecordedCommand.UpdateState(false);
-            _startRecordingCommand.UpdateState(false);
+            //_playReferenceCommand.UpdateState(false);
+            //_playRecordedCommand.UpdateState(false);
+            //_startRecordingCommand.UpdateState(false);
 
             foreach (var actionButton in _actionButtons)
             {
@@ -309,7 +316,7 @@ namespace Pronunciation.Trainer
                     postActions = null;
                     break;
             }
-            btnRecord.Target.ActionSequence = new BackgroundActionSequence(postActions);
+            context.ActiveSequence = new BackgroundActionSequence(postActions);
 
             return new ActionArgs<RecordingArgs>(new RecordingArgs
             {

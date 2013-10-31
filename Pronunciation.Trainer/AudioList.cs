@@ -10,13 +10,11 @@ namespace Pronunciation.Trainer
 {
     public class AudioList : ListBox
     {
-        private bool _isRecording;
         private AudioPanel _audioPanel;
 
         public AudioList()
         {
             base.PreviewKeyDown += AudioList_PreviewKeyDown;
-            base.PreviewKeyUp += AudioList_PreviewKeyUp;
         }
 
         public void AttachPanel(AudioPanel audioPanel)
@@ -36,30 +34,6 @@ namespace Pronunciation.Trainer
                     break;
                 case Key.Right:
                     _audioPanel.PlayRecordedAudio();
-                    break;
-                case Key.X:
-                    if (!_isRecording)
-                    {
-                        _isRecording = true;
-                        _audioPanel.StartRecording();
-                    }
-                    break;
-            }
-        }
-
-        private void AudioList_PreviewKeyUp(object sender, KeyEventArgs e)
-        {
-            if (_audioPanel == null)
-                return;
-
-            switch (e.Key)
-            {
-                case Key.X:
-                    if (_isRecording)
-                    {
-                        _isRecording = false;
-                        _audioPanel.StopAction(true);
-                    }
                     break;
             }
         }
