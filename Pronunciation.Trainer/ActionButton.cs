@@ -16,7 +16,6 @@ namespace Pronunciation.Trainer
         private BackgroundAction _target;
 
         public string StopText { get; set; }
-        public bool SupportsAbort { get; set; }
 
         public static readonly DependencyProperty IsRunningProperty = DependencyProperty.Register(
             "IsRunning", typeof(bool), typeof(ActionButton));
@@ -56,8 +55,8 @@ namespace Pronunciation.Trainer
         private void Target_ActionStarted(BackgroundAction action)
         {
             IsRunning = true;
-            IsEnabled = SupportsAbort;
-            if (SupportsAbort && !string.IsNullOrEmpty(StopText))
+            IsEnabled = action.IsAbortable;
+            if (action.IsAbortable && !string.IsNullOrEmpty(StopText))
             {
                 _originalContent = Content;
                 Content = StopText;
@@ -76,16 +75,30 @@ namespace Pronunciation.Trainer
 
         protected override void OnClick()
         {
-            if (Target.IsRunning)
+            switch (Target.ActionState)
             {
-                if (SupportsAbort)
-                {
-                    Target.RequestAbort(true);
-                }
-            }
-            else
-            {
-                Target.StartAction();
+                case BackgroundActionState.Suspended:
+                    Target.Resume();
+                    break;
+
+                case BackgroundActionState.Running:
+                    if (Target.IsSuspendable)
+                    {
+                        Target.Suspend();
+                    }
+                    else if (Target.IsAbortable)
+                    {
+                        Target.RequestAbort(true);
+                    }
+                    else
+                    {
+                        // do nothing - just wait until action completes
+                    }
+                    break;
+
+                default:
+                    Target.StartAction();
+                    break;
             }
 
             base.OnClick();

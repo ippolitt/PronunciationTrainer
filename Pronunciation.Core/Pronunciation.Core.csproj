@@ -57,6 +57,7 @@
     <Compile Include="Actions\ActionResult.cs" />
     <Compile Include="Actions\BackgroundAction.cs" />
     <Compile Include="Actions\BackgroundActionSequence.cs" />
+    <Compile Include="Actions\BackgroundActionState.cs" />
     <Compile Include="Audio\Mp3Recorder.cs" />
     <Compile Include="Audio\PlaybackResult.cs" />
     <Compile Include="Audio\Mp3Player.cs" />

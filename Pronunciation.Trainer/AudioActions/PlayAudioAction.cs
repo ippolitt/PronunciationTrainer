@@ -9,25 +9,20 @@ namespace Pronunciation.Trainer.AudioActions
 {
     public class PlayAudioAction : BackgroundActionWithArgs<PlaybackArgs, PlaybackResult>
     {
-        private readonly Mp3Player _player;
+        private volatile Mp3Player _activePlayer;
 
         public PlayAudioAction(Func<ActionContext, ActionArgs<PlaybackArgs>> argsBuilder,
             Action<ActionContext, ActionResult<PlaybackResult>> resultProcessor) 
             : base(argsBuilder, null, resultProcessor)
         {
             base.Worker = PlayAudio;
-            _player = new Mp3Player(true);
+            IsAbortable = true;
+            IsSuspendable = true;
         }
 
-        public TimeSpan AudioPosition
+        public Mp3Player ActivePlayer
         {
-            get { return _player.CurrentPosition; }
-            set { _player.CurrentPosition = value; }
-        }
-
-        public TimeSpan AudioLength
-        {
-            get { return _player.TotalLength; }
+            get { return _activePlayer; }
         }
 
         private PlaybackResult PlayAudio(ActionContext context, PlaybackArgs args)
@@ -36,13 +31,19 @@ namespace Pronunciation.Trainer.AudioActions
             float volumeDb = args.PlaybackVolumeDb <= 0 ? args.PlaybackVolumeDb : -args.PlaybackVolumeDb;
 
             PlaybackResult result;
-            if (args.IsFilePath)
+            using (var player = new Mp3Player(true))
             {
-                result = _player.PlayFile(args.PlaybackData, volumeDb, args.SkipMs);
-            }
-            else
-            {
-                result = _player.PlayRawData(args.PlaybackData, volumeDb, args.SkipMs);
+                player.PlayingStarted += player_PlayingStarted;
+                player.PlayingCompleted += player_PlayingCompleted;
+
+                if (args.IsFilePath)
+                {
+                    result = player.PlayFile(args.PlaybackData, volumeDb, args.SkipMs);
+                }
+                else
+                {
+                    result = player.PlayRawData(args.PlaybackData, volumeDb, args.SkipMs);
+                }
             }
 
             return result;
@@ -51,7 +52,50 @@ namespace Pronunciation.Trainer.AudioActions
         public override void RequestAbort(bool isSoftAbort)
         {
             base.RequestAbort(false);
-            _player.Stop();
+
+            var player = _activePlayer;
+            if (player != null)
+            {
+                player.Stop();
+            }
+        }
+
+        public override void Suspend()
+        {
+            base.Suspend();
+
+            var player = _activePlayer;
+            if (player != null)
+            {
+                if (player.Pause())
+                {
+                    base.RegisterSuspended();
+                }
+            }
+        }
+
+        public override void Resume()
+        {
+            base.Resume();
+
+            var player = _activePlayer;
+            if (player != null)
+            {
+                if (player.Resume())
+                {
+                    base.RegisterResumed();
+                }
+            }
+        }
+
+        private void player_PlayingStarted(Mp3Player player)
+        {
+            _activePlayer = player;
+        }
+
+        private void player_PlayingCompleted(Mp3Player player)
+        {
+            _activePlayer = null;
         }
 
         // TrackBar trackBarPosition.Maximum = (int)fileWaveStream.TotalTime.TotalSeconds;

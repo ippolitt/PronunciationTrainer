@@ -37,8 +37,10 @@ namespace Pronunciation.Trainer
         }
 
         private readonly DispatcherTimer _delayedActionTimer = new DispatcherTimer();
-        private readonly DispatcherTimer _paintWaveformTimer = new DispatcherTimer();
+        private readonly DispatcherTimer _moveSliderTimer = new DispatcherTimer();
         private DelayedActionArgs _delayedActionContext;
+        private bool _ignoreSliderValueChange;
+        private bool _rewindPlayer;
 
         private IAudioContext _audioContext;
         private BackgroundAction _activeAction;
@@ -47,11 +49,11 @@ namespace Pronunciation.Trainer
         private ExecuteActionCommand _playReferenceCommand;
         private ExecuteActionCommand _playRecordedCommand;
         private ExecuteActionCommand _startRecordingCommand;
-        private ExecuteActionCommand _pauseCommand;
+        private ExecuteActionCommand _stopCommand;
 
         private const string _recordProgressTemplate = "Recording, {0} seconds left..";
         private const int DelayedPlayIntervalMs = 500;
-        private const int PaintWaveformIntervalMs = 100;
+        private const int MoveSliderIntervalMs = 200;
 
         public event RecordingCompletedHandler RecordingCompleted;
 
@@ -65,13 +67,13 @@ namespace Pronunciation.Trainer
             _delayedActionTimer.Tick += _delayedActionTimer_Tick;
             _delayedActionTimer.Interval = TimeSpan.FromMilliseconds(DelayedPlayIntervalMs);
 
-            _paintWaveformTimer.Tick += _paintWaveformTimer_Tick;
-            _paintWaveformTimer.Interval = TimeSpan.FromMilliseconds(PaintWaveformIntervalMs);
+            _moveSliderTimer.Tick += _moveSliderTimer_Tick;
+            _moveSliderTimer.Interval = TimeSpan.FromMilliseconds(MoveSliderIntervalMs);
 
             _playReferenceCommand = new ExecuteActionCommand(PlayReferenceAudio, false);
             _playRecordedCommand = new ExecuteActionCommand(PlayRecordedAudio, false);
             _startRecordingCommand = new ExecuteActionCommand(StartRecording, false);
-            _pauseCommand = new ExecuteActionCommand(() => PauseAudio(), false);
+            _stopCommand = new ExecuteActionCommand(() => StopAction(true), false);
 
             btnPlayReference.Target = new PlayAudioAction(PrepareReferencePlaybackArgs, (x, y) => ProcessPlaybackResult(x, y, true));
             btnPlayRecorded.Target = new PlayAudioAction(PrepareRecordedPlaybackArgs, (x, y) => ProcessPlaybackResult(x, y, false));
@@ -83,6 +85,9 @@ namespace Pronunciation.Trainer
                 actionButton.Target.ActionStarted += ActionButton_ActionStarted;
                 actionButton.Target.ActionCompleted += ActionButton_ActionCompleted;
             }
+
+            btnShowSlider.IsChecked = false;
+            ShowSlider(false);
         }
 
         protected override void OnVisualTreeBuilt(bool isFirstBuild)
@@ -95,7 +100,7 @@ namespace Pronunciation.Trainer
                 container.InputBindings.Add(new KeyBinding(_playReferenceCommand, KeyGestures.PlayReference));
                 container.InputBindings.Add(new KeyBinding(_playRecordedCommand, KeyGestures.PlayRecorded));
                 container.InputBindings.Add(new KeyBinding(_startRecordingCommand, KeyGestures.StartRecording));
-                container.InputBindings.Add(new KeyBinding(_pauseCommand, KeyGestures.PauseAudio));
+                container.InputBindings.Add(new KeyBinding(_stopCommand, KeyGestures.PauseAudio));
 
                 container.PreviewKeyDown += container_PreviewKeyDown;
 
@@ -109,8 +114,30 @@ namespace Pronunciation.Trainer
         {
             if (e.KeyboardDevice.Modifiers == ModifierKeys.None && e.Key == Key.Space)
             {
+                bool isExecuted = false;
+                if (_activeAction != null)
+                {
+                    if (_activeAction.ActionState == BackgroundActionState.Suspended)
+                    {
+                        _activeAction.Resume();
+                        isExecuted = true;
+                    }
+                    else if (_activeAction.ActionState == BackgroundActionState.Running)
+                    {
+                        if (_activeAction.IsSuspendable)
+                        {
+                            _activeAction.Suspend();
+                        }
+                        else
+                        {
+                            _activeAction.RequestAbort(true);
+                        }
+                        isExecuted = true;
+                    }
+                }
+
                 // Prevent other controls from handling a Space if playback/recording is in progress
-                if (PauseAudio())
+                if (isExecuted)
                 {
                     e.Handled = true;
                 }
@@ -123,7 +150,9 @@ namespace Pronunciation.Trainer
             _audioContext.ContextChanged -= AudioContext_ContextChanged;
             _audioContext.ContextChanged += AudioContext_ContextChanged;
 
-            SetupControlsState();
+            ResetSlider();
+            SetupCommandsState();
+            SetupButtonsState();
         }
 
         public bool HasKeyboardFocus
@@ -155,17 +184,6 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private bool PauseAudio()
-        {
-            if (_activeAction != null)
-            {
-                _activeAction.RequestAbort(true);
-                return true;
-            }
-
-            return false;
-        }
-
         public void StopAction(bool isSoftAbort)
         {
             if (_activeAction != null)
@@ -174,23 +192,25 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void SetupControlsState()
+        private void SetupButtonsState()
         {
             btnPlayReference.IsEnabled = _audioContext.IsReferenceAudioExists;
-            _playReferenceCommand.UpdateState(_audioContext.IsReferenceAudioExists);
-
             btnPlayRecorded.IsEnabled = _audioContext.IsRecordedAudioExists;
-            _playRecordedCommand.UpdateState(_audioContext.IsRecordedAudioExists);
-
             btnRecord.IsEnabled = _audioContext.IsRecordingAllowed;
+        }
+
+        private void SetupCommandsState()
+        {
+            _playReferenceCommand.UpdateState(_audioContext.IsReferenceAudioExists);
+            _playRecordedCommand.UpdateState(_audioContext.IsRecordedAudioExists);
             _startRecordingCommand.UpdateState(_audioContext.IsRecordingAllowed);
         }
 
         private void AudioContext_ContextChanged(PlayAudioMode playMode)
         {
             _delayedActionContext = null;
-            waveReference.Clear();
-            waveRecorded.Clear();
+            ResetSlider();
+            SetupCommandsState();
 
             BackgroundAction target = null;
             if (playMode == PlayAudioMode.PlayReference && _audioContext.IsReferenceAudioExists)
@@ -205,7 +225,7 @@ namespace Pronunciation.Trainer
             bool isStarted = StartAction(target, true);
             if (!isStarted)
             {
-                SetupControlsState();
+                SetupButtonsState();
             }
         }
 
@@ -214,10 +234,7 @@ namespace Pronunciation.Trainer
             _activeAction = action;
             _delayedActionContext = null;
 
-            _pauseCommand.UpdateState(true);
-            //_playReferenceCommand.UpdateState(false);
-            //_playRecordedCommand.UpdateState(false);
-            //_startRecordingCommand.UpdateState(false);
+            _stopCommand.UpdateState(true);
 
             foreach (var actionButton in _actionButtons)
             {
@@ -226,19 +243,22 @@ namespace Pronunciation.Trainer
                     actionButton.IsEnabled = false;
                 }
             }
+
+            ResetSlider();
+            if (sliderPlay.Visibility == Visibility.Visible)
+            {
+                InitSliderPolling();
+            }
         }
 
         private void ActionButton_ActionCompleted(BackgroundAction action)
         {
             _activeAction = null;
-            _pauseCommand.UpdateState(false);
+            _stopCommand.UpdateState(false);
 
-            if (_paintWaveformTimer.IsEnabled)
-            {
-                _paintWaveformTimer.Stop();
-            }
-
-            SetupControlsState();
+            StopSliderPolling();
+            ResetSlider();
+            SetupButtonsState();
         }
 
         private void _delayedActionTimer_Tick(object sender, EventArgs e)
@@ -252,13 +272,71 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void _paintWaveformTimer_Tick(object sender, EventArgs e)
+        private void _moveSliderTimer_Tick(object sender, EventArgs e)
         {
             var playAction = _activeAction as PlayAudioAction;
             if (playAction == null)
-            {
-                _paintWaveformTimer.Stop();
                 return;
+
+            var player = playAction.ActivePlayer;
+            if (player == null)
+                return;
+
+            sliderPlay.IsEnabled = true;
+            double max = player.TotalLength.TotalMilliseconds;
+            if (max != sliderPlay.Maximum)
+            {
+                sliderPlay.Minimum = 0;
+                sliderPlay.Maximum = max;
+            }
+
+            if (_rewindPlayer)
+            {
+                _rewindPlayer = false;
+                player.CurrentPosition = TimeSpan.FromMilliseconds(sliderPlay.Value);
+            }
+            else
+            {
+                _ignoreSliderValueChange = true;
+                sliderPlay.Value = player.CurrentPosition.TotalMilliseconds;
+                _ignoreSliderValueChange = false;
+            }
+        }
+
+        private void sliderPlay_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!_ignoreSliderValueChange)
+            {
+                _rewindPlayer = true;
+            }
+        }
+
+        private void ResetSlider()
+        {
+            sliderPlay.Minimum = 0;
+            sliderPlay.Maximum = 10;
+            sliderPlay.Value = 0;
+            sliderPlay.IsEnabled = false;
+            _rewindPlayer = false;
+        }
+
+        private void InitSliderPolling()
+        {
+            if (_activeAction is PlayAudioAction)
+            {
+                if (_moveSliderTimer.IsEnabled)
+                {
+                    _moveSliderTimer.Stop();
+                }
+                _moveSliderTimer.Start();
+            }
+        }
+
+        private void StopSliderPolling()
+        {
+            if (_moveSliderTimer.IsEnabled)
+            {
+                _moveSliderTimer.Stop();
             }
         }
 
@@ -268,7 +346,6 @@ namespace Pronunciation.Trainer
             if (args == null)
                 return null;
 
-            waveReference.Clear();
             return new ActionArgs<PlaybackArgs>(new PlaybackArgs
             {
                 IsReferenceAudio = true,
@@ -284,7 +361,6 @@ namespace Pronunciation.Trainer
             if (args == null)
                 return null;
 
-            waveRecorded.Clear();
             return new ActionArgs<PlaybackArgs>(new PlaybackArgs
             {
                 IsReferenceAudio = false,
@@ -365,6 +441,32 @@ namespace Pronunciation.Trainer
             _delayedActionTimer.Start();
 
             return false;
+        }
+
+        private void btnShowSlider_Checked(object sender, RoutedEventArgs e)
+        {
+            ShowSlider(true);
+            InitSliderPolling();
+        }
+
+        private void btnShowSlider_Unchecked(object sender, RoutedEventArgs e)
+        {
+            ShowSlider(false);
+            StopSliderPolling();
+        }
+
+        private void ShowSlider(bool isVisible)
+        {
+            if (isVisible)
+            {
+                sliderPlay.Visibility = Visibility.Visible;
+                btnShowSlider.Content = "Hide slider";
+            }
+            else
+            {
+                sliderPlay.Visibility = Visibility.Hidden;
+                btnShowSlider.Content = "Show slider";
+            }
         }
     }
 }

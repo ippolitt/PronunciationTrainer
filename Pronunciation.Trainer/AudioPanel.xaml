@@ -11,7 +11,7 @@
             <Setter Property="Source" Value="Resources/AudioPlayRef.png" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Path=IsRunning}" Value="True">
-                    <Setter Property="Source" Value="Resources/AudioStopPlaying.png" />
+                    <Setter Property="Source" Value="Resources/AudioPause.png" />
                 </DataTrigger>
                 <Trigger Property="IsEnabled" Value="False">
                     <Setter Property="Opacity" Value="0.5" />
@@ -22,7 +22,7 @@
             <Setter Property="Source" Value="Resources/AudioPlayRec.png" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Path=IsRunning}" Value="True">
-                    <Setter Property="Source" Value="Resources/AudioStopPlaying.png" />
+                    <Setter Property="Source" Value="Resources/AudioPause.png" />
                 </DataTrigger>
                 <Trigger Property="IsEnabled" Value="False">
                     <Setter Property="Opacity" Value="0.5" />
@@ -41,35 +41,31 @@
             </Style.Triggers>
         </Style>
     </UserControl.Resources>
-    <Grid Name="gridPanel" Margin="2">
+    <Grid Name="gridPanel">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="29" />
             <ColumnDefinition Width="29" />
             <ColumnDefinition Width="29" />
-            <ColumnDefinition Width="251*" />
-            <ColumnDefinition Width="250*" />
+            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="91" />
         </Grid.ColumnDefinitions>
         <!-- For some reason action button, when clicked, locks keyboard focus -->
-        <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnPlayReference" SupportsAbort="True" Grid.Column="0"
+        <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnPlayReference" Grid.Column="0"
             Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
             ToolTip="Play reference audio">
             <Image Style="{StaticResource PlayImageRef}" Stretch="None" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </local:ActionButton>
-        <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23"  x:Name="btnPlayRecorded" SupportsAbort="True" Grid.Column="1"
+        <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23"  x:Name="btnPlayRecorded" Grid.Column="1"
             Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
             ToolTip="Play recorded audio">
             <Image Style="{StaticResource PlayImageRec}" Stretch="None" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </local:ActionButton>
-        <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnRecord" SupportsAbort="True" Grid.Column="2"                  
+        <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnRecord" Grid.Column="2"                  
             Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
             ToolTip="Start recording audio">
             <Image Style="{StaticResource RecordImage}" Stretch="None" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </local:ActionButton>
-        <Border BorderBrush="{x:Static SystemColors.ControlLightBrush}" CornerRadius="5" BorderThickness="1" Grid.Column="3" Margin="2,0,2,0">
-            <local:WaveForm x:Name="waveReference" />
-        </Border>
-        <Border BorderBrush="{x:Static SystemColors.ControlLightBrush}" CornerRadius="5" BorderThickness="1" Grid.Column="4" Margin="2,0,2,0">
-            <local:WaveForm x:Name="waveRecorded" />
-        </Border>        
+        <Slider Grid.Column="3" Margin="10,5,10,0" Name="sliderPlay" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ValueChanged="sliderPlay_ValueChanged" IsMoveToPointEnabled="True" />
+        <ToggleButton Grid.Column="4" Margin="10,4,0,4" Name="btnShowSlider" Content="Show slider" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Checked="btnShowSlider_Checked" Unchecked="btnShowSlider_Unchecked" />
     </Grid>
 </local:UserControlExt>

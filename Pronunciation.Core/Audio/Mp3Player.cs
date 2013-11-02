@@ -9,16 +9,23 @@ using NAudio.Wave.SampleProviders;
 
 namespace Pronunciation.Core.Audio
 {
-    public class Mp3Player
+    public class Mp3Player : IDisposable
     {
         private AutoResetEvent _stopWait;
         private Exception _lastError;
         private IWavePlayer _wavePlayer;
         private Mp3FileReader _mp3Reader;
 
+        private bool _isDisposed;
+        private TimeSpan _totalLength = TimeSpan.Zero;
         private readonly bool _collectSamples;
         private readonly object _syncLock = new object();
-        private readonly object _playLock = new object();
+        private static readonly object _playLock = new object(); // Allow only one active playback per process
+
+        public delegate void PlayerStateChangedDelegate(Mp3Player player);
+
+        public event PlayerStateChangedDelegate PlayingStarted;
+        public event PlayerStateChangedDelegate PlayingCompleted; 
 
         public Mp3Player(bool collectSamples)
         {
@@ -49,13 +56,7 @@ namespace Pronunciation.Core.Audio
 
         public TimeSpan TotalLength
         {
-            get
-            {
-                lock (_syncLock)
-                {
-                    return _mp3Reader == null ? TimeSpan.Zero : _mp3Reader.TotalTime;
-                }
-            }
+            get { return _totalLength; }
         }
 
         public PlaybackResult PlayFile(string filePath)
@@ -81,6 +82,9 @@ namespace Pronunciation.Core.Audio
 
         private PlaybackResult Play(string mp3Data, bool isFilePath, float volumeDb, int skipMs)
         {
+            if (_isDisposed)
+                throw new InvalidOperationException("The player has been disposed!");
+
             if (!Monitor.TryEnter(_playLock))
                 throw new InvalidOperationException("Only one audio file can be played at a time!");
 
@@ -90,6 +94,7 @@ namespace Pronunciation.Core.Audio
                     ? new Mp3FileReader(mp3Data)
                     : new Mp3FileReader(new MemoryStream(Convert.FromBase64String(mp3Data))))
                 {
+                    _totalLength = inputStream.TotalTime;
                     if (skipMs > 0)
                     {
                         inputStream.CurrentTime = TimeSpan.FromMilliseconds(skipMs);
@@ -103,37 +108,46 @@ namespace Pronunciation.Core.Audio
             }
         }
 
-        public void Resume()
+        public bool Resume()
         {
             lock (_syncLock)
             {
                 if (_wavePlayer != null && _wavePlayer.PlaybackState == PlaybackState.Paused)
                 {
                     _wavePlayer.Play();
+                    return true;
                 }
             }
+
+            return false;
         }
 
-        public void Pause()
+        public bool Pause()
         {
             lock (_syncLock)
             {
                 if (_wavePlayer != null && _wavePlayer.PlaybackState == PlaybackState.Playing)
                 {
-                    _wavePlayer.Pause(); 
+                    _wavePlayer.Pause();
+                    return true;
                 }
             }
+
+            return false;
         }
 
-        public void Stop()
+        public bool Stop()
         {
             lock (_syncLock)
             {
                 if (_wavePlayer != null && _wavePlayer.PlaybackState != PlaybackState.Stopped)
                 {
                     _wavePlayer.Stop();
+                    return true;
                 }
             }
+
+            return false;
         }
 
         private PlaybackResult PlayStream(Mp3FileReader inputStream, float volumeDb)
@@ -160,9 +174,17 @@ namespace Pronunciation.Core.Audio
                     _mp3Reader = inputStream;
                     _wavePlayer = waveOutDevice;
                 }
+                if (PlayingStarted != null)
+                {
+                    PlayingStarted(this);
+                }
 
                 _stopWait.WaitOne();
 
+                if (PlayingCompleted != null)
+                {
+                    PlayingCompleted(this);
+                }
                 lock (_syncLock)
                 {
                     _mp3Reader = null;
@@ -198,6 +220,15 @@ namespace Pronunciation.Core.Audio
             return (volume > 1 || volume <= 0) ? 1 : volume;
 
             //float db = 20 * (float)Math.Log10(Volume);
+        }
+
+        public void Dispose()
+        {
+            if (!_isDisposed)
+            {
+                _stopWait.Dispose();
+                _isDisposed = true;
+            }
         }
     }
 }

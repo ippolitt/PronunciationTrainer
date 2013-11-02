@@ -31,9 +31,10 @@ namespace Pronunciation.Core.Actions
 
         private readonly BackgroundWorker _worker;
         private Action<object> _progressReporter;
-        private Action _aborter;
         private AbortRequest _abortRequest;
-        private bool _isRunning;
+        private BackgroundActionState _actionState;
+        private bool _isAbortable;
+        private bool _isSuspendable;
 
         protected abstract ActionArgs<object> PrepareArgs(ActionContext context);
         protected abstract object DoWork(ActionContext context, object args);
@@ -42,15 +43,33 @@ namespace Pronunciation.Core.Actions
         public BackgroundAction()
         {
             _worker = new BackgroundWorker();
-            _worker.WorkerSupportsCancellation = true;
             _worker.DoWork += DoWork;
             _worker.ProgressChanged += ProgressChanged;
             _worker.RunWorkerCompleted += RunWorkerCompleted;
         }
 
-        public bool IsRunning
+        public bool IsAbortable
         {
-            get { return _isRunning; }
+            get
+            {
+                return _isAbortable;
+            }
+            set
+            {
+                _isAbortable = value;
+                _worker.WorkerSupportsCancellation = value;
+            }
+        }
+
+        public bool IsSuspendable
+        {
+            get { return _isSuspendable; }
+            set { _isSuspendable = value; }
+        }
+
+        public BackgroundActionState ActionState
+        {
+            get { return _actionState; }
         }
 
         public bool IsAbortRequested
@@ -65,7 +84,7 @@ namespace Pronunciation.Core.Actions
 
         public bool StartAction(object contextData, BackgroundActionSequence actionSequence)
         {
-            if (_isRunning)
+            if (_actionState == BackgroundActionState.Running || _actionState == BackgroundActionState.Suspended)
                 return false;
 
             _abortRequest = AbortRequest.None;
@@ -82,7 +101,7 @@ namespace Pronunciation.Core.Actions
 
             _worker.RunWorkerAsync(new ExecutionInfo { Context = context, Args = actionArgs.Args });
 
-            _isRunning = true;
+            _actionState = BackgroundActionState.Running;
             if (ActionStarted != null)
             {
                 ActionStarted(this);
@@ -93,11 +112,32 @@ namespace Pronunciation.Core.Actions
 
         public virtual void RequestAbort(bool isSoftAbort)
         {
+            if (!_isAbortable)
+                throw new InvalidOperationException("The operation is not abortable!");
+
             _abortRequest = isSoftAbort ? AbortRequest.SoftAbort : AbortRequest.HardAbort;
-            if (_aborter != null)
-            {
-                _aborter();
-            }
+        }
+
+        public virtual void Suspend()
+        {
+            if (!_isSuspendable)
+                throw new InvalidOperationException("The operation is not suspendable!"); 
+        }
+
+        public virtual void Resume()
+        {
+            if (!_isSuspendable)
+                throw new InvalidOperationException("The operation is not suspendable!");
+        }
+
+        protected void RegisterSuspended()
+        {
+            _actionState = BackgroundActionState.Suspended;
+        }
+
+        protected void RegisterResumed()
+        {
+            _actionState = BackgroundActionState.Running;
         }
 
         public void ReportProgress(object progress)
@@ -119,12 +159,6 @@ namespace Pronunciation.Core.Actions
                 _progressReporter = value;
                 _worker.WorkerReportsProgress = (value != null);
             }
-        }
-
-        public Action Aborter
-        {
-            get { return _aborter; }
-            set { _aborter = value; }
         }
 
         private void DoWork(object sender, DoWorkEventArgs e)
@@ -157,7 +191,7 @@ namespace Pronunciation.Core.Actions
             }
             finally
             {
-                _isRunning = false;
+                _actionState = isSuccess ? BackgroundActionState.Completed : BackgroundActionState.Aborted;
                 _abortRequest = AbortRequest.None;
                 if (ActionCompleted != null)
                 {

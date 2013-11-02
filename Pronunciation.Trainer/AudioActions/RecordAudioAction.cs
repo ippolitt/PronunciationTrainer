@@ -16,6 +16,7 @@ namespace Pronunciation.Trainer.AudioActions
             : base(argsBuilder, null, resultProcessor)
         {
             base.Worker = RecordAudio;
+            IsAbortable = true;
         }
 
         private string RecordAudio(ActionContext context, RecordingArgs args)
