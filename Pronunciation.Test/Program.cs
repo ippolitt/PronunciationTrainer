@@ -12,13 +12,14 @@ namespace Pronunciation.Test
         {
             try
             {
-                Image i = Image.FromFile(@"D:\WORK\Images\temp\player_stop.png");
-                Console.WriteLine(i.HorizontalResolution + " " + i.VerticalResolution);
-                Console.WriteLine(i.Width + " " + i.Height);
+                Console.WriteLine("{0:0.#}", 15.0);
+                //Image i = Image.FromFile(@"D:\WORK\Images\temp\player_stop.png");
+                //Console.WriteLine(i.HorizontalResolution + " " + i.VerticalResolution);
+                //Console.WriteLine(i.Width + " " + i.Height);
 
-                Image i2 = Image.FromFile(@"D:\WORK\Images\temp\Stop4.png");
-                Console.WriteLine(i2.HorizontalResolution + " " + i2.VerticalResolution);
-                Console.WriteLine(i2.Width + " " + i2.Height);
+                //Image i2 = Image.FromFile(@"D:\WORK\Images\temp\Stop4.png");
+                //Console.WriteLine(i2.HorizontalResolution + " " + i2.VerticalResolution);
+                //Console.WriteLine(i2.Width + " " + i2.Height);
             }
             catch (Exception ex)
             {

@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Pronunciation.Trainer"
         xmlns:my="clr-namespace:Pronunciation.Core.Database;assembly=Pronunciation.Core" 
-        Title="ExerciseDetails" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+        Title="Exercise" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
         UseLayoutRounding="True"
         Initialized="Window_Initialized" Loaded="Window_Loaded" Closing="Window_Closing" Height="576" Width="782">

@@ -9,20 +9,18 @@ namespace Pronunciation.Core.Providers
 {
     public class LPDProvider
     {
-        private readonly string _baseFolder;
+        private readonly string _sourceFolder;
         private readonly string _dictionaryFolder;
         private readonly string _recordingsFolder;
 
-        private const string _baseFolderName = "LPD";
         private const string _dictionaryFolderName = "Dic";
-        private const string _recordingsFolderName = "Recordings";
         private const string _indexFileName = "Index.txt";
 
-        public LPDProvider(string appFolder)
+        public LPDProvider(string sourceFolder, string recordingsFolder)
         {
-            _baseFolder = Path.Combine(appFolder, _baseFolderName);
-            _dictionaryFolder = Path.Combine(_baseFolder, _dictionaryFolderName);
-            _recordingsFolder = Path.Combine(_baseFolder, _recordingsFolderName);
+            _sourceFolder = sourceFolder;
+            _recordingsFolder = recordingsFolder;
+            _dictionaryFolder = Path.Combine(sourceFolder, _dictionaryFolderName);
         }
 
         public Uri BuildWordPath(string wordName)
@@ -35,7 +33,7 @@ namespace Pronunciation.Core.Providers
 
         public Uri BuildWordListPath(string listName)
         {
-            return new Uri(Path.Combine(_baseFolder, string.Format(@"{0}.html", listName.ToLower())));
+            return new Uri(Path.Combine(_sourceFolder, string.Format(@"{0}.html", listName.ToLower())));
         }
 
         public string BuildRecordingFilePath(string wordName)
@@ -46,7 +44,7 @@ namespace Pronunciation.Core.Providers
 
         public List<KeyTextPair<string>> GetWords()
         {
-            string indexFile = Path.Combine(_baseFolder, _indexFileName);
+            string indexFile = Path.Combine(_sourceFolder, _indexFileName);
             if (!File.Exists(indexFile))
                 return null;
 

@@ -8,21 +8,17 @@ namespace Pronunciation.Core.Providers
 {
     public class TrainingProvider
     {
-        private readonly string _baseFolder;
+        private readonly string _sourceFolder;
         private readonly string _recordingsFolder;
 
-        private const string _baseFolderName = "Exercises";
-        private const string _recordingsFolderName = "Recordings";
         private const string _exerciseFileName = "main.png";
-
-        private const string _bookFolderPrefix = "Book ";
         private const string _cdFolderPrefix = "CD";
         private const string _trackFolderPrefix = "";
 
-        public TrainingProvider(string appFolder)
+        public TrainingProvider(string sourceFolder, string recordingsFolder)
         {
-            _baseFolder = Path.Combine(appFolder, _baseFolderName);
-            _recordingsFolder = Path.Combine(_baseFolder, _recordingsFolderName);
+            _sourceFolder = sourceFolder;
+            _recordingsFolder = recordingsFolder;
         }
 
         public IEnumerable<KeyTextPair<string>> GetReferenceAudioList(ExerciseId exerciseId)
@@ -57,7 +53,7 @@ namespace Pronunciation.Core.Providers
 
         private string BuildTrackFolderPath(ExerciseId exerciseId)
         {
-            return Path.Combine(_baseFolder, BuildRelativeExercisePath(exerciseId));
+            return Path.Combine(_sourceFolder, BuildRelativeExercisePath(exerciseId));
         }
 
         private string BuildRecordedFolderPath(ExerciseId exerciseId)
@@ -67,8 +63,8 @@ namespace Pronunciation.Core.Providers
 
         private string BuildRelativeExercisePath(ExerciseId exerciseId)
         {
-            return string.Format(@"{0}{1}\{2}{3}\{4}{5}",
-                _bookFolderPrefix, exerciseId.BookId,
+            return string.Format(@"{0}\{1}{2}\{3}{4}",
+                exerciseId.BookKey,
                 _cdFolderPrefix, exerciseId.CDNumber,
                 _trackFolderPrefix, exerciseId.TrackNumber);
         }
@@ -102,38 +98,77 @@ namespace Pronunciation.Core.Providers
             private readonly AudioNamePart _leftPart;
             private readonly AudioNamePart _rightPart;
 
+            // Split logic: 1.2 -> 1|2, 1A or 1.A -> 1|A, A1 or A.1 -> A|1 
             public ComparableAudioName(string audioName)
             {
                 int splitIndex = 0;
-                int rightPartIndex = 0;
-                for (int i = 0; i < audioName.Length; i++)
+                bool isSeparator = false;
+                bool isPreviousCharDigit = false;
+                int i = 0;
+                foreach(char ch in audioName.Trim())
                 {
-                    if (!Char.IsDigit(audioName, i))
+                    if (Char.IsDigit(ch))
                     {
+                        if (i == 0)
+                        {
+                            isPreviousCharDigit = true;
+                        }
+                        else
+                        {
+                            // Previous char is letter and current char is digit -> split here
+                            if (!isPreviousCharDigit)
+                            {
+                                splitIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                    else if (Char.IsLetter(ch))
+                    {
+                        if (i == 0)
+                        {
+                            isPreviousCharDigit = false;
+                        }
+                        else
+                        {
+                            // Previous char is digit and current char is letter -> split here
+                            if (isPreviousCharDigit)
+                            {
+                                splitIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // It's neither letter nor digit -> treat it as a separator and split here
                         splitIndex = i;
-                        if (Char.IsLetterOrDigit(audioName, i))
-                        {
-                            rightPartIndex = i;
-                        }
-                        else if (i + 1 < audioName.Length)
-                        {
-                            rightPartIndex = i + 1;
-                        }
+                        isSeparator = true;
                         break;
                     }
+
+                    i++;
                 }
 
-                if (splitIndex > 0)
+                if (isSeparator)
                 {
-                    _leftPart = new AudioNamePart(audioName.Substring(0, splitIndex));
-                    if (rightPartIndex > 0)
+                    _leftPart = new AudioNamePart(splitIndex > 0 ? audioName.Substring(0, splitIndex) : string.Empty);
+                    if (splitIndex + 1 < audioName.Length)
                     {
-                        _rightPart = new AudioNamePart(audioName.Substring(rightPartIndex));
+                        _rightPart = new AudioNamePart(audioName.Substring(splitIndex + 1));
                     }
                 }
                 else
                 {
-                    _leftPart = new AudioNamePart(audioName);
+                    if (splitIndex > 0)
+                    {
+                        _leftPart = new AudioNamePart(audioName.Substring(0, splitIndex));
+                        _rightPart = new AudioNamePart(audioName.Substring(splitIndex));
+                    }
+                    else
+                    {
+                        _leftPart = new AudioNamePart(audioName);
+                    }
                 }
             }
 

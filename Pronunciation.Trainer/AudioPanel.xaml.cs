@@ -42,6 +42,9 @@ namespace Pronunciation.Trainer
         private bool _ignoreSliderValueChange;
         private bool _rewindPlayer;
 
+        private PlaybackResult _lastReferenceResult;
+        private PlaybackResult _lastRecordedResult;
+
         private IAudioContext _audioContext;
         private BackgroundAction _activeAction;
         private ActionButton[] _actionButtons;
@@ -150,9 +153,8 @@ namespace Pronunciation.Trainer
             _audioContext.ContextChanged -= AudioContext_ContextChanged;
             _audioContext.ContextChanged += AudioContext_ContextChanged;
 
-            ResetSlider();
-            SetupCommandsState();
-            SetupButtonsState();
+            ResetSamples();
+            RefreshControls();
         }
 
         public bool HasKeyboardFocus
@@ -192,25 +194,11 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void SetupButtonsState()
-        {
-            btnPlayReference.IsEnabled = _audioContext.IsReferenceAudioExists;
-            btnPlayRecorded.IsEnabled = _audioContext.IsRecordedAudioExists;
-            btnRecord.IsEnabled = _audioContext.IsRecordingAllowed;
-        }
-
-        private void SetupCommandsState()
-        {
-            _playReferenceCommand.UpdateState(_audioContext.IsReferenceAudioExists);
-            _playRecordedCommand.UpdateState(_audioContext.IsRecordedAudioExists);
-            _startRecordingCommand.UpdateState(_audioContext.IsRecordingAllowed);
-        }
-
         private void AudioContext_ContextChanged(PlayAudioMode playMode)
         {
             _delayedActionContext = null;
-            ResetSlider();
-            SetupCommandsState();
+            ResetSamples();
+            RefreshControls();
 
             BackgroundAction target = null;
             if (playMode == PlayAudioMode.PlayReference && _audioContext.IsReferenceAudioExists)
@@ -221,12 +209,7 @@ namespace Pronunciation.Trainer
             {
                 target = btnPlayRecorded.Target;
             }
-
-            bool isStarted = StartAction(target, true);
-            if (!isStarted)
-            {
-                SetupButtonsState();
-            }
+            StartAction(target, true);
         }
 
         private void ActionButton_ActionStarted(BackgroundAction action)
@@ -244,6 +227,8 @@ namespace Pronunciation.Trainer
                 }
             }
 
+            btnShowWaveforms.IsEnabled = false;
+
             ResetSlider();
             if (sliderPlay.Visibility == Visibility.Visible)
             {
@@ -257,8 +242,7 @@ namespace Pronunciation.Trainer
             _stopCommand.UpdateState(false);
 
             StopSliderPolling();
-            ResetSlider();
-            SetupButtonsState();
+            RefreshControls();
         }
 
         private void _delayedActionTimer_Tick(object sender, EventArgs e)
@@ -311,6 +295,20 @@ namespace Pronunciation.Trainer
             }
         }
 
+        private void RefreshControls()
+        {
+            ResetSlider();
+
+            _playReferenceCommand.UpdateState(_audioContext.IsReferenceAudioExists);
+            _playRecordedCommand.UpdateState(_audioContext.IsRecordedAudioExists);
+            _startRecordingCommand.UpdateState(_audioContext.IsRecordingAllowed);
+
+            btnPlayReference.IsEnabled = _audioContext.IsReferenceAudioExists;
+            btnPlayRecorded.IsEnabled = _audioContext.IsRecordedAudioExists;
+            btnRecord.IsEnabled = _audioContext.IsRecordingAllowed;
+            btnShowWaveforms.IsEnabled = (_lastReferenceResult != null || _lastRecordedResult != null);
+        }
+
         private void ResetSlider()
         {
             sliderPlay.Minimum = 0;
@@ -340,12 +338,19 @@ namespace Pronunciation.Trainer
             }
         }
 
+        private void ResetSamples()
+        {
+            _lastReferenceResult = null;
+            _lastRecordedResult = null;
+        }
+
         private ActionArgs<PlaybackArgs> PrepareReferencePlaybackArgs(ActionContext context)
         {
             PlaybackSettings args = _audioContext.GetReferenceAudio();
             if (args == null)
                 return null;
 
+            _lastReferenceResult = null;
             return new ActionArgs<PlaybackArgs>(new PlaybackArgs
             {
                 IsReferenceAudio = true,
@@ -361,6 +366,7 @@ namespace Pronunciation.Trainer
             if (args == null)
                 return null;
 
+            _lastRecordedResult = null;
             return new ActionArgs<PlaybackArgs>(new PlaybackArgs
             {
                 IsReferenceAudio = false,
@@ -405,7 +411,14 @@ namespace Pronunciation.Trainer
             if (result.Error != null)
                 throw new Exception(string.Format("There was an error during audio playback: {0}", result.Error.Message));
 
-            //(isReferenceAudio ? waveReference : waveRecorded).DrawWaveForm(result.ReturnValue.Samples);
+            if (isReferenceAudio)
+            {
+                _lastReferenceResult = result.ReturnValue;
+            }
+            else
+            {
+                _lastRecordedResult = result.ReturnValue;
+            }
         }
 
         private void ProcessRecordingResult(ActionContext context, ActionResult<string> result)
@@ -467,6 +480,14 @@ namespace Pronunciation.Trainer
                 sliderPlay.Visibility = Visibility.Hidden;
                 btnShowSlider.Content = "Show slider";
             }
+        }
+
+        private void btnShowWaveforms_Click(object sender, RoutedEventArgs e)
+        {
+            WaveFormsComparison window = new WaveFormsComparison();
+            window.ReferenceResult = _lastReferenceResult;
+            window.RecordedResult = _lastRecordedResult;
+            window.Show();
         }
     }
 }

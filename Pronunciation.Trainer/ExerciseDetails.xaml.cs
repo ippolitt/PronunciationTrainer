@@ -61,7 +61,7 @@ namespace Pronunciation.Trainer
         private void Window_Initialized(object sender, EventArgs e)
         {
             _dbRecordContext = new Entities();
-            _provider = new TrainingProvider(AppSettings.Instance.BaseFolder);
+            _provider = new TrainingProvider(AppSettings.Instance.Folders.Exercises, AppSettings.Instance.Folders.ExercisesRecordings);
 
             exerciseTypeIdComboBox.Items.SortDescriptions.Add(new SortDescription("Ordinal", ListSortDirection.Ascending));
             topicIdComboBox.Items.SortDescriptions.Add(new SortDescription("Ordinal", ListSortDirection.Ascending));
@@ -167,12 +167,12 @@ namespace Pronunciation.Trainer
 
         private ExerciseId BuildExerciseId(Exercise record)
         {
-            if (!record.BookId.HasValue || !record.SourceCD.HasValue || !record.SourceTrack.HasValue)
+            if (record.Book == null || !record.SourceCD.HasValue || !record.SourceTrack.HasValue)
                 return null;
 
             return new ExerciseId
             {
-                BookId = record.BookId.Value,
+                BookKey = record.Book.ShortName,
                 CDNumber = record.SourceCD.Value,
                 TrackNumber = record.SourceTrack.Value
             };

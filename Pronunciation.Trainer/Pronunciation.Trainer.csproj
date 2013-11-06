@@ -65,6 +65,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AppFolders.cs" />
     <Compile Include="AudioActions\PlayAudioAction.cs" />
     <Compile Include="AudioActions\PlaybackArgs.cs" />
     <Compile Include="AudioActions\RecordAudioAction.cs" />
@@ -99,14 +100,14 @@
       <DependentUpon>SettingsPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="Test.cs" />
-    <Compile Include="TextBoxWithIcon.xaml.cs">
-      <DependentUpon>TextBoxWithIcon.xaml</DependentUpon>
-    </Compile>
     <Compile Include="UserControlExt.cs" />
     <Compile Include="WaveForm.xaml.cs">
       <DependentUpon>WaveForm.xaml</DependentUpon>
     </Compile>
     <Compile Include="WaveFormBuilder.cs" />
+    <Compile Include="WaveFormsComparison.xaml.cs">
+      <DependentUpon>WaveFormsComparison.xaml</DependentUpon>
+    </Compile>
     <Page Include="AudioPanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -153,11 +154,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="TextBoxWithIcon.xaml">
+    <Page Include="WaveForm.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="WaveForm.xaml">
+    <Page Include="WaveFormsComparison.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

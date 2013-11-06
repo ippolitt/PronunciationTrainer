@@ -25,12 +25,15 @@ namespace Pronunciation.Trainer
 
         private readonly DispatcherTimer _delayedResizeTimer = new DispatcherTimer();
         private const int DelayedResizeIntervalMs = 500;
-        private float[] _lastAudioSamples;
+
+        public float[] AudioSamples { get; set; }
+        public double WidthFactor { get; set; }
 
         public WaveForm()
         {
             InitializeComponent();
 
+            WidthFactor = 1;
             _delayedResizeTimer.Tick += new EventHandler(_delayedResizeTimer_Tick);
             _delayedResizeTimer.Interval = TimeSpan.FromMilliseconds(DelayedResizeIntervalMs);
         }
@@ -40,11 +43,13 @@ namespace Pronunciation.Trainer
             waveCanvas.Children.Clear();
         }
 
-        public void DrawWaveForm(float[] audioSamples)
+        public void DrawWaveForm()
         {
-            waveCanvas.Children.Clear();
+            Clear();
+            if (AudioSamples == null)
+                return;
 
-            double maxWidth = waveCanvas.ActualWidth - 2 * PaddingWidth;
+            double maxWidth = WidthFactor * (waveCanvas.ActualWidth - 2 * PaddingWidth);
             double maxHeight = waveCanvas.ActualHeight - 2 * PaddingHeight;
 
             Polyline pl = new Polyline();
@@ -55,7 +60,7 @@ namespace Pronunciation.Trainer
             pl.MaxHeight = waveCanvas.ActualHeight;
 
             WaveFormBuilder builder = new WaveFormBuilder();
-            var points = builder.DrawNormalizedAudio(audioSamples, maxWidth, maxHeight);
+            var points = builder.DrawNormalizedAudio(AudioSamples, maxWidth, maxHeight);
             foreach (var point in points)
             {
                 pl.Points.Add(new Point(PaddingWidth + point.X, PaddingHeight + point.YMin));
@@ -63,13 +68,11 @@ namespace Pronunciation.Trainer
             }
 
             waveCanvas.Children.Add(pl);
-
-            _lastAudioSamples = audioSamples;
         }
 
         private void waveCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            if (e.WidthChanged && _lastAudioSamples != null)
+            if (AudioSamples != null)
             {
                 if (_delayedResizeTimer.IsEnabled)
                 {
@@ -82,10 +85,7 @@ namespace Pronunciation.Trainer
         private void _delayedResizeTimer_Tick(object sender, EventArgs e)
         {
             _delayedResizeTimer.Stop();
-            if (_lastAudioSamples != null)
-            {
-                DrawWaveForm(_lastAudioSamples);
-            }
+            DrawWaveForm();
         }
     }
 }

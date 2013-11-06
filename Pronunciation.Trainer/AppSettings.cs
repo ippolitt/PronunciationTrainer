@@ -32,6 +32,8 @@ namespace Pronunciation.Trainer
         public RecordedPlayMode RecordedMode { get; set; }
         public float ReferenceDataVolume { get; set; }
 
+        public AppFolders Folders { get; private set; }
+
         private readonly static Lazy<AppSettings> _instance = new Lazy<AppSettings>(() => new AppSettings());
 
         public static AppSettings Instance
@@ -47,6 +49,8 @@ namespace Pronunciation.Trainer
             RecordedMode = (RecordedPlayMode)Settings.Default.RecordedMode;
             ReferenceDataVolume = Settings.Default.ReferenceDataVolume;
             SkipRecordedAudioMs = Settings.Default.SkipRecordedAudioMs;
+
+            Folders = new AppFolders(Settings.Default.BaseFolder);
         }
 
         public void Save()

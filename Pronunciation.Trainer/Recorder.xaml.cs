@@ -33,7 +33,7 @@ namespace Pronunciation.Trainer
 
         private void UserControl_Initialized(object sender, EventArgs e)
         {
-            _provider = new RecorderProvider(AppSettings.Instance.BaseFolder);
+            _provider = new RecorderProvider(AppSettings.Instance.Folders.Recorder);
             _audioContext = new RecorderAudioContext(_provider);
 
             audioPanel.RecordingCompleted += AudioPanel_RecordingCompleted;

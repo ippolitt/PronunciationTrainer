@@ -25,7 +25,7 @@ namespace Pronunciation.Core.Audio
         public int Read(float[] buffer, int offset, int count)
         {
             int samplesRead = _source.Read(buffer, offset, count);
-            for (int i = offset; i < count; i++)
+            for (int i = offset; i < samplesRead; i++)
             {
                 _samples.Add(buffer[i]);
             }

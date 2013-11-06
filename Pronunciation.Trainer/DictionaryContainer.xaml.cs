@@ -95,7 +95,7 @@ namespace Pronunciation.Trainer
 
         private void UserControl_Initialized(object sender, EventArgs e)
         {
-            _provider = new LPDProvider(AppSettings.Instance.BaseFolder);
+            _provider = new LPDProvider(AppSettings.Instance.Folders.Dictionary, AppSettings.Instance.Folders.DictionaryRecordings);
             
             _audioContext = new DictionaryAudioContext(_provider, GetPageAudioData);
             audioPanel.AttachContext(_audioContext);

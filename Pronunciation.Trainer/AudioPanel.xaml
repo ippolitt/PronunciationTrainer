@@ -46,8 +46,9 @@
             <ColumnDefinition Width="29" />
             <ColumnDefinition Width="29" />
             <ColumnDefinition Width="29" />
-            <ColumnDefinition Width="1*" />
-            <ColumnDefinition Width="91" />
+            <ColumnDefinition Width="293*" />
+            <ColumnDefinition Width="96" />
+            <ColumnDefinition Width="112" />
         </Grid.ColumnDefinitions>
         <!-- For some reason action button, when clicked, locks keyboard focus -->
         <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnPlayReference" Grid.Column="0"
@@ -67,5 +68,6 @@
         </local:ActionButton>
         <Slider Grid.Column="3" Margin="10,5,10,0" Name="sliderPlay" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ValueChanged="sliderPlay_ValueChanged" IsMoveToPointEnabled="True" />
         <ToggleButton Grid.Column="4" Margin="10,4,0,4" Name="btnShowSlider" Content="Show slider" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Checked="btnShowSlider_Checked" Unchecked="btnShowSlider_Unchecked" />
+        <Button Grid.Column="5" Margin="10,4,0,4" Name="btnShowWaveforms" Content="Show waveforms" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="btnShowWaveforms_Click" />
     </Grid>
 </local:UserControlExt>

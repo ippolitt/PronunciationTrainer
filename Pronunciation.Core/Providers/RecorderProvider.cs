@@ -9,11 +9,10 @@ namespace Pronunciation.Core.Providers
     public class RecorderProvider
     {
         private readonly string _recordingsFolder;
-        private const string _recordingsFolderName = "Recorder";
 
-        public RecorderProvider(string appFolder)
+        public RecorderProvider(string recordingsFolder)
         {
-            _recordingsFolder = Path.Combine(appFolder, _recordingsFolderName);
+            _recordingsFolder = recordingsFolder;
             if (!Directory.Exists(_recordingsFolder))
             {
                 Directory.CreateDirectory(_recordingsFolder);

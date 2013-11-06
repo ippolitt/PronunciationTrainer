@@ -2,12 +2,12 @@ Adding new exercises:
 - Вырезать серединку в парах слов
 
 Waveforms:
-- Create detailed dialog with waveforms
+- Ensure it differentiates mono and stereo
 - Clip pauses at the end and at the beginning in the Waveform
 - Normalize my recording Waveform to the length of the reference one (don't stretch it)
 - Return waveforms to compare length (also move them)
+- Separate waveform on segments and allow to play a certain segment
 Top:
-- Create detailed dialog with
 - Resizing of detailed dialog
 - When detailed dialog is activated put focus to a list
 - Add shortcut for playing ref and rec sounds simultaneosuly

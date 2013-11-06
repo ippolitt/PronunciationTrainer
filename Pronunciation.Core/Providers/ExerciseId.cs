@@ -7,7 +7,7 @@ namespace Pronunciation.Core.Providers
 {
     public class ExerciseId
     {
-        public int BookId { get; set; }
+        public string BookKey { get; set; }
         public int CDNumber { get; set; }
         public int TrackNumber { get; set; }
     }
