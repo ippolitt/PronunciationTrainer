@@ -5,24 +5,40 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Pronunciation.Trainer"
              mc:Ignorable="d" 
-             d:DesignHeight="115" d:DesignWidth="502">
-    <Canvas Name="rootPanel">
-        <Canvas.Resources>
-            <local:AppSettingsWrapper x:Key="settingsSource"/>
-        </Canvas.Resources>
-        <Canvas.DataContext>
-            <Binding Source="{StaticResource settingsSource}"/>
-        </Canvas.DataContext>
-        <Label Canvas.Left="0" Canvas.Top="16" Content="When dictionary entry is loaded:" Height="21" Name="label3" Width="207" Padding="0" HorizontalContentAlignment="Left" />
-        <Label Canvas.Left="0" Canvas.Top="43" Content="When recording stops:" Height="21" HorizontalContentAlignment="Left" Name="label4" Padding="0" Width="207" />
-        <Label Canvas.Left="0" Canvas.Top="72" Content="Decrease reference sounds volume by:" Height="21" HorizontalContentAlignment="Left" Name="label5" Padding="0" Width="207" />
-        <ComboBox Canvas.Left="215" Canvas.Top="14" Height="23" Name="cboStartup" Width="258" 
+             d:DesignHeight="137" d:DesignWidth="505">
+    <UserControl.Resources>
+        <local:AppSettingsWrapper x:Key="settingsSource"/>
+    </UserControl.Resources>
+    <UserControl.DataContext>
+        <Binding Source="{StaticResource settingsSource}"/>
+    </UserControl.DataContext>
+    <Grid Margin="0,5,0,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="210"></ColumnDefinition>
+            <ColumnDefinition Width="260"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+        </Grid.RowDefinitions>
+        
+        <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="When dictionary entry is loaded:" />
+        <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,3,0,3" Name="cboStartup"
                   ItemsSource="{Binding Path=StartupEntries}" DisplayMemberPath="Text" SelectedValuePath="Key" SelectedValue="{Binding Path=Settings.StartupMode}" />
-        <ComboBox Canvas.Left="215" Canvas.Top="43" Height="23" Name="cboPostRecordingAction" Width="258" 
+
+        <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="When recording stops:" />
+        <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,3,0,3" Name="cboPostRecordingAction"
                   ItemsSource="{Binding Path=RecordingEntries}" DisplayMemberPath="Text" SelectedValuePath="Key" SelectedValue="{Binding Path=Settings.RecordedMode}" />
-        <TextBox Canvas.Left="215" Canvas.Top="70" Height="23" Name="txtVolume" Width="46" HorizontalContentAlignment="Right"
+
+        <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Decrease reference audio volume by:" />
+        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+            <TextBox Name="txtVolume" Width="46" Margin="0,3,5,3" HorizontalAlignment="Left" HorizontalContentAlignment="Right"
                          Text="{Binding Path=Settings.ReferenceDataVolume}"/>
-        <Label Canvas.Left="267" Canvas.Top="72" Content="db" Height="21" HorizontalContentAlignment="Left" Name="label6" Padding="0" Width="24" />
-        <TextBlock Canvas.Left="0" Canvas.Top="93" Height="20" Name="textBlock1" TextWrapping="WrapWithOverflow" Text="(it can be useful if recorded pronunciation sounds too quiet as compare to a reference one)" Width="502" />
-    </Canvas>
+            <TextBlock Name="label6" VerticalAlignment="Center" TextWrapping="WrapWithOverflow" Text="db" />
+        </StackPanel>
+        <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,0,0,0" Name="label7" VerticalAlignment="Center" TextWrapping="WrapWithOverflow" Text="(it can be useful if a recorded audio sounds too quiet as compare to the reference one)" />
+    </Grid>
 </UserControl>

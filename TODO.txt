@@ -1,20 +1,19 @@
-Adding new exercises:
-- Вырезать серединку в парах слов
+Top:
+- Use Grids instead of Canvas where possible
+- Get rid of labels
+- Resizing of the detailed dialog
+- When the detailed dialog is activated put focus to the list
+- Add a shortcut for playing ref and rec sounds simultaneosuly
+- Make the image in the detailed dialog non-focusable
+- Make the notes textbox higher
 
 Waveforms:
-- Ensure it differentiates mono and stereo
 - Clip pauses at the end and at the beginning in the Waveform
-- Normalize my recording Waveform to the length of the reference one (don't stretch it)
-- Return waveforms to compare length (also move them)
+- Add ability to move and stretch waveforms with a slider
 - Separate waveform on segments and allow to play a certain segment
-Top:
-- Resizing of detailed dialog
-- When detailed dialog is activated put focus to a list
-- Add shortcut for playing ref and rec sounds simultaneosuly
-- Make image in detailed dialog non-focusable
-- Make notes textbox higher
-- Allow to set the position to start playing from
 
+Other:
+- Ability to compare my pronunciations over time
 - Allow to replay certain phrase highlighted on the waveform
 - Add special signs explanation (LPD or Amazon)
 - generate html for pronunciation notes (from dictionary CD)

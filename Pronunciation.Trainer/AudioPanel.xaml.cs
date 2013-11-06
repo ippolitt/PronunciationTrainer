@@ -89,8 +89,7 @@ namespace Pronunciation.Trainer
                 actionButton.Target.ActionCompleted += ActionButton_ActionCompleted;
             }
 
-            btnShowSlider.IsChecked = false;
-            ShowSlider(false);
+            sliderPlay.Visibility = Visibility.Hidden;
         }
 
         protected override void OnVisualTreeBuilt(bool isFirstBuild)
@@ -456,38 +455,26 @@ namespace Pronunciation.Trainer
             return false;
         }
 
-        private void btnShowSlider_Checked(object sender, RoutedEventArgs e)
-        {
-            ShowSlider(true);
-            InitSliderPolling();
-        }
-
-        private void btnShowSlider_Unchecked(object sender, RoutedEventArgs e)
-        {
-            ShowSlider(false);
-            StopSliderPolling();
-        }
-
-        private void ShowSlider(bool isVisible)
-        {
-            if (isVisible)
-            {
-                sliderPlay.Visibility = Visibility.Visible;
-                btnShowSlider.Content = "Hide slider";
-            }
-            else
-            {
-                sliderPlay.Visibility = Visibility.Hidden;
-                btnShowSlider.Content = "Show slider";
-            }
-        }
-
         private void btnShowWaveforms_Click(object sender, RoutedEventArgs e)
         {
             WaveFormsComparison window = new WaveFormsComparison();
             window.ReferenceResult = _lastReferenceResult;
             window.RecordedResult = _lastRecordedResult;
             window.Show();
+        }
+
+        private void btnShowSlider_Click(object sender, RoutedEventArgs e)
+        {
+            if (sliderPlay.Visibility == Visibility.Visible)
+            {
+                sliderPlay.Visibility = Visibility.Hidden;
+                StopSliderPolling();
+            }
+            else
+            {
+                sliderPlay.Visibility = Visibility.Visible;
+                InitSliderPolling();
+            }
         }
     }
 }

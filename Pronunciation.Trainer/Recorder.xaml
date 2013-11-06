@@ -8,12 +8,23 @@
              d:DesignHeight="355" d:DesignWidth="870" Initialized="UserControl_Initialized" Loaded="UserControl_Loaded">
     <DockPanel Name="rootPanel">
         <local:AudioPanel DockPanel.Dock="Top" Height="32" x:Name="audioPanel" />
-        <Canvas Name="detailsPanel">
-            <local:AudioList Canvas.Left="0" Canvas.Top="17" Height="258" x:Name="lstRecordings" Width="204" 
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"></ColumnDefinition>
+                <ColumnDefinition Width="110"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition MinHeight="80" Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Column="0" Grid.Row="0" Margin="0,5,0,5" Name="textBlock1" Text="Recordings list:" />
+            <local:AudioList Grid.Column="0" Grid.Row="1" Margin="0" x:Name="lstRecordings" 
                      MouseDoubleClick="lstRecordings_MouseDoubleClick" SelectionChanged="lstRecordings_SelectionChanged" SelectionMode="Extended" />
-            <TextBlock Canvas.Left="0" Canvas.Top="0" Height="23" Name="textBlock1" Text="Recordings list:" Width="87" />
-            <Button Canvas.Left="0" Canvas.Top="281" Content="Delete all" Height="23" Name="btnClear" Width="97" Click="btnClear_Click" />
-            <Button Canvas.Left="107" Canvas.Top="281" Content="Delete selected" Height="23" Name="btnDeleteSelected" Width="97" Click="btnDeleteSelected_Click" />
-        </Canvas>
+            <StackPanel Grid.Column="1" Grid.Row="1" Margin="10,0,0,0" Orientation="Vertical" VerticalAlignment="Top" >
+                <Button Margin="0,0,0,5" Content="Delete selected" Name="btnDeleteSelected" Click="btnDeleteSelected_Click" />                
+                <Button Margin="0,0,0,5" Content="Delete all" Name="btnClear" Click="btnClear_Click" />
+            </StackPanel>
+        </Grid>
     </DockPanel>
 </local:UserControlExt>
