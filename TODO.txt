@@ -1,11 +1,7 @@
 Top:
-- Use Grids instead of Canvas where possible
-- Get rid of labels
-- Resizing of the detailed dialog
-- When the detailed dialog is activated put focus to the list
+- Store history of the recordings. Allow to record words separately when dictionary entry has several meanings (I, II)
+- Allow comparison of my own pronunciations in the wave forms dialog
 - Add a shortcut for playing ref and rec sounds simultaneosuly
-- Make the image in the detailed dialog non-focusable
-- Make the notes textbox higher
 
 Waveforms:
 - Clip pauses at the end and at the beginning in the Waveform
@@ -13,7 +9,6 @@ Waveforms:
 - Separate waveform on segments and allow to play a certain segment
 
 Other:
-- Ability to compare my pronunciations over time
 - Allow to replay certain phrase highlighted on the waveform
 - Add special signs explanation (LPD or Amazon)
 - generate html for pronunciation notes (from dictionary CD)

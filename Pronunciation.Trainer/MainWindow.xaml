@@ -15,10 +15,10 @@
             <local:ExerciseList x:Name="exersises" Margin="10" />
         </local:TabItemExt>
         <local:TabItemExt Header="Settings" x:Name="tabSettings" >
-            <local:SettingsPanel x:Name="settings" Margin="10" />
+            <local:SettingsPanel x:Name="settings" Margin="10,15,10,10" />
         </local:TabItemExt>
-        <local:TabItemExt Header="Data import" x:Name="tabImport">
-            <local:DataImporter x:Name="dataImporter" />
-        </local:TabItemExt>
+        <!--<local:TabItemExt Header="Data import" x:Name="tabImport">
+            <local:DataImporter x:Name="dataImporter" Margin="10" />
+        </local:TabItemExt>-->
     </TabControl>
 </Window>

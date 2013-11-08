@@ -76,6 +76,7 @@ namespace Pronunciation.Trainer
             lstRecords.AttachPanel(audioPanel);
 
             LoadExercise(exerciseId);
+            lstRecords.Focus();
         }
 
         private void btnOK_Click(object sender, RoutedEventArgs e)

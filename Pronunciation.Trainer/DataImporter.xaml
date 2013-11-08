@@ -6,7 +6,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="314" d:DesignWidth="671">
     <Canvas Name="canvas1">
-        <Label Canvas.Left="12" Canvas.Top="9" Content="Path to topics file:" Height="26" Name="label1" Width="105" />
+        <TextBlock Canvas.Left="12" Canvas.Top="9" Text="Path to topics file:" Height="26" Name="label1" Width="105" />
         <TextBox Canvas.Left="123" Canvas.Top="12" Height="23" Name="txtTopicsFile" Width="404" />
         <Button Canvas.Left="533" Canvas.Top="11" Content="Import topics" Height="23" Name="btnImportTopics" Width="90" Click="btnImportTopics_Click" />
     </Canvas>
