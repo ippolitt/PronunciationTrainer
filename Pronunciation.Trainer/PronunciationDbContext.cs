@@ -16,8 +16,8 @@ namespace Pronunciation.Trainer
         private readonly Lazy<ObservableCollection<ExerciseType>> _exerciseTypes;
         private readonly Lazy<ObservableCollection<Book>> _books;
 
-        public delegate void EntryChangedHandler(int entryId, bool isAdded);
-        public event EntryChangedHandler ExerciseChanged;
+        public delegate void ExerciseChangedHandler(Guid exerciseId, bool isAdded);
+        public event ExerciseChangedHandler ExerciseChanged;
 
         public PronunciationDbContext()
         {
@@ -70,7 +70,7 @@ namespace Pronunciation.Trainer
             get { return _dbContext; }
         }
 
-        public void NotifyExerciseChanged(int exerciseId, bool isAdded)
+        public void NotifyExerciseChanged(Guid exerciseId, bool isAdded)
         {
             if (isAdded)
             {

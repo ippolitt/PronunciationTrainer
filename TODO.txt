@@ -9,10 +9,10 @@ Waveforms:
 - Separate waveform on segments and allow to play a certain segment
 
 Other:
+- Add column "CD+Track" instead of page and sort by it
 - Allow to replay certain phrase highlighted on the waveform
 - Add special signs explanation (LPD or Amazon)
 - generate html for pronunciation notes (from dictionary CD)
-- Get rid of SQL server - use XML files
 - Create base MessageBox with predefined captions
 - Allow to record when the application is not active
 - Don't load all tabs on startup

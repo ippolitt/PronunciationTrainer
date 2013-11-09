@@ -26,7 +26,7 @@ namespace Pronunciation.Trainer
     public partial class ExerciseDetails : Window
     {
         public bool CreateNew { get; set; }
-        public int? ExerciseId { get; set; }
+        public Guid? ExerciseId { get; set; }
 
         private Entities _dbRecordContext;
         private TrainingAudioContext _audioContext;
@@ -47,6 +47,7 @@ namespace Pronunciation.Trainer
                     if (CreateNew)
                     {
                         _activeRecord = _dbRecordContext.Exercises.Create();
+                        _activeRecord.ExerciseId = Guid.NewGuid();
                         _dbRecordContext.Exercises.Add(_activeRecord);
                     }
                     else
@@ -69,13 +70,13 @@ namespace Pronunciation.Trainer
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            ExerciseId exerciseId = BuildExerciseId(ActiveRecord);
+            ExerciseKey exerciseKey = BuildExerciseKey(ActiveRecord);
 
-            _audioContext = new TrainingAudioContext(_provider, exerciseId);
+            _audioContext = new TrainingAudioContext(_provider, exerciseKey);
             audioPanel.AttachContext(_audioContext);
             lstRecords.AttachPanel(audioPanel);
 
-            LoadExercise(exerciseId);
+            LoadExercise(exerciseKey);
             lstRecords.Focus();
         }
 
@@ -109,9 +110,9 @@ namespace Pronunciation.Trainer
             btnApply.Focus();
             SaveChanges();
 
-            ExerciseId exerciseId = BuildExerciseId(ActiveRecord);
-            _audioContext.ResetExerciseContect(exerciseId);
-            LoadExercise(exerciseId);
+            ExerciseKey exerciseKey = BuildExerciseKey(ActiveRecord);
+            _audioContext.ResetExerciseContect(exerciseKey);
+            LoadExercise(exerciseKey);
         }
 
         private void SaveChanges()
@@ -120,19 +121,21 @@ namespace Pronunciation.Trainer
             {
                 _dbRecordContext.SaveChanges();
                 ((PronunciationDbContext)DataContext).NotifyExerciseChanged(ActiveRecord.ExerciseId, CreateNew);
+
+                CreateNew = false;
             }
         }
 
-        private void LoadExercise(ExerciseId exerciseId)
+        private void LoadExercise(ExerciseKey exerciseKey)
         {
-            if (exerciseId == null)
+            if (exerciseKey == null)
             {
                 imgContent.Source = null;
                 lstRecords.ItemsSource = null;
                 return;
             }
 
-            var imageUrl = _provider.GetExerciseImagePath(exerciseId);
+            var imageUrl = _provider.GetExerciseImagePath(exerciseKey);
             if (imageUrl != null)
             {
                 BitmapImage image = new BitmapImage();
@@ -149,7 +152,7 @@ namespace Pronunciation.Trainer
                 imgContent.Source = null;
             }
 
-            lstRecords.ItemsSource = _provider.GetReferenceAudioList(exerciseId);
+            lstRecords.ItemsSource = _provider.GetReferenceAudioList(exerciseKey);
         }
 
         private void lstRecords_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -166,12 +169,12 @@ namespace Pronunciation.Trainer
             audioPanel.StopAction(false);
         }
 
-        private ExerciseId BuildExerciseId(Exercise record)
+        private ExerciseKey BuildExerciseKey(Exercise record)
         {
             if (record.Book == null || !record.SourceCD.HasValue || !record.SourceTrack.HasValue)
                 return null;
 
-            return new ExerciseId
+            return new ExerciseKey
             {
                 BookKey = record.Book.ShortName,
                 CDNumber = record.SourceCD.Value,

@@ -76,7 +76,7 @@ namespace Pronunciation.Trainer
             return true;
         }
 
-        private void _dbContext_ExerciseChanged(int entryId, bool isAdded)
+        private void _dbContext_ExerciseChanged(Guid exerciseId, bool isAdded)
         {
             exerciseDataGrid.Items.Refresh();
         }

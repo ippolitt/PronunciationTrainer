@@ -15,6 +15,7 @@ namespace Pronunciation.Trainer
         private const string _recorderFolderName = "Recorder";
         private const string _dictionaryFolderName = "LPD";
         private const string _exercisesFolderName = "Exercises";
+        private const string _databaseFolderName = "Database";
 
         public AppFolders(string baseFolder)
         {
@@ -50,6 +51,11 @@ namespace Pronunciation.Trainer
         public string Recorder
         {
             get { return Path.Combine(_recordingsFolder, _recorderFolderName); }
+        }
+
+        public string Database
+        {
+            get { return Path.Combine(_baseFolder, _databaseFolderName); }
         }
     }
 }

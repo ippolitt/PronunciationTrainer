@@ -21,7 +21,7 @@ namespace Pronunciation.Core.Providers
             _recordingsFolder = recordingsFolder;
         }
 
-        public IEnumerable<KeyTextPair<string>> GetReferenceAudioList(ExerciseId exerciseId)
+        public IEnumerable<KeyTextPair<string>> GetReferenceAudioList(ExerciseKey exerciseId)
         {
             var audioFolder = BuildTrackFolderPath(exerciseId);
             if (!Directory.Exists(audioFolder))
@@ -32,7 +32,7 @@ namespace Pronunciation.Core.Providers
                 .OrderBy(x => new ComparableAudioName(x.Key));
         }
 
-        public Uri GetExerciseImagePath(ExerciseId exerciseId)
+        public Uri GetExerciseImagePath(ExerciseKey exerciseId)
         {
             var exerciseFile = Path.Combine(BuildTrackFolderPath(exerciseId), _exerciseFileName);
             if (!File.Exists(exerciseFile))
@@ -41,27 +41,27 @@ namespace Pronunciation.Core.Providers
             return new Uri(exerciseFile);
         }
 
-        public string BuildReferenceAudioPath(ExerciseId exerciseId, string recordingName)
+        public string BuildReferenceAudioPath(ExerciseKey exerciseId, string recordingName)
         {
             return Path.Combine(BuildTrackFolderPath(exerciseId), string.Format("{0}.mp3", recordingName));
         }
 
-        public string BuildRecordedAudioPath(ExerciseId exerciseId, string recordingName)
+        public string BuildRecordedAudioPath(ExerciseKey exerciseId, string recordingName)
         {
             return Path.Combine(BuildRecordedFolderPath(exerciseId), string.Format("{0}.mp3", recordingName));
         }
 
-        private string BuildTrackFolderPath(ExerciseId exerciseId)
+        private string BuildTrackFolderPath(ExerciseKey exerciseId)
         {
             return Path.Combine(_sourceFolder, BuildRelativeExercisePath(exerciseId));
         }
 
-        private string BuildRecordedFolderPath(ExerciseId exerciseId)
+        private string BuildRecordedFolderPath(ExerciseKey exerciseId)
         {
             return Path.Combine(_recordingsFolder, BuildRelativeExercisePath(exerciseId));
         }
 
-        private string BuildRelativeExercisePath(ExerciseId exerciseId)
+        private string BuildRelativeExercisePath(ExerciseKey exerciseId)
         {
             return string.Format(@"{0}\{1}{2}\{3}{4}",
                 exerciseId.BookKey,

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Pronunciation.Core.Providers
 {
-    public class ExerciseId
+    public class ExerciseKey
     {
         public string BookKey { get; set; }
         public int CDNumber { get; set; }

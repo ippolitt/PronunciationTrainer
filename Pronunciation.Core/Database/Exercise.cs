@@ -14,7 +14,7 @@ namespace Pronunciation.Core.Database
     
     public partial class Exercise
     {
-        public int ExerciseId { get; set; }
+        public Guid ExerciseId { get; set; }
         public Nullable<int> ExerciseTypeId { get; set; }
         public Nullable<int> BookId { get; set; }
         public Nullable<int> TopicId { get; set; }

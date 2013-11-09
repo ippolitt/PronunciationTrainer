@@ -4,12 +4,12 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-    <Schema Namespace="PronunciationModel.Store" Alias="Self" Provider="System.Data.SqlClient" ProviderManifestToken="2008" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/02/edm/ssdl">
+    <Schema Namespace="PronunciationModel.Store" Alias="Self" Provider="System.Data.SqlServerCe.3.5" ProviderManifestToken="3.5" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/02/edm/ssdl">
         <EntityContainer Name="PronunciationModelStoreContainer">
-          <EntitySet Name="Book" EntityType="PronunciationModel.Store.Book" store:Type="Tables" Schema="dbo" />
-          <EntitySet Name="Exercise" EntityType="PronunciationModel.Store.Exercise" store:Type="Tables" Schema="dbo" />
-          <EntitySet Name="ExerciseType" EntityType="PronunciationModel.Store.ExerciseType" store:Type="Tables" Schema="dbo" />
-          <EntitySet Name="Topic" EntityType="PronunciationModel.Store.Topic" store:Type="Tables" Schema="dbo" />
+          <EntitySet Name="Book" EntityType="PronunciationModel.Store.Book" store:Type="Tables" />
+          <EntitySet Name="Exercise" EntityType="PronunciationModel.Store.Exercise" store:Type="Tables" />
+          <EntitySet Name="ExerciseType" EntityType="PronunciationModel.Store.ExerciseType" store:Type="Tables" />
+          <EntitySet Name="Topic" EntityType="PronunciationModel.Store.Topic" store:Type="Tables" />
           <AssociationSet Name="FK_Exercise_Book" Association="PronunciationModel.Store.FK_Exercise_Book">
             <End Role="Book" EntitySet="Book" />
             <End Role="Exercise" EntitySet="Exercise" />
@@ -37,14 +37,13 @@
           </Key>
           <Property Name="BookId" Type="int" Nullable="false" />
           <Property Name="Title" Type="nvarchar" MaxLength="200" />
-          <Property Name="ShortName" Type="nvarchar" MaxLength="20" />
+          <Property Name="ShortName" Type="nvarchar" Nullable="false" MaxLength="20" />
           <Property Name="Author" Type="nvarchar" MaxLength="50" />
         </EntityType>
         <EntityType Name="Exercise">
           <Key>
             <PropertyRef Name="ExerciseId" />
           </Key>
-          <Property Name="ExerciseId" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
           <Property Name="ExerciseTypeId" Type="int" />
           <Property Name="BookId" Type="int" />
           <Property Name="TopicId" Type="int" />
@@ -54,6 +53,7 @@
           <Property Name="SourcePage" Type="int" />
           <Property Name="SourceCD" Type="int" />
           <Property Name="SourceTrack" Type="int" />
+          <Property Name="ExerciseId" Type="uniqueidentifier" Nullable="false" />
         </EntityType>
         <EntityType Name="ExerciseType">
           <Key>
@@ -140,20 +140,16 @@
       <Schema Namespace="PronunciationModel" Alias="Self" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
         <EntityContainer Name="Entities" annotation:LazyLoadingEnabled="true">
           <EntitySet Name="Books" EntityType="PronunciationModel.Book" />
+          <EntitySet Name="Exercises" EntityType="PronunciationModel.Exercise" />
           <EntitySet Name="ExerciseTypes" EntityType="PronunciationModel.ExerciseType" />
           <EntitySet Name="Topics" EntityType="PronunciationModel.Topic" />
-          <AssociationSet Name="FK_Topic_Book" Association="PronunciationModel.FK_Topic_Book">
-            <End Role="Book" EntitySet="Books" />
-            <End Role="Topic" EntitySet="Topics" />
-          </AssociationSet>
-          <AssociationSet Name="FK_Topic_Topic" Association="PronunciationModel.FK_Topic_Topic">
-            <End Role="Topic" EntitySet="Topics" />
-            <End Role="Topic1" EntitySet="Topics" />
-          </AssociationSet>
-          <EntitySet Name="Exercises" EntityType="PronunciationModel.Exercise" />
           <AssociationSet Name="FK_Exercise_Book" Association="PronunciationModel.FK_Exercise_Book">
             <End Role="Book" EntitySet="Books" />
             <End Role="Exercise" EntitySet="Exercises" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Topic_Book" Association="PronunciationModel.FK_Topic_Book">
+            <End Role="Book" EntitySet="Books" />
+            <End Role="Topic" EntitySet="Topics" />
           </AssociationSet>
           <AssociationSet Name="FK_Exercise_ExerciseType" Association="PronunciationModel.FK_Exercise_ExerciseType">
             <End Role="ExerciseType" EntitySet="ExerciseTypes" />
@@ -163,71 +159,26 @@
             <End Role="Topic" EntitySet="Topics" />
             <End Role="Exercise" EntitySet="Exercises" />
           </AssociationSet>
+          <AssociationSet Name="FK_Topic_Topic" Association="PronunciationModel.FK_Topic_Topic">
+            <End Role="Topic" EntitySet="Topics" />
+            <End Role="Topic1" EntitySet="Topics" />
+          </AssociationSet>
         </EntityContainer>
         <EntityType Name="Book">
           <Key>
             <PropertyRef Name="BookId" />
           </Key>
-          <Property Name="BookId" Type="Int32" Nullable="false" />
-          <Property Name="Title" Type="String" MaxLength="200" Unicode="true" FixedLength="false" />
-          <Property Name="ShortName" Type="String" MaxLength="20" Unicode="true" FixedLength="false" />
-          <Property Name="Author" Type="String" MaxLength="50" Unicode="true" FixedLength="false" />
-          <NavigationProperty Name="Topics" Relationship="PronunciationModel.FK_Topic_Book" FromRole="Book" ToRole="Topic" />
+          <Property Type="Int32" Name="BookId" Nullable="false" />
+          <Property Type="String" Name="Title" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="ShortName" Nullable="false" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="Author" MaxLength="50" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="Exercises" Relationship="PronunciationModel.FK_Exercise_Book" FromRole="Book" ToRole="Exercise" />
+          <NavigationProperty Name="Topics" Relationship="PronunciationModel.FK_Topic_Book" FromRole="Book" ToRole="Topic" />
         </EntityType>
-        <EntityType Name="ExerciseType">
-          <Key>
-            <PropertyRef Name="ExerciseTypeId" />
-          </Key>
-          <Property Name="ExerciseTypeId" Type="Int32" Nullable="false" />
-          <Property Name="ExerciseTypeName" Type="String" Nullable="false" MaxLength="50" Unicode="true" FixedLength="false" />
-          <Property Type="Int32" Name="Ordinal" />
-          <NavigationProperty Name="Exercises" Relationship="PronunciationModel.FK_Exercise_ExerciseType" FromRole="ExerciseType" ToRole="Exercise" />
-        </EntityType>
-        <EntityType Name="Topic">
-          <Key>
-            <PropertyRef Name="TopicId" />
-          </Key>
-          <Property Name="TopicId" Type="Int32" Nullable="false" />
-          <Property Name="TopicName" Type="String" MaxLength="200" Unicode="true" FixedLength="false" />
-          <Property Name="Level" Type="Int32" />
-          <Property Name="ParentTopicId" Type="Int32" />
-          <Property Name="BookId" Type="Int32" />
-          <NavigationProperty Name="Book" Relationship="PronunciationModel.FK_Topic_Book" FromRole="Topic" ToRole="Book" />
-          <NavigationProperty Name="Topic1" Relationship="PronunciationModel.FK_Topic_Topic" FromRole="Topic" ToRole="Topic1" />
-          <NavigationProperty Name="Topic2" Relationship="PronunciationModel.FK_Topic_Topic" FromRole="Topic1" ToRole="Topic" />
-          <Property Type="Int32" Name="Ordinal" />
-          <NavigationProperty Name="Exercises" Relationship="PronunciationModel.FK_Exercise_Topic" FromRole="Topic" ToRole="Exercise" />
-        </EntityType>
-        <Association Name="FK_Topic_Book">
-          <End Role="Book" Type="PronunciationModel.Book" Multiplicity="0..1" />
-          <End Role="Topic" Type="PronunciationModel.Topic" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Book">
-              <PropertyRef Name="BookId" />
-            </Principal>
-            <Dependent Role="Topic">
-              <PropertyRef Name="BookId" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_Topic_Topic">
-          <End Role="Topic" Type="PronunciationModel.Topic" Multiplicity="0..1" />
-          <End Role="Topic1" Type="PronunciationModel.Topic" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Topic">
-              <PropertyRef Name="TopicId" />
-            </Principal>
-            <Dependent Role="Topic1">
-              <PropertyRef Name="ParentTopicId" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
         <EntityType Name="Exercise">
           <Key>
             <PropertyRef Name="ExerciseId" />
           </Key>
-          <Property Type="Int32" Name="ExerciseId" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Type="Int32" Name="ExerciseTypeId" />
           <Property Type="Int32" Name="BookId" />
           <Property Type="Int32" Name="TopicId" />
@@ -237,9 +188,34 @@
           <Property Type="Int32" Name="SourcePage" />
           <Property Type="Int32" Name="SourceCD" />
           <Property Type="Int32" Name="SourceTrack" />
+          <Property Type="Guid" Name="ExerciseId" Nullable="false" />
           <NavigationProperty Name="Book" Relationship="PronunciationModel.FK_Exercise_Book" FromRole="Exercise" ToRole="Book" />
           <NavigationProperty Name="ExerciseType" Relationship="PronunciationModel.FK_Exercise_ExerciseType" FromRole="Exercise" ToRole="ExerciseType" />
           <NavigationProperty Name="Topic" Relationship="PronunciationModel.FK_Exercise_Topic" FromRole="Exercise" ToRole="Topic" />
+        </EntityType>
+        <EntityType Name="ExerciseType">
+          <Key>
+            <PropertyRef Name="ExerciseTypeId" />
+          </Key>
+          <Property Type="Int32" Name="ExerciseTypeId" Nullable="false" />
+          <Property Type="String" Name="ExerciseTypeName" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Type="Int32" Name="Ordinal" />
+          <NavigationProperty Name="Exercises" Relationship="PronunciationModel.FK_Exercise_ExerciseType" FromRole="ExerciseType" ToRole="Exercise" />
+        </EntityType>
+        <EntityType Name="Topic">
+          <Key>
+            <PropertyRef Name="TopicId" />
+          </Key>
+          <Property Type="Int32" Name="TopicId" Nullable="false" />
+          <Property Type="String" Name="TopicName" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Type="Int32" Name="Level" />
+          <Property Type="Int32" Name="ParentTopicId" />
+          <Property Type="Int32" Name="BookId" />
+          <Property Type="Int32" Name="Ordinal" />
+          <NavigationProperty Name="Book" Relationship="PronunciationModel.FK_Topic_Book" FromRole="Topic" ToRole="Book" />
+          <NavigationProperty Name="Exercises" Relationship="PronunciationModel.FK_Exercise_Topic" FromRole="Topic" ToRole="Exercise" />
+          <NavigationProperty Name="Topic1" Relationship="PronunciationModel.FK_Topic_Topic" FromRole="Topic" ToRole="Topic1" />
+          <NavigationProperty Name="Topic2" Relationship="PronunciationModel.FK_Topic_Topic" FromRole="Topic1" ToRole="Topic" />
         </EntityType>
         <Association Name="FK_Exercise_Book">
           <End Type="PronunciationModel.Book" Role="Book" Multiplicity="0..1" />
@@ -249,6 +225,18 @@
               <PropertyRef Name="BookId" />
             </Principal>
             <Dependent Role="Exercise">
+              <PropertyRef Name="BookId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Topic_Book">
+          <End Type="PronunciationModel.Book" Role="Book" Multiplicity="0..1" />
+          <End Type="PronunciationModel.Topic" Role="Topic" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Book">
+              <PropertyRef Name="BookId" />
+            </Principal>
+            <Dependent Role="Topic">
               <PropertyRef Name="BookId" />
             </Dependent>
           </ReferentialConstraint>
@@ -277,34 +265,38 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Topic_Topic">
+          <End Type="PronunciationModel.Topic" Role="Topic" Multiplicity="0..1" />
+          <End Type="PronunciationModel.Topic" Role="Topic1" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Topic">
+              <PropertyRef Name="TopicId" />
+            </Principal>
+            <Dependent Role="Topic1">
+              <PropertyRef Name="ParentTopicId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
     <edmx:Mappings>
       <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2008/09/mapping/cs">
         <EntityContainerMapping StorageEntityContainer="PronunciationModelStoreContainer" CdmEntityContainer="Entities">
-          <EntitySetMapping Name="Books"><EntityTypeMapping TypeName="PronunciationModel.Book"><MappingFragment StoreEntitySet="Book">
-            <ScalarProperty Name="BookId" ColumnName="BookId" />
-            <ScalarProperty Name="Title" ColumnName="Title" />
-            <ScalarProperty Name="ShortName" ColumnName="ShortName" />
-            <ScalarProperty Name="Author" ColumnName="Author" />
-          </MappingFragment></EntityTypeMapping></EntitySetMapping>
-          <EntitySetMapping Name="ExerciseTypes"><EntityTypeMapping TypeName="PronunciationModel.ExerciseType"><MappingFragment StoreEntitySet="ExerciseType">
-            <ScalarProperty Name="Ordinal" ColumnName="Ordinal" />
-                <ScalarProperty Name="ExerciseTypeId" ColumnName="ExerciseTypeId" />
-            <ScalarProperty Name="ExerciseTypeName" ColumnName="ExerciseTypeName" />
-          </MappingFragment></EntityTypeMapping></EntitySetMapping>
-          <EntitySetMapping Name="Topics"><EntityTypeMapping TypeName="PronunciationModel.Topic"><MappingFragment StoreEntitySet="Topic">
-            <ScalarProperty Name="Ordinal" ColumnName="Ordinal" />
-                <ScalarProperty Name="TopicId" ColumnName="TopicId" />
-            <ScalarProperty Name="TopicName" ColumnName="TopicName" />
-            <ScalarProperty Name="Level" ColumnName="Level" />
-            <ScalarProperty Name="ParentTopicId" ColumnName="ParentTopicId" />
-            <ScalarProperty Name="BookId" ColumnName="BookId" />
-          </MappingFragment></EntityTypeMapping></EntitySetMapping>
+          <EntitySetMapping Name="Books">
+            <EntityTypeMapping TypeName="PronunciationModel.Book">
+              <MappingFragment StoreEntitySet="Book">
+                <ScalarProperty Name="Author" ColumnName="Author" />
+                <ScalarProperty Name="ShortName" ColumnName="ShortName" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="BookId" ColumnName="BookId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           <EntitySetMapping Name="Exercises">
             <EntityTypeMapping TypeName="PronunciationModel.Exercise">
               <MappingFragment StoreEntitySet="Exercise">
+                <ScalarProperty Name="ExerciseId" ColumnName="ExerciseId" />
                 <ScalarProperty Name="SourceTrack" ColumnName="SourceTrack" />
                 <ScalarProperty Name="SourceCD" ColumnName="SourceCD" />
                 <ScalarProperty Name="SourcePage" ColumnName="SourcePage" />
@@ -314,7 +306,27 @@
                 <ScalarProperty Name="TopicId" ColumnName="TopicId" />
                 <ScalarProperty Name="BookId" ColumnName="BookId" />
                 <ScalarProperty Name="ExerciseTypeId" ColumnName="ExerciseTypeId" />
-                <ScalarProperty Name="ExerciseId" ColumnName="ExerciseId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ExerciseTypes">
+            <EntityTypeMapping TypeName="PronunciationModel.ExerciseType">
+              <MappingFragment StoreEntitySet="ExerciseType">
+                <ScalarProperty Name="Ordinal" ColumnName="Ordinal" />
+                <ScalarProperty Name="ExerciseTypeName" ColumnName="ExerciseTypeName" />
+                <ScalarProperty Name="ExerciseTypeId" ColumnName="ExerciseTypeId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Topics">
+            <EntityTypeMapping TypeName="PronunciationModel.Topic">
+              <MappingFragment StoreEntitySet="Topic">
+                <ScalarProperty Name="Ordinal" ColumnName="Ordinal" />
+                <ScalarProperty Name="BookId" ColumnName="BookId" />
+                <ScalarProperty Name="ParentTopicId" ColumnName="ParentTopicId" />
+                <ScalarProperty Name="Level" ColumnName="Level" />
+                <ScalarProperty Name="TopicName" ColumnName="TopicName" />
+                <ScalarProperty Name="TopicId" ColumnName="TopicId" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -340,33 +352,33 @@
     <!-- Diagram content (shape and connector positions) -->
     <Diagrams>
       <Diagram Name="PronunciationModel">
-        <EntityTypeShape EntityType="PronunciationModel.Book" Width="1.5" PointX="0.75" PointY="3.625" Height="2.1725878906249996" IsExpanded="true" />
-        <EntityTypeShape EntityType="PronunciationModel.ExerciseType" Width="1.5" PointX="3" PointY="5.125" Height="1.5956835937499996" IsExpanded="true" />
-        <EntityTypeShape EntityType="PronunciationModel.Topic" Width="1.5" PointX="2.875" PointY="7.375" Height="2.7494921874999996" IsExpanded="true" />
-        <AssociationConnector Association="PronunciationModel.FK_Topic_Book" ManuallyRouted="false">
-          <ConnectorPoint PointX="1.5" PointY="5.797587890625" />
-          <ConnectorPoint PointX="1.5" PointY="8.8458968098958337" />
-          <ConnectorPoint PointX="2.875" PointY="8.8458968098958337" />
-        </AssociationConnector>
-        <AssociationConnector Association="PronunciationModel.FK_Topic_Topic" ManuallyRouted="false">
-          <ConnectorPoint PointX="3.4069230769230767" PointY="10.316793619791666" />
-          <ConnectorPoint PointX="3.4069230769230767" PointY="10.566793619791666" />
-          <ConnectorPoint PointX="3.8534615384615383" PointY="10.566793619791666" />
-          <ConnectorPoint PointX="3.8534615384615383" PointY="10.316793619791666" />
-        </AssociationConnector>
-        <EntityTypeShape EntityType="PronunciationModel.Exercise" Width="1.5" PointX="5.25" PointY="5.25" Height="3.5186979166666656" />
+        <EntityTypeShape EntityType="PronunciationModel.Book" Width="1.5" PointX="0.75" PointY="3.75" Height="2.1725878906249996" />
+        <EntityTypeShape EntityType="PronunciationModel.Exercise" Width="1.5" PointX="5.25" PointY="5.375" Height="3.5186979166666656" />
+        <EntityTypeShape EntityType="PronunciationModel.ExerciseType" Width="1.5" PointX="3" PointY="4.25" Height="1.7879850260416674" />
+        <EntityTypeShape EntityType="PronunciationModel.Topic" Width="1.5" PointX="3" PointY="7.625" Height="2.9417936197916674" />
         <AssociationConnector Association="PronunciationModel.FK_Exercise_Book" >
-          <ConnectorPoint PointX="2.25" PointY="4.34375" />
-          <ConnectorPoint PointX="6" PointY="4.34375" />
-          <ConnectorPoint PointX="6" PointY="5.25" />
+          <ConnectorPoint PointX="2.25" PointY="3.96875" />
+          <ConnectorPoint PointX="6" PointY="3.96875" />
+          <ConnectorPoint PointX="6" PointY="5.375" />
+        </AssociationConnector>
+        <AssociationConnector Association="PronunciationModel.FK_Topic_Book" >
+          <ConnectorPoint PointX="1.5" PointY="5.922587890625" />
+          <ConnectorPoint PointX="1.5" PointY="9.0958968098958337" />
+          <ConnectorPoint PointX="3" PointY="9.0958968098958337" />
         </AssociationConnector>
         <AssociationConnector Association="PronunciationModel.FK_Exercise_ExerciseType" >
-          <ConnectorPoint PointX="4.5" PointY="6.0814925130208337" />
-          <ConnectorPoint PointX="5.25" PointY="6.0814925130208337" />
+          <ConnectorPoint PointX="4.5" PointY="5.7064925130208337" />
+          <ConnectorPoint PointX="5.25" PointY="5.7064925130208337" />
         </AssociationConnector>
         <AssociationConnector Association="PronunciationModel.FK_Exercise_Topic" >
-          <ConnectorPoint PointX="4.375" PointY="8.0718489583333337" />
-          <ConnectorPoint PointX="5.25" PointY="8.0718489583333337" />
+          <ConnectorPoint PointX="4.5" PointY="8.2593489583333337" />
+          <ConnectorPoint PointX="5.25" PointY="8.2593489583333337" />
+        </AssociationConnector>
+        <AssociationConnector Association="PronunciationModel.FK_Topic_Topic" >
+          <ConnectorPoint PointX="3.5319230769230767" PointY="10.566793619791667" />
+          <ConnectorPoint PointX="3.5319230769230767" PointY="10.816793619791667" />
+          <ConnectorPoint PointX="3.9784615384615383" PointY="10.816793619791667" />
+          <ConnectorPoint PointX="3.9784615384615383" PointY="10.566793619791667" />
         </AssociationConnector>
       </Diagram>
     </Diagrams>

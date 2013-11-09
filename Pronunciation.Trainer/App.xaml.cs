@@ -17,7 +17,7 @@ namespace Pronunciation.Trainer
         {
             // To handle exceptions from all threads:
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
-
+            
             // For main UI thread: Application.Current.DispatcherUnhandledException or Dispatcher.UnhandledException
             // For async tasks: TaskScheduler.UnobservedTaskException 
             //
@@ -28,6 +28,9 @@ namespace Pronunciation.Trainer
             //    {
             //        throw new Exception("Exception from another Thread", exc);
             //    }), ex);
+
+            // Set "|DataDirectory|" parameter used in the connection string in App.config
+            AppDomain.CurrentDomain.SetData("DataDirectory", AppSettings.Instance.Folders.Database);
 
             BindingErrorTraceListener.SetTrace();
         }
