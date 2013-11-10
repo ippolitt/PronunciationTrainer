@@ -5,6 +5,8 @@ using System.Text;
 using System.Reflection;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Data.SqlServerCe;
+using System.Data;
 
 namespace Pronunciation.Parser
 {
@@ -31,6 +33,11 @@ namespace Pronunciation.Parser
         {
             try
             {
+                //UploadFiles();
+                ////TestUpload();
+                //Console.WriteLine("Finished");
+                //return;
+
                 var rootFolder = Path.GetFullPath(Path.Combine(
                     Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), RootFolderPath));
 
@@ -67,7 +74,6 @@ namespace Pronunciation.Parser
 
                 //var topBuilder = new TopWordsBuilder();
                 //topBuilder.MergeTopWords();
-
                 Console.WriteLine("Finished");
             }
             catch (Exception ex)
@@ -76,6 +82,7 @@ namespace Pronunciation.Parser
             }
             finally
             {
+                
                 Console.ReadLine();
             }
         }
@@ -153,6 +160,55 @@ namespace Pronunciation.Parser
                 count++;
             }
             return;
+        }
+
+        private static void UploadFiles()
+        {
+            using (SqlCeConnection conn = new SqlCeConnection(
+                @"Data Source=D:\DOCS\Языки\English\Pronunciation\Trainer\Database\LPD2.sdf;Max Database Size=4000;"))
+            {
+                conn.Open();
+
+                //SqlCeCommand deleteCmd = new SqlCeCommand("Delete Words", conn);
+                //deleteCmd.ExecuteNonQuery();
+
+                SqlCeCommand cmd = new SqlCeCommand("INSERT Words(WordId, Keyword, Body) Values(newid(), @keyword, @body)", conn);
+                var parmName = cmd.Parameters.Add("@keyword", SqlDbType.NVarChar, 200);
+                var parmBody = cmd.Parameters.Add("@body", SqlDbType.Image);
+
+                var files = Directory.GetFiles(@"D:\DOCS\Языки\English\Pronunciation\Trainer\LPD\Dic", "*.html", SearchOption.AllDirectories);
+                int cnt = 0;
+                foreach (var file in files)
+                {
+                    parmName.Value = Path.GetFileNameWithoutExtension(file);
+                    parmBody.Value = File.ReadAllBytes(file);
+                    int k = cmd.ExecuteNonQuery();
+                    if (k != 1)
+                        throw new InvalidOperationException();
+
+                    cnt++;
+                    Console.WriteLine("Added " + cnt);
+                    //if (cnt >= 1000)
+                    //    break;
+                }
+            }
+        }
+
+        private static void TestUpload()
+        {
+            using (SqlCeConnection conn = new SqlCeConnection(
+                @"Data Source=D:\DOCS\Языки\English\Pronunciation\Trainer\Database\LPD.sdf;Max Database Size=2100;"))
+            {
+                conn.Open();
+                SqlCeCommand cmd = new SqlCeCommand(
+                    "SELECT Body FROM Words WHERE Keyword = @keyword", conn);
+                var parmName = cmd.Parameters.Add("@keyword", SqlDbType.NVarChar, 200);
+                parmName.Value = "a-";
+
+                string result = (string)cmd.ExecuteScalar();
+               // File.WriteAllText(@"D:\temp.html", result);
+                Console.WriteLine(string.IsNullOrEmpty(result) ? false : true);
+            }
         }
     }
 }
