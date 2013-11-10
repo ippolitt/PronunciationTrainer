@@ -22,7 +22,7 @@
                 <RowDefinition Height="Auto"></RowDefinition>
                 <RowDefinition Height="Auto"></RowDefinition>
                 <RowDefinition Height="Auto"></RowDefinition>
-                <RowDefinition Height="50"></RowDefinition>
+                <RowDefinition Height="60"></RowDefinition>
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Book:"/>
@@ -73,10 +73,10 @@
             </ComboBox>
 
             <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Title:"/>
-            <TextBox Grid.Row="2" Grid.Column="1" Name="titleTextBox" Margin="0,3" TabIndex="70"
+            <TextBox Grid.Row="2" Grid.Column="1" Name="titleTextBox" Margin="0,3,0,2" TabIndex="70"
                 Text="{Binding Path=Title, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" />
             <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0" Text="Sounds:"/>
-            <TextBox Grid.Row="2" Grid.Column="3" Name="targetSoundTextBox" Margin="0,3" TabIndex="80"
+            <TextBox Grid.Row="2" Grid.Column="3" Name="targetSoundTextBox" Margin="0,3,0,2" TabIndex="80"
                     Text="{Binding Path=TargetSound, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" />
 
             <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,5,0,0" VerticalAlignment="Top" Text="Execution notes:" />
@@ -94,7 +94,7 @@
         <Grid Name="exerciseBody" Margin="0,5,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"></ColumnDefinition>
-                <ColumnDefinition Width="60"></ColumnDefinition>
+                <ColumnDefinition Width="70"></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"></RowDefinition>
@@ -115,7 +115,7 @@
                     -->
                 </ScrollViewer>
             </Border>
-            <local:AudioList Grid.Row="1" Grid.Column="1" Margin="0,5,0,0" x:Name="lstRecords" TabIndex="100" 
+            <local:AudioList Grid.Row="1" Grid.Column="1" Margin="0,5,1,0" x:Name="lstRecords" TabIndex="100" 
                 SelectionChanged="lstRecords_SelectionChanged" />
             <!--<Rectangle Height="302" Name="rectangle1" Stroke="Black" Width="742" RadiusX="10" RadiusY="10" />-->
         </Grid>

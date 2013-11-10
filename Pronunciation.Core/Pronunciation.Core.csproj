@@ -108,6 +108,7 @@
     </Compile>
     <Compile Include="Providers\ExerciseId.cs" />
     <Compile Include="Providers\LPDProvider.cs" />
+    <Compile Include="Providers\MultipartName.cs" />
     <Compile Include="Providers\PageInfo.cs" />
     <Compile Include="Providers\RecorderProvider.cs" />
     <Compile Include="Providers\ScriptArgs.cs" />

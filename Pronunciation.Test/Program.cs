@@ -13,13 +13,15 @@ namespace Pronunciation.Test
             try
             {
                 //Console.WriteLine("{0:0.#}", 15.0);
-                Image i = Image.FromFile(@"D:\WORK\NET\PronunciationTrainer\Pronunciation.Trainer\Resources\AudioWaveform.png");
-                Console.WriteLine(i.HorizontalResolution + " " + i.VerticalResolution);
-                Console.WriteLine(i.Width + " " + i.Height);
 
-                Image i2 = Image.FromFile(@"D:\WORK\Images\temp\Stop4.png");
-                Console.WriteLine(i2.HorizontalResolution + " " + i2.VerticalResolution);
-                Console.WriteLine(i2.Width + " " + i2.Height);
+                int number;
+                bool res = int.TryParse(null, out number);
+
+                int k = "".CompareTo(null);
+
+                //Image i = Image.FromFile(@"D:\WORK\NET\PronunciationTrainer\Pronunciation.Trainer\Resources\AudioWaveform.png");
+                //Console.WriteLine(i.HorizontalResolution + " " + i.VerticalResolution);
+                //Console.WriteLine(i.Width + " " + i.Height);
             }
             catch (Exception ex)
             {

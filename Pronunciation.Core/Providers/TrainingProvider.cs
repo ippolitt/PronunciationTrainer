@@ -29,7 +29,7 @@ namespace Pronunciation.Core.Providers
 
             return Directory.GetFiles(audioFolder, "*.mp3", SearchOption.TopDirectoryOnly)
                 .Select(x => new KeyTextPair<string>(Path.GetFileNameWithoutExtension(x)))
-                .OrderBy(x => new ComparableAudioName(x.Key));
+                .OrderBy(x => new MultipartName(x.Key));
         }
 
         public Uri GetExerciseImagePath(ExerciseKey exerciseId)
@@ -67,136 +67,6 @@ namespace Pronunciation.Core.Providers
                 exerciseId.BookKey,
                 _cdFolderPrefix, exerciseId.CDNumber,
                 _trackFolderPrefix, exerciseId.TrackNumber);
-        }
-
-        private class ComparableAudioName : IComparable<ComparableAudioName>
-        {
-            private class AudioNamePart : IComparable<AudioNamePart>
-            {
-                private int? _number;
-                private string _text;
-
-                public AudioNamePart(string namePart)
-                {
-                    int number;
-                    if (int.TryParse(namePart, out number))
-                    {
-                        _number = number;
-                    }
-                    _text = namePart;
-                }
-
-                public int CompareTo(AudioNamePart other)
-                {
-                    if (_number.HasValue && other._number.HasValue)
-                        return _number.Value.CompareTo(other._number.Value);
-
-                    return _text.CompareTo(other._text);
-                }
-            }
-
-            private readonly AudioNamePart _leftPart;
-            private readonly AudioNamePart _rightPart;
-
-            // Split logic: 1.2 -> 1|2, 1A or 1.A -> 1|A, A1 or A.1 -> A|1 
-            public ComparableAudioName(string audioName)
-            {
-                int splitIndex = 0;
-                bool isSeparator = false;
-                bool isPreviousCharDigit = false;
-                int i = 0;
-                foreach(char ch in audioName.Trim())
-                {
-                    if (Char.IsDigit(ch))
-                    {
-                        if (i == 0)
-                        {
-                            isPreviousCharDigit = true;
-                        }
-                        else
-                        {
-                            // Previous char is letter and current char is digit -> split here
-                            if (!isPreviousCharDigit)
-                            {
-                                splitIndex = i;
-                                break;
-                            }
-                        }
-                    }
-                    else if (Char.IsLetter(ch))
-                    {
-                        if (i == 0)
-                        {
-                            isPreviousCharDigit = false;
-                        }
-                        else
-                        {
-                            // Previous char is digit and current char is letter -> split here
-                            if (isPreviousCharDigit)
-                            {
-                                splitIndex = i;
-                                break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // It's neither letter nor digit -> treat it as a separator and split here
-                        splitIndex = i;
-                        isSeparator = true;
-                        break;
-                    }
-
-                    i++;
-                }
-
-                if (isSeparator)
-                {
-                    _leftPart = new AudioNamePart(splitIndex > 0 ? audioName.Substring(0, splitIndex) : string.Empty);
-                    if (splitIndex + 1 < audioName.Length)
-                    {
-                        _rightPart = new AudioNamePart(audioName.Substring(splitIndex + 1));
-                    }
-                }
-                else
-                {
-                    if (splitIndex > 0)
-                    {
-                        _leftPart = new AudioNamePart(audioName.Substring(0, splitIndex));
-                        _rightPart = new AudioNamePart(audioName.Substring(splitIndex));
-                    }
-                    else
-                    {
-                        _leftPart = new AudioNamePart(audioName);
-                    }
-                }
-            }
-
-            public int CompareTo(ComparableAudioName other)
-            {
-                int result = _leftPart.CompareTo(other._leftPart);
-                if (result == 0)
-                {
-                    if (_rightPart != null && other._rightPart != null)
-                    {
-                        result = _rightPart.CompareTo(other._rightPart); 
-                    }
-                    else if (_rightPart != null)
-                    {
-                        result = 1;
-                    }
-                    else if (other._rightPart != null)
-                    {
-                        result = -1;
-                    }
-                    else
-                    {
-                        result = 0;
-                    }
-                }
-
-                return result;
-            }
         }
     }
 }

@@ -14,6 +14,7 @@ Waveforms:
 - Add word name to the last played audio
 
 Other:
+- Add a switch to hide/display exercise desription
 - Add recording duration to the recordings list
 - Add column "CD+Track" instead of page and sort by it
 - Add special signs explanation (LPD or Amazon)
