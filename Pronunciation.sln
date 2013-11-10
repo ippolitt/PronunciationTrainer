@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pronunciation", "Pronunciation\Pronunciation.csproj", "{F9D16E6B-762E-49F2-9DE9-79E4085E2241}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pronunciation.Parser", "Pronunciation.Parser\Pronunciation.Parser.csproj", "{F9D16E6B-762E-49F2-9DE9-79E4085E2241}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pronunciation.Core", "Pronunciation.Core\Pronunciation.Core.csproj", "{0315A9EA-A9BA-4B70-8280-D3431B726B74}"
 EndProject

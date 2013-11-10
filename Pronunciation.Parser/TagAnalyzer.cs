@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Pronunciation
+namespace Pronunciation.Parser
 {
     public class TagInfo
     {

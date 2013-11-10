@@ -7,7 +7,7 @@ using System.Xml;
 using System.Text.RegularExpressions;
 using System.Reflection;
 
-namespace Pronunciation
+namespace Pronunciation.Parser
 {
     class HtmlBuilder
     {

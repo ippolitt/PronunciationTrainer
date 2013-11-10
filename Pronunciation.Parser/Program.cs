@@ -6,7 +6,7 @@ using System.Reflection;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace Pronunciation
+namespace Pronunciation.Parser
 {
     class Program
     {

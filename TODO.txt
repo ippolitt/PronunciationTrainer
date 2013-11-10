@@ -1,32 +1,31 @@
 Top:
-- Store history of the recordings. Allow to record words separately when dictionary entry has several meanings (I, II)
-- Allow comparison of my own pronunciations in the wave forms dialog
+- Try loading .html page from a database. Test performance
+- Store history of the recordings. Save best recordings with the date so that I was able to compare them over time to check my progress
+- Allow separate recording of words if dictionary entry has several meanings (I, II)
+- Add a button to remember/highlight a record in the Recorder
+- Allow comparison of my own pronunciations at the wave forms dialog
+- Compare different reference pronunciation or different recorded ones
 - Add a shortcut for playing ref and rec sounds simultaneosuly
 
 Waveforms:
 - Clip pauses at the end and at the beginning in the Waveform
 - Add ability to move and stretch waveforms with a slider
 - Separate waveform on segments and allow to play a certain segment
+- Add word name to the last played audio
 
 Other:
+- Add recording duration to the recordings list
 - Add column "CD+Track" instead of page and sort by it
-- Allow to replay certain phrase highlighted on the waveform
 - Add special signs explanation (LPD or Amazon)
 - generate html for pronunciation notes (from dictionary CD)
 - Create base MessageBox with predefined captions
-- Allow to record when the application is not active
+- Allow recording when the application is not active
 - Don't load all tabs on startup
 - Open detailed dialogs as tabs of the Exercise list (as in MVVM article)
-- Add a button to remember/highlight a record in Recorder
-- Add text to exercises to enable full text search
-- Add recording duration to recordings list
-- add word name to last played audio
-- ability to compare my recordings
-- 'pause' transcript is incorrect in Lingvo
-- Save best recordings with the date so that I was able to compare them over time to check my progress
-- Compare different reference pronunciation or different recorded ones
+- Add text to exercises to enable full text search (?)
 - Play any word in the dictionary when I double click on it
 
 Generation of the pages:
 - check errors in "don't" - AmE is not separated 
+- 'pause' transcript is incorrect in Lingvo
 - don't combine similar words together?

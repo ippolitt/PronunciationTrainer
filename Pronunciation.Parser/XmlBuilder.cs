@@ -5,7 +5,7 @@ using System.Text;
 using System.IO;
 using System.Xml;
 
-namespace Pronunciation
+namespace Pronunciation.Parser
 {
     class XmlBuilder
     {

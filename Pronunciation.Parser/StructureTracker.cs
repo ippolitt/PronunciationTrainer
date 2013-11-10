@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Pronunciation
+namespace Pronunciation.Parser
 {
-
     class StructureTracker
     {
         private enum EntryState
