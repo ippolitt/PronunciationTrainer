@@ -44,12 +44,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ContentCollector.cs" />
+    <Compile Include="DatabaseUploader.cs" />
     <Compile Include="DicElements.cs" />
     <Compile Include="DicWord.cs" />
     <Compile Include="FileLoader.cs" />
     <Compile Include="HtmlBuilder.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SoundCollector.cs" />
+    <Compile Include="SoundInfo.cs" />
     <Compile Include="StructureTracker.cs" />
     <Compile Include="DicAnalyzer.cs" />
     <Compile Include="TagAnalyzer.cs" />

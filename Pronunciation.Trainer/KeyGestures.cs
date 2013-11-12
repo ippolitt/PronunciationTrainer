@@ -38,6 +38,11 @@ namespace Pronunciation.Trainer
             get { return new KeyGesture(Key.X, ModifierKeys.Alt, "Alt+X"); }
         }
 
+        public static KeyGesture ShowWaveform
+        {
+            get { return new KeyGesture(Key.W, ModifierKeys.Alt, "Alt+W"); }
+        }
+
         public static string GetTooltipString(this KeyGesture gesture)
         {
             if (gesture == null)

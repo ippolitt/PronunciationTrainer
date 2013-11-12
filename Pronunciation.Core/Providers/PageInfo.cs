@@ -9,6 +9,7 @@ namespace Pronunciation.Core.Providers
     {
         public bool IsWord {get; private set;}
         public string PageName { get; private set; }
+        public IndexEntry Index { get; set; }
 
         public PageInfo(bool isWord, string pageName)
         {

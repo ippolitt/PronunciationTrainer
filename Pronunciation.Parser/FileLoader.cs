@@ -91,7 +91,7 @@ namespace Pronunciation.Parser
                     throw new ArgumentException();
             }
 
-            string sourceFile = Path.Combine(_sourceFolder, string.Format("{0}.mp3", fileName));
+            string sourceFile = BuildFilePath(fileName);
             if (!File.Exists(sourceFile))
             {
                 Console.WriteLine("\r\nMissing sound file '{0}'", fileName);
@@ -103,6 +103,20 @@ namespace Pronunciation.Parser
             _cache[fileName] = result;
 
             return result;
+        }
+
+        public byte[] GetRawData(string fileName)
+        {
+            string base64 = GetBase64Content(fileName);
+            if (string.IsNullOrEmpty(base64))
+                return null;
+
+            return Convert.FromBase64String(base64);
+        }
+
+        private string BuildFilePath(string fileName)
+        {
+            return Path.Combine(_sourceFolder, string.Format("{0}.mp3", fileName));
         }
     }
 }

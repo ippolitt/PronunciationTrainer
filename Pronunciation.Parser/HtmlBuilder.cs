@@ -6,6 +6,8 @@ using System.IO;
 using System.Xml;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using System.Data.SqlServerCe;
+using System.Data;
 
 namespace Pronunciation.Parser
 {
@@ -45,9 +47,16 @@ namespace Pronunciation.Parser
         private class ParseResult
         {
             public string HtmlData;
-            public string SoundUK;
-            public string SoundUS;
-            public int TotalSounds;
+
+            public string SoundTextUK;
+            public string SoundTextUS;
+        }
+
+        public class WordSounds
+        {
+            public string SoundKeyUK;
+            public string SoundKeyUS;
+            public List<SoundInfo> Sounds;
         }
 
         private class WordUsageResult
@@ -57,16 +66,28 @@ namespace Pronunciation.Parser
             public string NextWordHtml;
         }
 
-        private readonly string _logFile;
+        private class IndexItem
+        {
+            public string Key;
+            public string Text;
+            public string SoundKeyUK;
+            public string SoundKeyUS;
+            public bool IsCollocation;
+        }
 
-        private static List<TagReplaceInfo> ReplaceMap = new List<TagReplaceInfo>();
         private static Regex _htmlRegex = new Regex("<.*?>", RegexOptions.Compiled);
         private static Regex _wordNameRegex = new Regex("[A-Za-z0-9 _'&+.-]", RegexOptions.Compiled);
         private static Regex _firstLetterRegex = new Regex("[A-Za-z0-9]", RegexOptions.Compiled);
-        private static List<string> _forbiddenNames = new List<string>();
+
+        private readonly List<TagReplaceInfo> ReplaceMap = new List<TagReplaceInfo>();
+        private readonly List<string> _forbiddenNames = new List<string>();
+        private readonly Dictionary<char, string> _wordNameMap = new Dictionary<char, string>();
 
         private readonly WordUsageBuilder _usageBuilder;
         private readonly FileLoader _fileLoader;
+        private readonly DatabaseUploader _dbUploader;
+        private readonly string _logFile;
+        private readonly bool _isDatabaseMode;
 
         private const string TemplateFilePath = @"Html\Template.html";
         private const string TopTemplateFilePath = @"Html\TopTemplate.html";
@@ -81,11 +102,13 @@ namespace Pronunciation.Parser
         private const string CaptionSmallUk = "BrE";
         private const string CaptionSmallUs = "AmE";
 
-        private static Dictionary<char, string> _wordNameMap = new Dictionary<char, string>();
+        private const string XmlElementStrong = "strong";
 
-        static HtmlBuilder()
+        private HtmlBuilder(bool isDatabaseMode)
         {
-            AddMap("strong", ReplacementType.LeaveOldTag, null, null);
+            _isDatabaseMode = isDatabaseMode;
+
+            AddMap(XmlElementStrong, ReplacementType.LeaveOldTag, null, null);
             AddMap("em", ReplacementType.LeaveOldTag, null, null);
             AddMap("sub", ReplacementType.LeaveOldTag, null, null);
             AddMap("sup", ReplacementType.LeaveOldTag, null, null);
@@ -99,18 +122,31 @@ namespace Pronunciation.Parser
             AddMap("lang", ReplacementType.ReplaceOldTag, "span", "class=\"lang\"");
             AddMap("stress_up", ReplacementType.ReplaceOldTag, "span", "class=\"stress_up\"", false);
             AddMap("stress_low", ReplacementType.ReplaceOldTag, "span", "class=\"stress_low\"", false);
+            AddMap("stress_low_optional", ReplacementType.ReplaceOldTag, "span", "class=\"stress_low_optional\"", false);
             AddMap("stress_shift", ReplacementType.ReplaceOldTag, "span", "class=\"stress_shift\"", false);
 
             AddMap("pic", ReplacementType.ReplaceImage, "img", 
                 "<img class=\"poll_image\" src=\"{0}\" />", false);
             AddMap("wlink", ReplacementType.ReplaceLink, "a", 
                 "<a class=\"word_link\" href=\"{0}\">{1}</a>", false);
-            AddMap("sound_uk", ReplacementType.ReplaceSoundUK, "button",
-                "<button type=\"button\" class=\"audio_button audio_uk\" data-src=\"{0}\" raw-data=\"{1}\">{2}</button>",
-                false);
-            AddMap("sound_us", ReplacementType.ReplaceSoundUS, "button", 
-                "<button type=\"button\" class=\"audio_button audio_us\" data-src=\"{0}\" raw-data=\"{1}\">{2}</button>",
-                false);
+            if (_isDatabaseMode)
+            {
+                AddMap("sound_uk", ReplacementType.ReplaceSoundUK, "button",
+                    "<button type=\"button\" class=\"audio_button audio_uk\" data-src=\"{0}\">{1}</button>",
+                    false);
+                AddMap("sound_us", ReplacementType.ReplaceSoundUS, "button",
+                    "<button type=\"button\" class=\"audio_button audio_us\" data-src=\"{0}\">{1}</button>",
+                    false);
+            }
+            else
+            {
+                AddMap("sound_uk", ReplacementType.ReplaceSoundUK, "button",
+                    "<button type=\"button\" class=\"audio_button audio_uk\" data-src=\"{0}\" raw-data=\"{1}\">{2}</button>",
+                    false);
+                AddMap("sound_us", ReplacementType.ReplaceSoundUS, "button",
+                    "<button type=\"button\" class=\"audio_button audio_us\" data-src=\"{0}\" raw-data=\"{1}\">{2}</button>",
+                    false);
+            }
 
             _wordNameMap.Add('/', "-");
             _wordNameMap.Add('à', "a");
@@ -148,22 +184,23 @@ namespace Pronunciation.Parser
                 .ToLower().Split(new []{ ',', ' '}));
         }
 
-        public HtmlBuilder(string logFile, FileLoader fileLoader)
+        public HtmlBuilder(bool isDatabaseMode, string connectionString, string logFile, FileLoader fileLoader, string wordUsageFile)
+            : this(isDatabaseMode)
         {
             _logFile = logFile;
             _fileLoader = fileLoader;
-        }
-
-        public HtmlBuilder(string logFile, FileLoader fileLoader, string wordUsageFile) : this(logFile, fileLoader)
-        {
+            if (isDatabaseMode)
+            {
+                _dbUploader = new DatabaseUploader(connectionString, fileLoader);
+            }
             _usageBuilder = new WordUsageBuilder(wordUsageFile);
         }
 
-        private static void AddMap(string sourceTag, ReplacementType replacementType, string replacementTag, string additionalData)
+        private void AddMap(string sourceTag, ReplacementType replacementType, string replacementTag, string additionalData)
         {
             AddMap(sourceTag, replacementType, replacementTag, additionalData, true);
         }
-        private static void AddMap(string sourceTag, ReplacementType replacementType, string replacementTag, 
+        private void AddMap(string sourceTag, ReplacementType replacementType, string replacementTag, 
             string additionalData, bool allowChildTags)
         {
             ReplaceMap.Add(new TagReplaceInfo 
@@ -195,7 +232,6 @@ namespace Pronunciation.Parser
 
             // Group by keyword
             var nameStats = new StringBuilder();
-            var indexBuilder = new StringBuilder();
             var groups = new Dictionary<string, WordGroup>();
             foreach (var word in words)
             {
@@ -211,12 +247,8 @@ namespace Pronunciation.Parser
                 }
 
                 group.Words.Add(word);
-
-                indexBuilder.AppendLine(string.Format("{0}\t{1}", word.Keyword, groupName));
             }
             File.AppendAllText(_logFile, "\r\nName stats:\r\n" + nameStats.ToString());
-            File.WriteAllText(Path.Combine(rootFolder, IndexFileName), indexBuilder.ToString(), Encoding.UTF8);
-            indexBuilder = null;
 
             // Load template
             var template = File.ReadAllText(
@@ -233,61 +265,106 @@ namespace Pronunciation.Parser
             var letterStats = new StringBuilder();
             int wordsCount = 0;
             int letterGroups = 0;
-            foreach (var group in groups.Values.OrderBy(x => x.Name, StringComparer.Ordinal))
+            var index = new List<IndexItem>();
+
+            if (_isDatabaseMode)
             {
-                var subFolder = group.Name.Substring(0, 1);
-                if (Path.Combine(dicFolder, subFolder) != outputFolder)
+                _dbUploader.Open();
+            }
+            try
+            {
+                foreach (var group in groups.Values.OrderBy(x => x.Name, StringComparer.Ordinal))
                 {
-                    outputFolder = Path.Combine(dicFolder, subFolder);
-                    if (!Directory.Exists(outputFolder))
+                    var subFolder = group.Name.Substring(0, 1);
+                    if (Path.Combine(dicFolder, subFolder) != outputFolder)
                     {
-                        Directory.CreateDirectory(outputFolder);
+                        outputFolder = Path.Combine(dicFolder, subFolder);
+                        if (!Directory.Exists(outputFolder))
+                        {
+                            Directory.CreateDirectory(outputFolder);
+                        }
+
+                        if (currentCacheFile != null)
+                        {
+                            _fileLoader.FlushCache(currentCacheFile);
+                        }
+                        currentCacheFile = string.Format("{0}.txt", subFolder);
+                        _fileLoader.LoadCache(currentCacheFile);
+
+                        if (letterGroups > 0)
+                        {
+                            letterStats.AppendFormat(", groups: {0}\r\n", letterGroups);
+                            Console.WriteLine(" ({0}) groups.", letterGroups);
+
+                            letterGroups = 0;
+                        }
+
+                        letterStats.AppendFormat("Letter: {0}", subFolder);
+                        Console.Write("Processing " + subFolder);
                     }
 
-                    if (currentCacheFile != null)
-                    {
-                        _fileLoader.FlushCache(currentCacheFile);
-                    }
-                    currentCacheFile = string.Format("{0}.txt", subFolder);
-                    _fileLoader.LoadCache(currentCacheFile);
+                    WordSounds soundInfo;
+                    var body = GenerateHtml(group, soundStats, index, out soundInfo);
 
-                    if (letterGroups > 0)
+                    string title = string.Join(" + ", group.Words.Select(x => x.Keyword));
+                    if (group.Words.Count > 1)
                     {
-                        letterStats.AppendFormat(", groups: {0}\r\n", letterGroups);
-                        Console.WriteLine(" ({0}) groups.", letterGroups);
-                        
-                        letterGroups = 0;
+                        titleStats.AppendFormat("Grouped words: {0}\r\n", title);
                     }
 
-                    letterStats.AppendFormat("Letter: {0}", subFolder);
-                    Console.Write("Processing " + subFolder);
+                    if (!isFakeMode)
+                    {
+                        if (_isDatabaseMode)
+                        {
+                            _dbUploader.InsertWord(group.Name, string.Format(template, title, body), soundInfo);
+                        }
+                        else
+                        {
+                            File.WriteAllText(
+                                Path.Combine(outputFolder, string.Format("{0}.html", group.Name)),
+                                string.Format(template, title, body),
+                                Encoding.UTF8);
+                        }
+                    }
+
+                    wordsCount += group.Words.Count;
+                    letterGroups++;
+
+                    filesCount++;
+                    if (maxFiles > 0 && filesCount >= maxFiles)
+                        break;
                 }
-
-                var body = GenerateHtml(group, soundStats);
-
-                string title = string.Join(" + ", group.Words.Select(x => x.Keyword));
-                if (group.Words.Count > 1)
+            }
+            finally
+            {
+                if (_isDatabaseMode)
                 {
-                    titleStats.AppendFormat("Grouped words: {0}\r\n", title);
+                    _dbUploader.Dispose();
                 }
-
-                if (!isFakeMode)
-                {
-                    File.WriteAllText(
-                        Path.Combine(outputFolder, string.Format("{0}.html", group.Name)),
-                        string.Format(template, title, body),
-                        Encoding.UTF8);
-                }
-
-                wordsCount += group.Words.Count;
-                letterGroups++;
-
-                filesCount++;
-                if (maxFiles > 0 && filesCount >= maxFiles)
-                    break;
             }
 
             _fileLoader.FlushCache(currentCacheFile);
+
+            // Store index file
+            var indexBuilder = new StringBuilder();
+            foreach(var indexGroup in index.GroupBy(x => x.Text).OrderBy(x => x.Key))
+            {
+                IndexItem mainItem = null;
+                if (indexGroup.Count() > 1)
+                {
+                    // If there are several items with the same text then "Word" items have a bigger priority
+                    mainItem = indexGroup.FirstOrDefault(x => !x.IsCollocation);
+                }
+                if (mainItem == null)
+                {
+                    mainItem = indexGroup.FirstOrDefault();
+                }
+                indexBuilder.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}", 
+                    mainItem.Text, mainItem.Key, mainItem.IsCollocation ? "1" : "0",
+                    mainItem.SoundKeyUK, mainItem.SoundKeyUS));
+            }
+            File.WriteAllText(Path.Combine(rootFolder, IndexFileName), indexBuilder.ToString(), Encoding.UTF8);
+            indexBuilder = null;
 
             letterStats.AppendFormat(", groups: {0}\r\n", letterGroups);
             Console.WriteLine(" ({0}) groups.", letterGroups);
@@ -306,29 +383,60 @@ namespace Pronunciation.Parser
             File.AppendAllText(_logFile, "Ended conversion.\r\n\r\n");
         }
 
-        private string GenerateHtml(WordGroup group, StringBuilder stats)
+        private string GenerateHtml(WordGroup group, StringBuilder stats, List<IndexItem> index, out WordSounds wordSounds)
         {
+            wordSounds = new WordSounds() { Sounds = new List<SoundInfo>() };
+
             StringBuilder bldGroup = new StringBuilder();
+            bool isGroupSoundSet = false;
             foreach (var word in group.Words)
             {
+                IndexItem wordIndex = new IndexItem
+                {
+                    Key = group.Name,
+                    Text = word.Keyword
+                };
+                index.Add(wordIndex);
+
                 WordUsageResult wordUsage = GetWordUsage(word.Keyword);
 
-                string soundUK = null;
-                string soundUS = null;
-                var bldEntries = new StringBuilder();
-
                 // Parse XML
+                string soundTextUK = null;
+                string soundTextUS = null;
+                var bldEntries = new StringBuilder();
+                bool isIndexSoundSet = false;
                 int ordinal = 0;
                 foreach (var entry in word.Entries)
                 {
                     ordinal++;
                     
                     // Parse main data
-                    ParseResult result = ParseItemXml(entry.RawMainData, true);
-                    if (result.TotalSounds != 2)
+                    var entrySoundCollector = new SoundCollector();
+                    ParseResult entryResult = ParseItemXml(entry.RawMainData, true, null, entrySoundCollector);
+                    wordSounds.Sounds.AddRange(entrySoundCollector.Sounds);
+
+                    if (entrySoundCollector.HasMainSounds)
                     {
-                        stats.AppendFormat("Number of sounds is [{0}] for [{1}] {2}\r\n", result.TotalSounds, word.Keyword, entry.EntryNumber);
-                        result = ParseItemXml(entry.RawMainData, false);
+                        // Consider first entry having both US & UK audio as the word audio
+                        if (!isIndexSoundSet)
+                        {
+                            wordIndex.SoundKeyUK = entrySoundCollector.MainSoundUK;
+                            wordIndex.SoundKeyUS = entrySoundCollector.MainSoundUS;
+                            isIndexSoundSet = true;
+
+                            // Consider audio of the first word as the group audio
+                            if (!isGroupSoundSet)
+                            {
+                                wordSounds.SoundKeyUK = entrySoundCollector.MainSoundUK;
+                                wordSounds.SoundKeyUS = entrySoundCollector.MainSoundUS;
+                                isGroupSoundSet = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        stats.AppendFormat("Word [{0}] {1} misses a main pronunciation\r\n", word.Keyword, entry.EntryNumber);
+                        entryResult = ParseItemXml(entry.RawMainData, false, null, null);
                     }
 
                     bldEntries.Append(
@@ -341,8 +449,8 @@ namespace Pronunciation.Parser
                         // Add sounds directly to the word name if entry number is missing
                         if (ordinal == 1)
                         {
-                            soundUK = result.SoundUK;
-                            soundUS = result.SoundUS;
+                            soundTextUK = entryResult.SoundTextUK;
+                            soundTextUS = entryResult.SoundTextUS;
                         }
                         else
                             throw new ArgumentException();
@@ -356,13 +464,13 @@ namespace Pronunciation.Parser
                 {2}
             </span>
 ",
-                            entry.EntryNumber, result.SoundUK, result.SoundUS);
+                            entry.EntryNumber, entryResult.SoundTextUK, entryResult.SoundTextUS);
                     }
 
                     bldEntries.AppendFormat(
 @"          <div class=""entry_text"">{0}</div>
 ",
-                            result.HtmlData);
+                            entryResult.HtmlData);
 
                     // Parse word forms and collocations
                     if (entry.AllItems != null && entry.AllItems.Count > 0)
@@ -388,20 +496,45 @@ namespace Pronunciation.Parser
 
                             foreach (var item in itemGroup.Items)
                             {
-                                result = ParseItemXml(item.RawData, false);
+                                ContentCollector contentCollector = null;
+                                if (itemGroup.GroupType == ItemType.Collocation)
+                                {
+                                    contentCollector = new ContentCollector(XmlElementStrong, true);
+                                }
+
+                                var itemSoundCollector = new SoundCollector();
+                                ParseResult itemResult = ParseItemXml(item.RawData, false, contentCollector, itemSoundCollector);
+                                wordSounds.Sounds.AddRange(itemSoundCollector.Sounds);
+
+                                if (itemGroup.GroupType == ItemType.Collocation)
+                                {
+                                    var contentItems = ParseCollocationsContent(contentCollector.GetContent());
+                                    if (contentItems != null)
+                                    {
+                                        index.AddRange(contentItems.Select(x => new IndexItem 
+                                        { 
+                                            Key = group.Name,
+                                            Text = x,
+                                            IsCollocation = true,
+                                            SoundKeyUK = itemSoundCollector.MainSoundUK,
+                                            SoundKeyUS = itemSoundCollector.MainSoundUS
+                                        }));
+                                    }
+                                }
+                                
                                 if (itemGroup.GroupType == ItemType.WordForm)
                                 {
                                     bldEntries.AppendFormat(
 @"              <div class=""form"">{0}</div>
 ",
-                                        result.HtmlData);
+                                        itemResult.HtmlData);
                                 }
                                 else
                                 {
                                     bldEntries.AppendFormat(
 @"              <div class=""collocation"">{0}</div>
 ",
-                                        result.HtmlData);
+                                        itemResult.HtmlData);
                                 }
                             }
 
@@ -429,7 +562,7 @@ namespace Pronunciation.Parser
                         wordUsage.Rank, wordUsage.PreviousWordHtml, wordUsage.NextWordHtml);
                 }
 
-                if (!string.IsNullOrEmpty(soundUK) || !string.IsNullOrEmpty(soundUS))
+                if (!string.IsNullOrEmpty(soundTextUK) || !string.IsNullOrEmpty(soundTextUS))
                 {
                     bldGroup.AppendFormat(
 @"      <div class=""word_audio"">
@@ -437,7 +570,7 @@ namespace Pronunciation.Parser
             {1}
         </div>
 ",
-                        soundUK, soundUS);
+                        soundTextUK, soundTextUS);
                 }
 
                 bldGroup.AppendFormat(
@@ -465,22 +598,24 @@ namespace Pronunciation.Parser
         private string PrepareFileName(string keyword, StringBuilder stat)
         {
             var text = _htmlRegex.Replace(keyword, string.Empty).Replace("&amp;", "&");
-            if (text.EndsWith("..."))
-            {
-                text.Remove(text.Length - 3);
-                if (stat != null)
-                {
-                    stat.AppendFormat("Ignored '...' at the end of [{0}] word\r\n", keyword);
-                }
-            }
-            if (text.EndsWith("-"))
-            {
-                text.Remove(text.Length - 1);
-                if (stat != null)
-                {
-                    stat.AppendFormat("Ignored '-' at the end of [{0}] word\r\n", keyword);
-                }
-            }
+            // TODO: after migration to DB uncomment this code for generating html files
+            //if (text.EndsWith("..."))
+            //{
+            //    text = text.Remove(text.Length - 3);
+            //    if (stat != null)
+            //    {
+            //        stat.AppendFormat("Ignored '...' at the end of [{0}] word\r\n", keyword);
+            //    }
+            //}
+            //if (text.EndsWith("-"))
+            //{
+            //    text = text.Remove(text.Length - 1);
+            //    if (stat != null)
+            //    {
+            //        stat.AppendFormat("Ignored '-' at the end of [{0}] word\r\n", keyword);
+            //    }
+            //}
+
             var bld = new StringBuilder();
             Regex regex; 
             foreach (var ch in text)
@@ -566,7 +701,8 @@ namespace Pronunciation.Parser
             return words;
         }
 
-        private ParseResult ParseItemXml(string rawData, bool extractSounds)
+        private ParseResult ParseItemXml(string rawData, bool extractSounds, ContentCollector contentCollector, 
+            SoundCollector soundCollector)
         {
             if (string.IsNullOrWhiteSpace(rawData))
                 throw new ArgumentException();
@@ -593,7 +729,7 @@ namespace Pronunciation.Parser
                             var replace = ReplaceMap.Single(x => x.SourceTag == reader.Name);
                             if (reader.IsEmptyElement)
                             {
-                                var replacement = PrepareText(replace, null, false);
+                                var replacement = PrepareText(replace, null, null, false);
                                 if (activeNode != null)
                                 {
                                     activeNode.Data += replacement;
@@ -607,6 +743,10 @@ namespace Pronunciation.Parser
                             {
                                 activeNode = new CurrentTagInfo { ReplaceInfo = replace };
                                 activeNodes.Push(activeNode);
+                                if (contentCollector != null)
+                                {
+                                    contentCollector.NodeOpened(reader.Name);
+                                }
                             }
                             break;
 
@@ -617,24 +757,24 @@ namespace Pronunciation.Parser
                             if (activeNode.ReplaceInfo.SourceTag != reader.Name)
                                 throw new ArgumentException();
 
-                            var replacementText = PrepareText(activeNode.ReplaceInfo, activeNode.Data, extractSounds);
+                            var replacementText = PrepareText(activeNode.ReplaceInfo, activeNode.Data, soundCollector, extractSounds);
+                            
+                            // Move main sounds (US and UK) to the outer level
                             if (extractSounds)
                             {
                                 if (activeNode.ReplaceInfo.ReplacementType == ReplacementType.ReplaceSoundUK)
                                 {
-                                    result.TotalSounds++;
-                                    if (string.IsNullOrEmpty(result.SoundUK))
+                                    if (string.IsNullOrEmpty(result.SoundTextUK))
                                     {
-                                        result.SoundUK = replacementText;
+                                        result.SoundTextUK = replacementText;
                                         replacementText = null;
                                     }
                                 }
                                 else if (activeNode.ReplaceInfo.ReplacementType == ReplacementType.ReplaceSoundUS)
                                 {
-                                    result.TotalSounds++;
-                                    if (string.IsNullOrEmpty(result.SoundUS))
+                                    if (string.IsNullOrEmpty(result.SoundTextUS))
                                     {
-                                        result.SoundUS = replacementText;
+                                        result.SoundTextUS = replacementText;
                                         replacementText = null;
                                     }
                                 }
@@ -652,6 +792,11 @@ namespace Pronunciation.Parser
                                 bld.Append(replacementText);
                                 activeNode = null;
                             }
+
+                            if (contentCollector != null)
+                            {
+                                contentCollector.NodeClosed();
+                            }
                             break;
 
                         case XmlNodeType.Whitespace:
@@ -663,6 +808,11 @@ namespace Pronunciation.Parser
                             else
                             {
                                 activeNode.Data += reader.Value;
+                            }
+
+                            if (contentCollector != null)
+                            {
+                                contentCollector.Append(reader.Value);
                             }
                             break;
 
@@ -681,7 +831,7 @@ namespace Pronunciation.Parser
             return result;
         }
 
-        private string PrepareText(TagReplaceInfo info, string data, bool extractSounds)
+        private string PrepareText(TagReplaceInfo info, string data, SoundCollector soundCollector, bool extractSounds)
         {
             string result;
             switch (info.ReplacementType)
@@ -718,8 +868,20 @@ namespace Pronunciation.Parser
                         : (extractSounds ? CaptionBigUs : CaptionSmallUs);
 
                     string fileKey = Path.GetFileNameWithoutExtension(data);
-                    result = string.Format(info.AdditionalData,
-                        fileKey, _fileLoader.GetBase64Content(fileKey), lang);
+                    if (_isDatabaseMode)
+                    {
+                        result = string.Format(info.AdditionalData, fileKey, lang);
+                    }
+                    else
+                    {
+                        result = string.Format(info.AdditionalData,
+                            fileKey, _fileLoader.GetBase64Content(fileKey), lang);
+                    }
+
+                    if (soundCollector != null)
+                    {
+                        soundCollector.RegisterSound(fileKey, info.ReplacementType == ReplacementType.ReplaceSoundUK);
+                    }
                     break;
 
                 default:
@@ -939,6 +1101,44 @@ namespace Pronunciation.Parser
 
                 previousRank = rank;
             }
+        }
+
+        // Test: Richmond-u₍ˌ₎pon-Thames, S₍ˌ₎VO language
+        // Test how ₍ˌ₎ looks
+        private string[] ParseCollocationsContent(string rawContent)
+        {
+            if (string.IsNullOrWhiteSpace(rawContent))
+                return null;
+
+            List<string> contentItems = new List<string>();
+            foreach (var rawItem in rawContent.Trim().Split(new [] {','}, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (string.IsNullOrWhiteSpace(rawItem))
+                    continue;
+
+                // Ignore words with tilde or those starting with "-" because they will look meaningless without the context
+                var contentItem = rawItem.Trim();
+                if (contentItem.Contains("~") || contentItem.StartsWith("-"))
+                    continue;
+
+                // Remove garbadge like: ˌ•• ˈ••
+                contentItem = contentItem.Replace("•", string.Empty).Replace("ˌ", string.Empty).Replace("ˈ", string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(contentItem))
+                    continue;
+
+                // Some words contain "₍₎" with some garbidge symbols in the beginning ("South Africa", "trade union")
+                var index = contentItem.IndexOf("₎");
+                if (index >= 0)
+                {
+                    contentItem = contentItem.Remove(0, index + 1).Trim();
+                }
+                if (string.IsNullOrWhiteSpace(contentItem))
+                    continue;
+
+                contentItems.Add(contentItem);
+            }
+
+            return contentItems.Count == 0 ? null : contentItems.ToArray();
         }
     }
 }

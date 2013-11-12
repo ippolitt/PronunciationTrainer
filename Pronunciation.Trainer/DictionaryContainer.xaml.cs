@@ -28,64 +28,24 @@ namespace Pronunciation.Trainer
     /// </summary>
     public partial class DictionaryContainer : UserControlExt, ISupportsKeyboardFocus
     {
-        private class SearchTextComparer : IComparer<string>
+        private class TokenizedIndexEntry
         {
-            private readonly string _searchText;
-
-            public SearchTextComparer(string searchText)
-            {
-                _searchText = searchText;
-            }
-
-            public int Compare(string x, string y)
-            {
-                int result = 0;
-                if (x == y || (x == null && y == null))
-                {
-                    result = 0;
-                }
-                else if (x == null)
-                {
-                    result = -1;
-                }
-                else if (y == null)
-                {
-                    result = 1;
-                }
-                else if (string.Equals(x, y, StringComparison.OrdinalIgnoreCase))
-                {
-                    // We rank case-sensitive match with the search text higher than case-insensitive one.
-                    // So if search text is "A", then we display: "A, a" 
-                    if (x.StartsWith(_searchText))
-                    {
-                        result = -1;
-                    }
-                    else if (y.StartsWith(_searchText))
-                    {
-                        result = 1;
-                    }
-                    else
-                    {
-                        result = x.CompareTo(y);
-                    }
-                }
-                else
-                {
-                    result = x.CompareTo(y);
-                }
-
-                return result;
-            }
+            public string Token;
+            public int Rank;
+            public IndexEntry Entry;
         }
 
         private LPDProvider _provider;
         private DictionaryAudioContext _audioContext;
-        private KeyTextPair<string>[] _words;
+        private IndexEntry[] _wordsIndex;
+        private TokenizedIndexEntry[] _tokensIndex;
+        private PageInfo _loadingPage;
+        private PageInfo _currentPage;
 
         private ExecuteActionCommand _commandBack;
         private ExecuteActionCommand _commandForward;
 
-        private const int MaxNumberOfSuggestions = 50;
+        private const int MaxNumberOfSuggestions = 100;
         private const string MoreSuggestionsKey = "...";
 
         public DictionaryContainer()
@@ -101,7 +61,7 @@ namespace Pronunciation.Trainer
             audioPanel.AttachContext(_audioContext);
             browser.ObjectForScripting = _audioContext;
 
-            _words = _provider.GetWords().OrderBy(x => x.Text).ToArray();
+            BuildIndex(_provider.GetWords());
 
             var wordLists = _provider.GetWordLists();
             if (wordLists != null)
@@ -153,22 +113,34 @@ namespace Pronunciation.Trainer
 
         private void browser_LoadCompleted(object sender, NavigationEventArgs e)
         {
-            PageInfo previousPage = _audioContext.ActivePage;
-            _audioContext.RefreshContext(e.Uri, 
+            _currentPage = _loadingPage;
+            _loadingPage = null;
+
+            // It means that the page has been loaded by clicking on a hyperlink inside a previous page
+            if (_currentPage == null)
+            {
+                _currentPage = _provider.GetPageInfo(e.Uri);
+                if (_currentPage != null && _currentPage.IsWord)
+                {
+                    _currentPage.Index = _wordsIndex.FirstOrDefault(x => x.Key == _currentPage.PageName && !x.IsCollocation);
+                }
+            }
+
+            _audioContext.RefreshContext(_currentPage, 
                 AppSettings.Instance.StartupMode == StartupPlayMode.British,
                 AppSettings.Instance.StartupMode != StartupPlayMode.None);
 
-            if (_audioContext.ActivePage == null)
+            if (_currentPage == null)
             {
                 cboWordLists.SelectedItem = null;
             }
-            else if (_audioContext.ActivePage.IsWord)
+            else if (_currentPage.IsWord)
             {
-                KeyTextPair<string> item = _words.FirstOrDefault(x => x.Key == _audioContext.ActivePage.PageName);
-                if (item != null)
+                if (_currentPage.Index != null)
                 {
-                    RegisterRecentWord(item);
+                    RegisterRecentWord(_currentPage.Index);
                 }
+
                 // Move keyboard focus to another control
                 if (txtSearch.IsKeyboardFocusWithin)
                 {
@@ -193,16 +165,16 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void RegisterRecentWord(KeyTextPair<string> wordItem)
+        private void RegisterRecentWord(IndexEntry entry)
         {
             var currentIndex = lstRecentWords.SelectedIndex;
-            var existingItem = lstRecentWords.Items.Cast<KeyTextPair<string>>().FirstOrDefault(x => x.Key == wordItem.Key);
+            var existingItem = lstRecentWords.Items.Cast<IndexEntry>().FirstOrDefault(x => x == entry);
             if (existingItem != null)
             {
                 lstRecentWords.Items.Remove(existingItem);
             }
 
-            lstRecentWords.Items.Insert(0, new KeyTextPair<string>(wordItem.Key, wordItem.Text));
+            lstRecentWords.Items.Insert(0, entry);
             lstRecentWords.SelectedIndex = currentIndex >= 0 ? currentIndex : 0;
         }
 
@@ -241,7 +213,7 @@ namespace Pronunciation.Trainer
             var items = FindWordsByText(txtSearch.Text, false, MaxNumberOfSuggestions);
             if (items != null && items.Count == MaxNumberOfSuggestions)
             {
-                items.Add(new KeyTextPair<string>(MoreSuggestionsKey, "..."));
+                items.Add(new IndexEntry(MoreSuggestionsKey, "...", false));
             }
             lstSuggestions.ItemsSource = items;
             if (lstSuggestions.Items.Count > 0)
@@ -275,33 +247,44 @@ namespace Pronunciation.Trainer
                 else
                 {
                     lstSuggestions.SelectedIndex = 0;
-                    NavigateWord(((KeyTextPair<string>)lstSuggestions.Items[0]).Key);
+                    NavigateWord((IndexEntry)lstSuggestions.Items[0]);
                 }
             }
         }
 
-        private List<KeyTextPair<string>> FindWordsByText(string wordText, bool isExactMatch, int maxItems)
+        private List<IndexEntry> FindWordsByText(string wordText, bool isExactMatch, int maxItems)
         {
             if (string.IsNullOrWhiteSpace(wordText))
                 return null;
 
             string searchText = wordText.Trim();
-            IEnumerable<KeyTextPair<string>> query;
+            IEnumerable<IndexEntry> query;
             if (isExactMatch)
             {
-                query = _words.Where(x => string.Equals(x.Text, searchText, StringComparison.OrdinalIgnoreCase));   
+                query = _wordsIndex.Where(x => string.Equals(x.Text, searchText, StringComparison.OrdinalIgnoreCase));   
             }
             else
             {
-                query = _words.Where(x => x.Text.StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
+                query = _wordsIndex.Where(x => x.Text.StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
             }
-
             if (maxItems >= 0)
             {
                 query = query.Take(maxItems);
             }
 
-            return query.OrderBy(x => x.Text, new SearchTextComparer(searchText)).ToList();
+            var entries = query.OrderBy(x => x.Text, new SearchTextComparer(searchText)).ToList();
+            if (!isExactMatch && (entries.Count < maxItems || maxItems < 0))
+            {
+                // Add token based matches
+                var tokensQuery =_tokensIndex.Where(x => x.Token.StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
+                if (maxItems >= 0)
+                {
+                    tokensQuery = tokensQuery.Take(maxItems - entries.Count);
+                }
+                entries.AddRange(tokensQuery.OrderBy(x => x.Rank).ThenBy(x => x.Entry.Text).Select(x => x.Entry).Distinct());
+            }
+
+            return entries;
         }
 
         private void lstSuggestions_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -332,26 +315,31 @@ namespace Pronunciation.Trainer
 
         private void NavigateListboxItem(ListBox listBox)
         {
-            var selectedItem = listBox.SelectedItem as KeyTextPair<string>;
+            var selectedItem = listBox.SelectedItem as IndexEntry;
             if (selectedItem == null || selectedItem.Key == MoreSuggestionsKey)
                 return;
 
-            if (_audioContext.ActivePage != null && _audioContext.ActivePage.IsWord 
-                && _audioContext.ActivePage.PageName == selectedItem.Key)
-                return;
+            if (_currentPage != null && _currentPage.IsWord && _currentPage.PageName == selectedItem.Key)
+            {
+                if (_currentPage.Index == null || _currentPage.Index == selectedItem)
+                    return;
+            }
 
-            NavigateWord(selectedItem.Key);
+            NavigateWord(selectedItem);
         }
 
-        private void NavigateWord(string word)
+        private void NavigateWord(IndexEntry entry)
         {
-            Uri pageUrl = _provider.BuildWordPath(word);
+            Uri pageUrl = _provider.BuildWordPath(entry.Key);
+            _loadingPage = new PageInfo(true, entry.Key);
+            _loadingPage.Index = entry;
             browser.Navigate(PrepareNavigationUri(pageUrl));
         }
 
         private void NavigateList(string listName)
         {
             Uri pageUrl = _provider.BuildWordListPath(listName);
+            _loadingPage = new PageInfo(false, listName);
             browser.Navigate(PrepareNavigationUri(pageUrl));
         }
 
@@ -379,5 +367,110 @@ namespace Pronunciation.Trainer
             object scriptResult = browser.InvokeScript(methodName, methodArgs);
             return (scriptResult is DBNull) ? null : (string)scriptResult;
         }
+
+        // Test /s
+        private void BuildIndex(IEnumerable<IndexEntry> entries)
+        {
+            // Build index for StartWith match
+            _wordsIndex = entries.OrderBy(x => x.Text).ToArray();
+
+            // Build index for token-based match
+            var tokens = new List<TokenizedIndexEntry>();
+            foreach (var entry in _wordsIndex)
+            {
+                int rank = 0;
+                int position = 0;
+                bool isTokenStart = false;
+                foreach(char ch in entry.Text)
+                {
+                    if (ch == ' ' || ch == '-' || ch == ',' || ch == '/' || ch == '(' || ch == ')')
+                    {
+                        // As soon as we hit a separator the next character might be the beginning of a token
+                        // It means that we'll skip first words in the collocations 
+                        // (because this case is covered by the _wordsIndex array)
+                        isTokenStart = true;
+                    }
+                    else
+                    {
+                        if (isTokenStart)
+                        {
+                            isTokenStart = false;
+
+                            // Add the whole remaining string as a token to enable multi-words match: 
+                            // e.g. match "lot car" in "parking lot car"
+                            string token = entry.Text.Substring(position);
+
+                            // Don't add 1-symbol tokens
+                            if (token.Length > 1)
+                            {
+                                tokens.Add(new TokenizedIndexEntry
+                                {
+                                    Rank = rank,
+                                    Token = token,
+                                    Entry = entry
+                                });
+                            }
+
+                            rank++;
+                        }
+                    }
+
+                    position++;
+                }
+            }
+
+            _tokensIndex = tokens.OrderBy(x => x.Rank).ThenBy(x => x.Entry.Text).ToArray();
+        }
+
+        private class SearchTextComparer : IComparer<string>
+        {
+            private readonly string _searchText;
+
+            public SearchTextComparer(string searchText)
+            {
+                _searchText = searchText;
+            }
+
+            public int Compare(string x, string y)
+            {
+                int result = 0;
+                if (x == y || (x == null && y == null))
+                {
+                    result = 0;
+                }
+                else if (x == null)
+                {
+                    result = -1;
+                }
+                else if (y == null)
+                {
+                    result = 1;
+                }
+                else if (string.Equals(x, y, StringComparison.OrdinalIgnoreCase))
+                {
+                    // We rank case-sensitive match with the search text higher than case-insensitive one.
+                    // So if search text is "A", then we display: "A, a" 
+                    if (x.StartsWith(_searchText))
+                    {
+                        result = -1;
+                    }
+                    else if (y.StartsWith(_searchText))
+                    {
+                        result = 1;
+                    }
+                    else
+                    {
+                        result = x.CompareTo(y);
+                    }
+                }
+                else
+                {
+                    result = x.CompareTo(y);
+                }
+
+                return result;
+            }
+        }
+
     }
 }

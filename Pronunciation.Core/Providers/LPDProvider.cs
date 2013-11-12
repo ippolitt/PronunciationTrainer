@@ -42,22 +42,22 @@ namespace Pronunciation.Core.Providers
                 string.Format(@"{0}\{1}.mp3", BuildSubfolderName(wordName), wordName));
         }
 
-        public List<KeyTextPair<string>> GetWords()
+        public List<IndexEntry> GetWords()
         {
             string indexFile = Path.Combine(_sourceFolder, _indexFileName);
             if (!File.Exists(indexFile))
                 return null;
 
-            var words = new List<KeyTextPair<string>>();
+            var words = new List<IndexEntry>();
             using (var reader = new StreamReader(indexFile, Encoding.UTF8))
             {
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 2)
+                    if (data.Length != 5)
                         throw new InvalidOperationException("Index file is broken!");
 
-                    words.Add(new KeyTextPair<string>(data[1], data[0]));
+                    words.Add(new IndexEntry(data[1], data[0], data[2] == "1" ? true : false, data[3], data[4]));
                 }
             }
 
@@ -84,8 +84,12 @@ namespace Pronunciation.Core.Providers
             bool isWord = segments.Length >= 3 
                 ? string.Equals(segments[segments.Length - 3], _dictionaryFolderName + "/", StringComparison.OrdinalIgnoreCase)
                 : false;
- 
-            return new PageInfo(isWord, Path.GetFileNameWithoutExtension(fileName));
+
+            string key = Path.GetFileNameWithoutExtension(fileName);
+            if (!File.Exists((isWord ? BuildWordPath(key) : BuildWordListPath(key)).LocalPath))
+                return null;
+
+            return new PageInfo(isWord, key);
         }
 
         private string BuildSubfolderName(string fileName)

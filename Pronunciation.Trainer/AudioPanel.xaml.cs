@@ -53,6 +53,7 @@ namespace Pronunciation.Trainer
         private ExecuteActionCommand _playRecordedCommand;
         private ExecuteActionCommand _startRecordingCommand;
         private ExecuteActionCommand _stopCommand;
+        private ExecuteActionCommand _showWaveformCommand;
 
         private const string _recordProgressTemplate = "Recording, {0} seconds left..";
         private const int DelayedPlayIntervalMs = 500;
@@ -77,7 +78,9 @@ namespace Pronunciation.Trainer
             _playRecordedCommand = new ExecuteActionCommand(PlayRecordedAudio, false);
             _startRecordingCommand = new ExecuteActionCommand(StartRecording, false);
             _stopCommand = new ExecuteActionCommand(() => StopAction(true), false);
+            _showWaveformCommand = new ExecuteActionCommand(ShowWaveformsDialog, false);
 
+            btnShowWaveforms.Command = _showWaveformCommand;
             btnPlayReference.Target = new PlayAudioAction(PrepareReferencePlaybackArgs, (x, y) => ProcessPlaybackResult(x, y, true));
             btnPlayRecorded.Target = new PlayAudioAction(PrepareRecordedPlaybackArgs, (x, y) => ProcessPlaybackResult(x, y, false));
             btnRecord.Target = new RecordAudioAction(PrepareRecordingArgs, ProcessRecordingResult);
@@ -103,12 +106,14 @@ namespace Pronunciation.Trainer
                 container.InputBindings.Add(new KeyBinding(_playRecordedCommand, KeyGestures.PlayRecorded));
                 container.InputBindings.Add(new KeyBinding(_startRecordingCommand, KeyGestures.StartRecording));
                 container.InputBindings.Add(new KeyBinding(_stopCommand, KeyGestures.PauseAudio));
+                container.InputBindings.Add(new KeyBinding(_showWaveformCommand, KeyGestures.ShowWaveform));
 
                 container.PreviewKeyDown += container_PreviewKeyDown;
 
                 btnPlayReference.ToolTip += KeyGestures.PlayReference.GetTooltipString();
                 btnPlayRecorded.ToolTip += KeyGestures.PlayRecorded.GetTooltipString();
                 btnRecord.ToolTip += KeyGestures.StartRecording.GetTooltipString();
+                btnShowWaveforms.ToolTip += KeyGestures.ShowWaveform.GetTooltipString();
             }
         }
 
@@ -217,6 +222,7 @@ namespace Pronunciation.Trainer
             _delayedActionContext = null;
 
             _stopCommand.UpdateState(true);
+            _showWaveformCommand.UpdateState(false);
 
             foreach (var actionButton in _actionButtons)
             {
@@ -225,8 +231,6 @@ namespace Pronunciation.Trainer
                     actionButton.IsEnabled = false;
                 }
             }
-
-            btnShowWaveforms.IsEnabled = false;
 
             ResetSlider();
             if (sliderPlay.Visibility == Visibility.Visible)
@@ -298,14 +302,14 @@ namespace Pronunciation.Trainer
         {
             ResetSlider();
 
-            _playReferenceCommand.UpdateState(_audioContext.IsReferenceAudioExists);
-            _playRecordedCommand.UpdateState(_audioContext.IsRecordedAudioExists);
-            _startRecordingCommand.UpdateState(_audioContext.IsRecordingAllowed);
-
             btnPlayReference.IsEnabled = _audioContext.IsReferenceAudioExists;
             btnPlayRecorded.IsEnabled = _audioContext.IsRecordedAudioExists;
             btnRecord.IsEnabled = _audioContext.IsRecordingAllowed;
-            btnShowWaveforms.IsEnabled = (_lastReferenceResult != null || _lastRecordedResult != null);
+
+            _playReferenceCommand.UpdateState(btnPlayReference.IsEnabled);
+            _playRecordedCommand.UpdateState(btnPlayRecorded.IsEnabled);
+            _startRecordingCommand.UpdateState(btnRecord.IsEnabled);
+            _showWaveformCommand.UpdateState(_lastReferenceResult != null || _lastRecordedResult != null);
         }
 
         private void ResetSlider()
@@ -455,7 +459,7 @@ namespace Pronunciation.Trainer
             return false;
         }
 
-        private void btnShowWaveforms_Click(object sender, RoutedEventArgs e)
+        private void ShowWaveformsDialog()
         {
             WaveFormsComparison window = new WaveFormsComparison();
             window.ReferenceResult = _lastReferenceResult;

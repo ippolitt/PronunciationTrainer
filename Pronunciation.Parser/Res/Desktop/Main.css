@@ -138,6 +138,12 @@ iframe
     font-weight: bold;
     color: green;
 }
+.stress_low_optional:before
+{
+    content: "(ˬ)";
+    font-weight: bold;
+    color: green;
+}
 .stress_up:before
 {
     content: "ˆ";

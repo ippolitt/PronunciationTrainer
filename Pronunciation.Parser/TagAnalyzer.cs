@@ -52,6 +52,7 @@ namespace Pronunciation.Parser
             AddMap("[b]", "[/b]", "strong");
             AddMap("[c blue]ˈ[/c]", null, "<stress_up/>", null, false, EntryType.Collocation); // do it only for collocations to separate phrase stress from word stress
             AddMap("[c blue]ˌ[/c]", null, "<stress_low/>", null, false, EntryType.Collocation);
+            AddMap("[c blue]₍ˌ₎[/c]", null, "<stress_low_optional/>", null, false, EntryType.Collocation);
             AddMap("[c blue]◂[/c]", null, "<stress_shift/>", null, false);
             AddMap("[c blue]", "[/c]", null); // remove the tags for all other cases
 

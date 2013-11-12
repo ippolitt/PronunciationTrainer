@@ -15,6 +15,13 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="IndexItem" TargetType="ListBoxItem">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Path=IsCollocation}" Value="True">
+                    <Setter Property="FontStyle" Value="Italic" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
     <DockPanel Name="rootPanel">
         <local:AudioPanel DockPanel.Dock="Top" Height="32" x:Name="audioPanel" />
@@ -48,8 +55,8 @@
                 <Image Source="Resources/ArrowForward.png" Stretch="None" Style="{StaticResource GreyedImage}" />
             </Button>
         </Grid>
-        <ListBox Name="lstSuggestions" DockPanel.Dock="Left" Width="123" Margin="0,5,0,0" MouseLeftButtonUp="lstSuggestions_MouseLeftButtonUp" PreviewKeyDown="lstSuggestions_PreviewKeyDown" />
-        <ListBox Name="lstRecentWords" DockPanel.Dock="Right" Width="123" Margin="10,5,0,0" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown" />       
+        <ListBox Name="lstSuggestions" DockPanel.Dock="Left" Width="123" Margin="0,5,0,0" ItemContainerStyle="{StaticResource IndexItem}" MouseLeftButtonUp="lstSuggestions_MouseLeftButtonUp" PreviewKeyDown="lstSuggestions_PreviewKeyDown" />
+        <ListBox Name="lstRecentWords" DockPanel.Dock="Right" Width="123" Margin="10,5,0,0" ItemContainerStyle="{StaticResource IndexItem}" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown" />       
         <WebBrowser Name="browser" LoadCompleted="browser_LoadCompleted" />
     </DockPanel>
 </local:UserControlExt>

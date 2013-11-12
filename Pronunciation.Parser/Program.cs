@@ -12,7 +12,7 @@ namespace Pronunciation.Parser
 {
     class Program
     {
-        private const string HtmlFolderPath = @"D:\DOCS\Языки\English\Pronunciation\LPD";
+        private const string HtmlFolderPath = @"D:\LEARN\English\Pronunciation\LPD";
         private const string RootFolderPath = @"..\..\..\";
 
         private const string DataFolder = @"Data\";
@@ -29,12 +29,16 @@ namespace Pronunciation.Parser
         private const string HtmlSourceFile = AnalysisFolder + "Results - Final.xml";
         private const string HtmlLogFile = AnalysisFolder + "HtmlConvert.log";
 
+        private const string DbConnectionString = @"Data Source=D:\LEARN\English\Pronunciation\Trainer\Database\LPD2.sdf;Max Database Size=4000;";
+
         static void Main(string[] args)
         {
             try
             {
                 //UploadFiles();
-                ////TestUpload();
+                //UploadFilesBulk();
+                //TestUpload();
+                //CleanDatabase();
                 //Console.WriteLine("Finished");
                 //return;
 
@@ -60,11 +64,15 @@ namespace Pronunciation.Parser
                 //    Path.Combine(rootFolder, XmlFile),
                 //    true, false);
 
+                bool isDatabaseMode = true;
+
                 var fileLoader = new FileLoader(
                     Path.Combine(rootFolder, SoundsFolder),
                     Path.Combine(rootFolder, SoundsCacheFolder),
                     true);
                 var htmlBuilder = new HtmlBuilder(
+                    isDatabaseMode,
+                    DbConnectionString,
                     Path.Combine(rootFolder, HtmlLogFile),
                     fileLoader,
                     Path.Combine(rootFolder, TopWordsFile));
@@ -81,8 +89,7 @@ namespace Pronunciation.Parser
                 Console.WriteLine(ex);
             }
             finally
-            {
-                
+            { 
                 Console.ReadLine();
             }
         }
@@ -162,15 +169,28 @@ namespace Pronunciation.Parser
             return;
         }
 
-        private static void UploadFiles()
+        private static void CleanDatabase()
         {
-            using (SqlCeConnection conn = new SqlCeConnection(
-                @"Data Source=D:\DOCS\Языки\English\Pronunciation\Trainer\Database\LPD2.sdf;Max Database Size=4000;"))
+            using (SqlCeConnection conn = new SqlCeConnection(DbConnectionString))
             {
                 conn.Open();
 
-                //SqlCeCommand deleteCmd = new SqlCeCommand("Delete Words", conn);
-                //deleteCmd.ExecuteNonQuery();
+                SqlCeCommand cmd = new SqlCeCommand();
+                cmd.Connection = conn;
+
+                cmd.CommandText = "Delete Words";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "Delete Sounds";
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private static void UploadFiles()
+        {
+            using (SqlCeConnection conn = new SqlCeConnection(DbConnectionString))
+            {
+                conn.Open();
 
                 SqlCeCommand cmd = new SqlCeCommand("INSERT Words(WordId, Keyword, Body) Values(newid(), @keyword, @body)", conn);
                 var parmName = cmd.Parameters.Add("@keyword", SqlDbType.NVarChar, 200);
@@ -194,20 +214,55 @@ namespace Pronunciation.Parser
             }
         }
 
-        private static void TestUpload()
+        private static void UploadFilesBulk()
         {
-            using (SqlCeConnection conn = new SqlCeConnection(
-                @"Data Source=D:\DOCS\Языки\English\Pronunciation\Trainer\Database\LPD.sdf;Max Database Size=2100;"))
+            using (SqlCeConnection conn = new SqlCeConnection(DbConnectionString))
             {
                 conn.Open();
-                SqlCeCommand cmd = new SqlCeCommand(
-                    "SELECT Body FROM Words WHERE Keyword = @keyword", conn);
-                var parmName = cmd.Parameters.Add("@keyword", SqlDbType.NVarChar, 200);
-                parmName.Value = "a-";
 
-                string result = (string)cmd.ExecuteScalar();
-               // File.WriteAllText(@"D:\temp.html", result);
-                Console.WriteLine(string.IsNullOrEmpty(result) ? false : true);
+                SqlCeCommand cmd = new SqlCeCommand("Words", conn);
+                cmd.CommandType = CommandType.TableDirect;
+
+                SqlCeResultSet resultSet = cmd.ExecuteResultSet(ResultSetOptions.Updatable);
+
+                int baseId = 105;
+                for (int i = 0; i < 1000; i++)
+                {
+                    var record = resultSet.CreateRecord();
+                    record["WordId"] = baseId + i;
+                    record["Keyword"] = "two";
+                    record["HtmlPage"] = new byte[] { 12, 45, 78, 88, 99, 0 };
+
+                    resultSet.Insert(record);
+                }
+            }
+        }
+
+        private static void TestUpload()
+        {
+            using (SqlCeConnection conn = new SqlCeConnection(DbConnectionString))
+            {
+                conn.Open();
+               // SqlCeCommand cmd = new SqlCeCommand(
+               //     "SELECT Body FROM Words WHERE Keyword = @keyword", conn);
+               // var parmName = cmd.Parameters.Add("@keyword", SqlDbType.NVarChar, 200);
+               // parmName.Value = "a-";
+
+               // string result = (string)cmd.ExecuteScalar();
+
+               //// File.WriteAllText(@"D:\temp.html", result);
+               // Console.WriteLine(string.IsNullOrEmpty(result) ? false : true);
+
+                SqlCeCommand cmd = new SqlCeCommand(
+                    "SELECT RawData FROM Sounds WHERE SoundKey = 'uk_lpd_a__paper'", conn);
+
+                File.WriteAllBytes(@"D:\Test.mp3", (byte[])cmd.ExecuteScalar());
+
+                SqlCeCommand cmd2 = new SqlCeCommand(
+    "SELECT HtmlPage FROM Words WHERE Keyword = 'alert'", conn);
+
+                File.WriteAllBytes(@"D:\Test.html", (byte[])cmd2.ExecuteScalar());
+
             }
         }
     }

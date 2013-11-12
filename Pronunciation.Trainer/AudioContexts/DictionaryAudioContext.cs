@@ -20,6 +20,7 @@ namespace Pronunciation.Trainer.AudioContexts
         private bool _useUkAudio;
 
         private const string GetPageAudioMethodName = "extGetAudioData";
+        private const string GetPageAudioByKeyMethodName = "extGetAudioByKey";
         private const int FirstUkAudioCode = 1;
         private const int FirstUsAudioCode = 2;
 
@@ -32,11 +33,11 @@ namespace Pronunciation.Trainer.AudioContexts
             _audioDataLoader = audioDataLoader;
         }
 
-        public void RefreshContext(Uri pageUrl, bool useUkAudio, bool playImmediately)
+        public void RefreshContext(PageInfo currentPage, bool useUkAudio, bool playImmediately)
         {
             _referenceAudioData = null;
             _useUkAudio = useUkAudio;
-            _currentPage = _provider.GetPageInfo(pageUrl);
+            _currentPage = currentPage;
 
             if (ContextChanged != null)
             {
@@ -52,11 +53,6 @@ namespace Pronunciation.Trainer.AudioContexts
             {
                 ContextChanged(PlayAudioMode.PlayReference);
             }
-        }
-
-        public PageInfo ActivePage
-        {
-            get { return _currentPage; }
         }
 
         public bool IsReferenceAudioExists
@@ -87,8 +83,20 @@ namespace Pronunciation.Trainer.AudioContexts
 
             if (string.IsNullOrEmpty(_referenceAudioData))
             {
-                _referenceAudioData = _audioDataLoader(GetPageAudioMethodName, 
-                    new object[] { _useUkAudio ? FirstUkAudioCode : FirstUsAudioCode });
+                if (_currentPage.Index != null)
+                {
+                    var audioKey = _useUkAudio ? _currentPage.Index.SoundKeyUK : _currentPage.Index.SoundKeyUS;
+                    if (!string.IsNullOrEmpty(audioKey))
+                    {
+                        _referenceAudioData = _audioDataLoader(GetPageAudioByKeyMethodName, new object[] { audioKey });
+                    }
+                }
+
+                if (string.IsNullOrEmpty(_referenceAudioData))
+                {
+                    _referenceAudioData = _audioDataLoader(GetPageAudioMethodName,
+                        new object[] { _useUkAudio ? FirstUkAudioCode : FirstUsAudioCode });
+                }
             }
             if (string.IsNullOrEmpty(_referenceAudioData))
                 return null;

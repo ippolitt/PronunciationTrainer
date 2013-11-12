@@ -78,7 +78,7 @@
         </local:ActionButton>
         <Button Focusable="False" Grid.Column="3"  HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" 
             x:Name="btnShowWaveforms" Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-            ToolTip="Show waveforms" Click="btnShowWaveforms_Click">
+            ToolTip="Show waveforms">
             <Image Source="Resources/AudioWaveform.png" Style="{StaticResource AudioImage}" />
         </Button>
         <Button Focusable="False" Grid.Column="4"  HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnShowSlider"
