@@ -1,6 +1,5 @@
 var myAudioContext, isWebKit;
 var firstAudioUk, firstAudioUs, lastPlayedAudio;
-var audioKeys;
 
 // 1 - read mp3 data directly from Base64 string and play via Web Audio API (doesn't work in IE)
 // 2 - read mp3 data directly from Base64 string and play via Audio element (doesn't work in mobile browsers)
@@ -51,6 +50,10 @@ function registerHandlers() {
     registerAudio();
 }
 
+function loadPage(keyword) {
+    alert(keyword);
+}
+
 function registerAudio() {
     var elements = document.getElementsByClassName("audio_button");
     for (var i = 0; i < elements.length; i++) {
@@ -69,12 +72,6 @@ function registerAudio() {
             }
         }
     }
-}
-
-function openWindow(url) {
-    url = url.toLowerCase();
-    var letter = url[0];
-    window.location = '../../Dic/' + letter + '/' + url + '.html';
 }
 
 function playAudio() {

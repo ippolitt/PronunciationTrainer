@@ -7,10 +7,8 @@ namespace Pronunciation.Parser
 {
     class SoundCollector
     {
-        private string _mainSoundUK;
-        private string _mainSoundUS;
-
-        public bool HasMainSounds { get; private set; }
+        public string MainSoundUK { get; private set; }
+        public string MainSoundUS { get; private set; }
         public List<SoundInfo> Sounds { get; private set; }
 
         public SoundCollector()
@@ -18,14 +16,14 @@ namespace Pronunciation.Parser
             Sounds = new List<SoundInfo>();
         }
 
-        public string MainSoundUK
+        public bool HasUKSound
         {
-            get { return HasMainSounds ? _mainSoundUK : null; }
+            get { return !string.IsNullOrEmpty(MainSoundUK); }
         }
 
-        public string MainSoundUS
+        public bool HasUSSound
         {
-            get { return HasMainSounds ? _mainSoundUS : null; }
+            get { return !string.IsNullOrEmpty(MainSoundUS); }
         }
 
         public void RegisterSound(string soundKey, bool isUKSound)
@@ -34,27 +32,17 @@ namespace Pronunciation.Parser
 
             if (isUKSound)
             {
-                if (string.IsNullOrEmpty(_mainSoundUK))
+                if (string.IsNullOrEmpty(MainSoundUK))
                 {
-                    _mainSoundUK = soundKey;
-                    CheckSounds();
+                    MainSoundUK = soundKey;
                 }
             }
             else
             {
-                if (string.IsNullOrEmpty(_mainSoundUS))
+                if (string.IsNullOrEmpty(MainSoundUS))
                 {
-                    _mainSoundUS = soundKey;
-                    CheckSounds();
+                    MainSoundUS = soundKey;
                 }
-            }
-        }
-
-        private void CheckSounds()
-        {
-            if (!string.IsNullOrEmpty(_mainSoundUK) && !string.IsNullOrEmpty(_mainSoundUS))
-            {
-                HasMainSounds = true;
             }
         }
     }

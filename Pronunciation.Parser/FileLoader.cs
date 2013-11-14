@@ -13,6 +13,7 @@ namespace Pronunciation.Parser
         private Dictionary<string, string> _cache;
         private string _cacheFolder;
         private bool _useCacheOnly;
+        private string _currentCacheFile;
 
         public FileLoader(string sourceFolder, string cacheFolder, bool useCacheOnly)
         {
@@ -22,12 +23,25 @@ namespace Pronunciation.Parser
             _cache = new Dictionary<string, string>();
         }
 
+        public void SwitchCache(string newCacheKey)
+        {
+            if (!string.IsNullOrEmpty(_currentCacheFile))
+            {
+                FlushCache(_currentCacheFile);
+            }
+
+            if (string.IsNullOrEmpty(newCacheKey))
+                return;
+
+            LoadCache(string.Format("{0}.txt", newCacheKey));
+        }
+
         public bool FlushCache(string cacheFileName)
         {
             if (_useCacheOnly)
             {
                 // No need to save the cache again over the same data
-                _cache.Clear();
+                ClearCache();
                 return false;
             }
 
@@ -45,13 +59,13 @@ namespace Pronunciation.Parser
                 }
             }
 
-            _cache.Clear();
+            ClearCache();
             return true;
         }
 
         public bool LoadCache(string cacheFileName)
         {
-            _cache.Clear();
+            ClearCache();
 
             var filePath = Path.Combine(_cacheFolder, cacheFileName);
             if (!File.Exists(filePath))
@@ -75,7 +89,14 @@ namespace Pronunciation.Parser
                 }
             }
 
+            _currentCacheFile = cacheFileName;
             return true;
+        }
+
+        private void ClearCache()
+        {
+            _cache.Clear();
+            _currentCacheFile = null;
         }
 
         public string GetBase64Content(string fileName)

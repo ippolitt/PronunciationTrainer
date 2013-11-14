@@ -29,7 +29,7 @@ namespace Pronunciation.Parser
         private const string HtmlSourceFile = AnalysisFolder + "Results - Final.xml";
         private const string HtmlLogFile = AnalysisFolder + "HtmlConvert.log";
 
-        private const string DbConnectionString = @"Data Source=D:\LEARN\English\Pronunciation\Trainer\Database\LPD2.sdf;Max Database Size=4000;";
+        private const string DbConnectionString = @"Data Source=D:\LEARN\English\Pronunciation\Trainer\Database\LPD.sdf;Max Database Size=4000;";
 
         static void Main(string[] args)
         {
@@ -39,7 +39,6 @@ namespace Pronunciation.Parser
                 //UploadFilesBulk();
                 //TestUpload();
                 //CleanDatabase();
-                //Console.WriteLine("Finished");
                 //return;
 
                 var rootFolder = Path.GetFullPath(Path.Combine(
@@ -82,14 +81,14 @@ namespace Pronunciation.Parser
 
                 //var topBuilder = new TopWordsBuilder();
                 //topBuilder.MergeTopWords();
-                Console.WriteLine("Finished");
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
             }
             finally
-            { 
+            {
+                Console.WriteLine("Finished");
                 Console.ReadLine();
             }
         }
@@ -178,6 +177,9 @@ namespace Pronunciation.Parser
                 SqlCeCommand cmd = new SqlCeCommand();
                 cmd.Connection = conn;
 
+                cmd.CommandText = "Delete Collocations";
+                cmd.ExecuteNonQuery();
+
                 cmd.CommandText = "Delete Words";
                 cmd.ExecuteNonQuery();
 
@@ -253,15 +255,21 @@ namespace Pronunciation.Parser
                //// File.WriteAllText(@"D:\temp.html", result);
                // Console.WriteLine(string.IsNullOrEmpty(result) ? false : true);
 
-                SqlCeCommand cmd = new SqlCeCommand(
-                    "SELECT RawData FROM Sounds WHERE SoundKey = 'uk_lpd_a__paper'", conn);
+                //SqlCeCommand cmd = new SqlCeCommand(
+                //    "SELECT RawData FROM Sounds WHERE SoundKey = 'uk_lpd_a__paper'", conn);
 
-                File.WriteAllBytes(@"D:\Test.mp3", (byte[])cmd.ExecuteScalar());
+                //File.WriteAllBytes(@"D:\Test.mp3", (byte[])cmd.ExecuteScalar());
 
                 SqlCeCommand cmd2 = new SqlCeCommand(
-    "SELECT HtmlPage FROM Words WHERE Keyword = 'alert'", conn);
+    "SELECT HtmlPage FROM Words WHERE Keyword = 'an'", conn);
 
-                File.WriteAllBytes(@"D:\Test.html", (byte[])cmd2.ExecuteScalar());
+                var data = Encoding.UTF8.GetString((byte[])cmd2.ExecuteScalar());
+
+                var template = File.ReadAllText(@"D:\WORK\NET\PronunciationTrainer\Pronunciation.Parser\Html\DatabaseTemplate.html");
+                var result = string.Format(template, "My title", "file:///D:/LEARN/English/Pronunciation/Trainer/LPD/", data);
+                File.WriteAllText(@"D:\Test.html", result, Encoding.UTF8);
+
+                //
 
             }
         }

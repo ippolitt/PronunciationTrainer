@@ -1,5 +1,5 @@
 Top:
-- Remove duplicates after merge of the Collocations and Words (Words have bigger priority)
+- Backup tables schema (Trainer & Dictionary)
 - Store history of the recordings. Save best recordings with the date so that I was able to compare them over time to check my progress
 - Allow separate recording of words if dictionary entry has several meanings (I, II)
 - Add a button to remember/highlight a record in the Recorder
@@ -8,6 +8,7 @@ Top:
 - Add a shortcut for playing ref and rec sounds simultaneosuly
 
 Waveforms:
+- Implement logic of silence finder and automatically stop recording if there's a long pause
 - Clip pauses at the end and at the beginning in the Waveform
 - Add ability to move and stretch waveforms with a slider
 - Separate waveform on segments and allow to play a certain segment
@@ -15,7 +16,6 @@ Waveforms:
 - Play sound along with moving a slider on waveform
 
 Migration to DB:
-- Do all work in a branch
 - Try loading .html page from a database. Test performance. 
 - Results:
 	DB size: 2GB vs. 1GB in file system. To reduce size:
@@ -28,15 +28,7 @@ Migration to DB:
 	Can we specify base folder for the browser control and put all other stuff (css, js, images) there?
 	Reponse time is very fast.
 - Generation:
-	Add IsUK flag to Sounds table
-	Add stubs for .css and .js injection
-	Embed images
-	Separate mp3 files. Specify which ones are main UK/US files
-	Generate jscript function call instead of the direct link (don't forget about the file lists)
-	Don't generate index file
-	Specify Rank for each word in the table
-	Don't combine similar words together. Don't remove special symbols from word names (see "ignored" keyword)
-	Add charset specification (UTF8)?
+	Test word lists
 - Code:
 	We don't need to get firstUK/Us audio from jScript anymore (we have a relation in the database). 
 	But don't forget that the last played audio should always be used
@@ -46,6 +38,7 @@ Migration to DB:
 	Generate words index based on the records from DB
 
 Other:
+- Add a handler for the double-click on the audio list item
 - Add a switch to hide/display exercise desription
 - Add recording duration to the recordings list
 - Add column "CD+Track" instead of page and sort by it

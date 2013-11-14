@@ -81,15 +81,15 @@ namespace Pronunciation.Core.Providers
             string fileName = HttpUtility.UrlDecode(segments[segments.Length - 1]);
 
             // Check if URI ends with "Dic/[subfolder]/[page name]"
-            bool isWord = segments.Length >= 3 
+            bool isArticle = segments.Length >= 3 
                 ? string.Equals(segments[segments.Length - 3], _dictionaryFolderName + "/", StringComparison.OrdinalIgnoreCase)
                 : false;
 
             string key = Path.GetFileNameWithoutExtension(fileName);
-            if (!File.Exists((isWord ? BuildWordPath(key) : BuildWordListPath(key)).LocalPath))
+            if (!File.Exists((isArticle ? BuildWordPath(key) : BuildWordListPath(key)).LocalPath))
                 return null;
 
-            return new PageInfo(isWord, key);
+            return new PageInfo(isArticle, key);
         }
 
         private string BuildSubfolderName(string fileName)

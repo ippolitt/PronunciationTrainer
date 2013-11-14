@@ -15,7 +15,7 @@ namespace Pronunciation.Trainer.AudioContexts
     {
         private readonly LPDProvider _provider;
         private readonly GetPageAudioHandler _audioDataLoader;
-        private PageInfo _currentPage;
+        private IndexEntry _currentIndex;
         private string _referenceAudioData;
         private bool _useUkAudio;
 
@@ -33,11 +33,11 @@ namespace Pronunciation.Trainer.AudioContexts
             _audioDataLoader = audioDataLoader;
         }
 
-        public void RefreshContext(PageInfo currentPage, bool useUkAudio, bool playImmediately)
+        public void RefreshContext(IndexEntry currentIndex, bool useUkAudio, bool playImmediately)
         {
             _referenceAudioData = null;
             _useUkAudio = useUkAudio;
-            _currentPage = currentPage;
+            _currentIndex = currentIndex;
 
             if (ContextChanged != null)
             {
@@ -57,17 +57,27 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public bool IsReferenceAudioExists
         {
-            get { return IsWord; }
+            get 
+            {
+                if (_currentIndex == null)
+                    return false;
+
+                if (!string.IsNullOrEmpty(_referenceAudioData))
+                    return true;
+
+                return (_useUkAudio && !string.IsNullOrEmpty(_currentIndex.SoundKeyUK))
+                    || (!_useUkAudio && !string.IsNullOrEmpty(_currentIndex.SoundKeyUS)); 
+            }
         }
 
         public bool IsRecordedAudioExists
         {
             get
             {
-                if (!IsWord)
+                if (_currentIndex == null)
                     return false;
 
-                return File.Exists(_provider.BuildRecordingFilePath(_currentPage.PageName));
+                return File.Exists(_provider.BuildRecordingFilePath(_currentIndex.Key));
             }
         }
 
@@ -78,25 +88,22 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public PlaybackSettings GetReferenceAudio()
         {
-            if (!IsWord)
+            if (_currentIndex == null)
                 return null;
 
             if (string.IsNullOrEmpty(_referenceAudioData))
             {
-                if (_currentPage.Index != null)
+                var audioKey = _useUkAudio ? _currentIndex.SoundKeyUK : _currentIndex.SoundKeyUS;
+                if (!string.IsNullOrEmpty(audioKey))
                 {
-                    var audioKey = _useUkAudio ? _currentPage.Index.SoundKeyUK : _currentPage.Index.SoundKeyUS;
-                    if (!string.IsNullOrEmpty(audioKey))
-                    {
-                        _referenceAudioData = _audioDataLoader(GetPageAudioByKeyMethodName, new object[] { audioKey });
-                    }
+                    _referenceAudioData = _audioDataLoader(GetPageAudioByKeyMethodName, new object[] { audioKey });
                 }
 
-                if (string.IsNullOrEmpty(_referenceAudioData))
-                {
-                    _referenceAudioData = _audioDataLoader(GetPageAudioMethodName,
-                        new object[] { _useUkAudio ? FirstUkAudioCode : FirstUsAudioCode });
-                }
+                //if (string.IsNullOrEmpty(_referenceAudioData))
+                //{
+                //    _referenceAudioData = _audioDataLoader(GetPageAudioMethodName,
+                //        new object[] { _useUkAudio ? FirstUkAudioCode : FirstUsAudioCode });
+                //}
             }
             if (string.IsNullOrEmpty(_referenceAudioData))
                 return null;
@@ -106,10 +113,10 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public PlaybackSettings GetRecordedAudio()
         {
-            if (!IsWord)
+            if (_currentIndex == null)
                 return null;
 
-            string recordedFilePath = _provider.BuildRecordingFilePath(_currentPage.PageName);
+            string recordedFilePath = _provider.BuildRecordingFilePath(_currentIndex.Key);
             if (!File.Exists(recordedFilePath))
                 return null;
 
@@ -118,15 +125,10 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public RecordingSettings GetRecordingSettings()
         {
-            if (!IsWord)
+            if (_currentIndex == null)
                 return null;
 
-            return new RecordingSettings(_provider.BuildRecordingFilePath(_currentPage.PageName));
-        }
-
-        private bool IsWord
-        {
-            get { return (_currentPage != null && _currentPage.IsWord); }
+            return new RecordingSettings(_provider.BuildRecordingFilePath(_currentIndex.Key));
         }
     }
 }

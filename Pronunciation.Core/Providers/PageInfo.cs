@@ -7,13 +7,13 @@ namespace Pronunciation.Core.Providers
 {
     public class PageInfo
     {
-        public bool IsWord {get; private set;}
+        public bool IsArticle {get; private set;}
         public string PageName { get; private set; }
         public IndexEntry Index { get; set; }
 
-        public PageInfo(bool isWord, string pageName)
+        public PageInfo(bool isArticle, string pageName)
         {
-            IsWord = isWord;
+            IsArticle = isArticle;
             PageName = pageName;
         }
     }

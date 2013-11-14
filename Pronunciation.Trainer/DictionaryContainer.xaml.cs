@@ -120,25 +120,37 @@ namespace Pronunciation.Trainer
             if (_currentPage == null)
             {
                 _currentPage = _provider.GetPageInfo(e.Uri);
-                if (_currentPage != null && _currentPage.IsWord)
+            }
+
+            IndexEntry wordIndex = null;
+            if (_currentPage != null && _currentPage.IsArticle)
+            {
+                if (_currentPage.Index != null && !_currentPage.Index.IsCollocation)
                 {
-                    _currentPage.Index = _wordsIndex.FirstOrDefault(x => x.Key == _currentPage.PageName && !x.IsCollocation);
+                    wordIndex = _currentPage.Index;
+                }
+                else
+                {
+                    wordIndex = _wordsIndex.FirstOrDefault(x => x.Key == _currentPage.PageName && !x.IsCollocation);
+                    if (_currentPage.Index == null)
+                    {
+                        _currentPage.Index = wordIndex;
+                    }
                 }
             }
 
-            _audioContext.RefreshContext(_currentPage, 
-                AppSettings.Instance.StartupMode == StartupPlayMode.British,
-                AppSettings.Instance.StartupMode != StartupPlayMode.None);
+            RefreshAudioContext(_currentPage == null ? null : _currentPage.Index);
 
             if (_currentPage == null)
             {
                 cboWordLists.SelectedItem = null;
             }
-            else if (_currentPage.IsWord)
+            else if (_currentPage.IsArticle)
             {
-                if (_currentPage.Index != null)
-                {
-                    RegisterRecentWord(_currentPage.Index);
+                // We register only recent words, not collocations
+                if (wordIndex != null)
+                { 
+                    RegisterRecentWord(wordIndex);
                 }
 
                 // Move keyboard focus to another control
@@ -151,6 +163,13 @@ namespace Pronunciation.Trainer
             }
 
             SetupControlsState();
+        }
+
+        private void RefreshAudioContext(IndexEntry index)
+        {
+            _audioContext.RefreshContext(index,
+                AppSettings.Instance.StartupMode == StartupPlayMode.British,
+                AppSettings.Instance.StartupMode != StartupPlayMode.None);
         }
 
         private void UserControl_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -257,31 +276,39 @@ namespace Pronunciation.Trainer
             if (string.IsNullOrWhiteSpace(wordText))
                 return null;
 
+            // Add main matches
             string searchText = wordText.Trim();
-            IEnumerable<IndexEntry> query;
+            IEnumerable<IndexEntry> mainQuery;
             if (isExactMatch)
             {
-                query = _wordsIndex.Where(x => string.Equals(x.Text, searchText, StringComparison.OrdinalIgnoreCase));   
+                mainQuery = _wordsIndex.Where(x => string.Equals(x.Text, searchText, StringComparison.OrdinalIgnoreCase));   
             }
             else
             {
-                query = _wordsIndex.Where(x => x.Text.StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
+                mainQuery = _wordsIndex.Where(x => x.Text.StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
             }
             if (maxItems >= 0)
             {
-                query = query.Take(maxItems);
+                mainQuery = mainQuery.Take(maxItems);
             }
+            var entries = mainQuery.OrderBy(x => x.Text, new SearchTextComparer(searchText)).ToList();
 
-            var entries = query.OrderBy(x => x.Text, new SearchTextComparer(searchText)).ToList();
+            // Add token based matches
             if (!isExactMatch && (entries.Count < maxItems || maxItems < 0))
             {
-                // Add token based matches
                 var tokensQuery =_tokensIndex.Where(x => x.Token.StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
                 if (maxItems >= 0)
                 {
                     tokensQuery = tokensQuery.Take(maxItems - entries.Count);
                 }
-                entries.AddRange(tokensQuery.OrderBy(x => x.Rank).ThenBy(x => x.Entry.Text).Select(x => x.Entry).Distinct());
+
+                var tokenEntries = tokensQuery.OrderBy(x => x.Rank).ThenBy(x => x.Entry.Text).Select(x => x.Entry).ToList();
+                if (tokenEntries.Count > 0)
+                {
+                    // Add only those entries that don't already present in the list
+                    var hashSet = new HashSet<IndexEntry>(entries);
+                    entries.AddRange(tokenEntries.Where(x => hashSet.Add(x)));
+                }
             }
 
             return entries;
@@ -319,10 +346,15 @@ namespace Pronunciation.Trainer
             if (selectedItem == null || selectedItem.Key == MoreSuggestionsKey)
                 return;
 
-            if (_currentPage != null && _currentPage.IsWord && _currentPage.PageName == selectedItem.Key)
+            if (_currentPage != null && _currentPage.IsArticle && _currentPage.PageName == selectedItem.Key)
             {
-                if (_currentPage.Index == null || _currentPage.Index == selectedItem)
-                    return;
+                // The same page - just play the sound without reloading the page
+                if (_currentPage.Index != null && _currentPage.Index != selectedItem)
+                {
+                    RefreshAudioContext(selectedItem);
+                }
+
+                return;
             }
 
             NavigateWord(selectedItem);
@@ -331,8 +363,7 @@ namespace Pronunciation.Trainer
         private void NavigateWord(IndexEntry entry)
         {
             Uri pageUrl = _provider.BuildWordPath(entry.Key);
-            _loadingPage = new PageInfo(true, entry.Key);
-            _loadingPage.Index = entry;
+            _loadingPage = new PageInfo(true, entry.Key) { Index = entry };
             browser.Navigate(PrepareNavigationUri(pageUrl));
         }
 
@@ -368,7 +399,6 @@ namespace Pronunciation.Trainer
             return (scriptResult is DBNull) ? null : (string)scriptResult;
         }
 
-        // Test /s
         private void BuildIndex(IEnumerable<IndexEntry> entries)
         {
             // Build index for StartWith match
@@ -386,8 +416,7 @@ namespace Pronunciation.Trainer
                     if (ch == ' ' || ch == '-' || ch == ',' || ch == '/' || ch == '(' || ch == ')')
                     {
                         // As soon as we hit a separator the next character might be the beginning of a token
-                        // It means that we'll skip first words in the collocations 
-                        // (because this case is covered by the _wordsIndex array)
+                        // It means that we'll skip first words (because this case is covered by the _wordsIndex array)
                         isTokenStart = true;
                     }
                     else

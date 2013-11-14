@@ -164,7 +164,7 @@ input
 .stress_low_optional:before
 {
     content: "(ˬ)";
-    font-weight: bold;
+    font-weight: normal;
     color: green;
 }
 .stress_up:before

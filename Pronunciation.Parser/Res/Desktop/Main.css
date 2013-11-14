@@ -141,7 +141,7 @@ iframe
 .stress_low_optional:before
 {
     content: "(ˬ)";
-    font-weight: bold;
+    font-weight: normal;
     color: green;
 }
 .stress_up:before
@@ -173,6 +173,10 @@ iframe
     display:block;
 }
 
+h1
+{
+	font-size: 1.6em;
+}
 .topword_items
 {
     margin-top: 2em;
@@ -185,7 +189,7 @@ iframe
 }
 .topword_item .word_link
 {
-    font-size: 1.5em;
+    font-size: 1.3em;
 }
 .page_scroll
 {

@@ -9,9 +9,49 @@ namespace Pronunciation.Parser
     class WordUsageInfo
     {
         public string Keyword;
-        public int Rank;
+        public int CombinedRank;
+        public WordRanks Ranks;
         public WordUsageInfo PreviousWord;
         public WordUsageInfo NextWord;
+    }
+
+    public class WordRanks
+    {
+        public string LongmanSpoken;
+        public string LongmanWritten;
+        public int Macmillan;
+        public int COCA;
+
+        public int CalculateRank()
+        {
+            int rank;
+            if (LongmanSpoken == "S1" || LongmanWritten == "W1" || (COCA > 0 && COCA <= 1000))
+            {
+                rank = 1000;
+            }
+            else if (LongmanSpoken == "S2" || LongmanWritten == "W2" || (COCA > 0 && COCA <= 2000))
+            {
+                rank = 2000;
+            }
+            else if (LongmanSpoken == "S3" || LongmanWritten == "W3" || (COCA > 0 && COCA <= 3000) || Macmillan == 2500)
+            {
+                rank = 3000;
+            }
+            else if ((COCA > 0 && COCA <= 5000) || Macmillan == 5000)
+            {
+                rank = 5000;
+            }
+            else if ((COCA > 0 && COCA <= 7500) || Macmillan == 7500)
+            {
+                rank = 7500;
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
+
+            return rank;
+        }
     }
 
     class WordUsageBuilder
@@ -51,16 +91,24 @@ namespace Pronunciation.Parser
                         _words.Add(keyword, info);
                     }
 
-                    var rank = CalculateRank(parts[2], parts[3], parts[4], parts[5]);
-                    if (rank < info.Rank || info.Rank == 0)
+                    var ranks = new WordRanks 
                     {
-                        info.Rank = rank;
+                        LongmanSpoken = parts[2],
+                        LongmanWritten = parts[3],
+                        Macmillan = string.IsNullOrEmpty(parts[4]) ? 0 : int.Parse(parts[4]),
+                        COCA = string.IsNullOrEmpty(parts[5]) ? 0 : int.Parse(parts[5])
+                    };
+                    var rank = ranks.CalculateRank();
+                    if (rank < info.CombinedRank || info.CombinedRank == 0)
+                    {
+                        info.CombinedRank = rank;
+                        info.Ranks = ranks;
                     }
                 }
             }
 
             // Build previous and next words within each rank
-            foreach (var group in _words.Values.GroupBy(x => x.Rank))
+            foreach (var group in _words.Values.GroupBy(x => x.CombinedRank))
             {
                 WordUsageInfo previous = null;
                 foreach (var word in group.OrderBy(x => x.Keyword))
@@ -92,40 +140,7 @@ namespace Pronunciation.Parser
 
         public IEnumerable<WordUsageInfo> GetWords(int rank)
         {
-            return _words.Values.Where(x => x.Rank == rank);
-        }
-
-        private int CalculateRank(string longmanS, string longmanW, string macmillan, string coca)
-        {
-            int cocaRank = string.IsNullOrEmpty(coca) ? 0 : int.Parse(coca);
-
-            int rank;
-            if (longmanS == "S1" || longmanW == "W1" || (cocaRank > 0 && cocaRank <= 1000))
-            {
-                rank = 1000;
-            }
-            else if (longmanS == "S2" || longmanW == "W2" || (cocaRank > 0 && cocaRank <= 2000))
-            {
-                rank = 2000;
-            }
-            else if (longmanS == "S3" || longmanW == "W3" || (cocaRank > 0 && cocaRank <= 3000) || macmillan == "2500")
-            {
-                rank = 3000;
-            }
-            else if ((cocaRank > 0 && cocaRank <= 5000) || macmillan == "5000")
-            {
-                rank = 5000;
-            }
-            else if ((cocaRank > 0 && cocaRank <= 7500) || macmillan == "7500")
-            {
-                rank = 7500;
-            }
-            else
-            {
-                throw new ArgumentException();
-            }
-
-            return rank;
+            return _words.Values.Where(x => x.CombinedRank == rank);
         }
     }
 }

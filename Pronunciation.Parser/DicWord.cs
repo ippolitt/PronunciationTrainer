@@ -16,9 +16,6 @@ namespace Pronunciation.Parser
         public string EntryNumber;
         public string RawMainData;
 
-        public List<DicItem> WordForms;
-        public List<DicItem> Collocations;
-
         public List<DicItem> AllItems;
     }
 
