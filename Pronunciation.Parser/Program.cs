@@ -39,6 +39,7 @@ namespace Pronunciation.Parser
                 //UploadFilesBulk();
                 //TestUpload();
                 //CleanDatabase();
+                //MigrateRecordings();
                 //return;
 
                 var rootFolder = Path.GetFullPath(Path.Combine(
@@ -271,6 +272,44 @@ namespace Pronunciation.Parser
 
                 //
 
+            }
+        }
+
+        private static void MigrateRecordings()
+        {
+            var baseFolder = @"D:\LEARN\English\Pronunciation\Trainer\Recordings\LPD";
+            var files = Directory.GetFiles(baseFolder, "*.mp3", SearchOption.AllDirectories);
+
+            using (SqlCeConnection conn = new SqlCeConnection(DbConnectionString))
+            {
+                conn.Open();
+
+                SqlCeCommand cmd = new SqlCeCommand(
+@"SELECT s.SoundKey FROM Words w 
+    INNER JOIN Sounds s ON w.SoundIdUS = s.SoundId
+    WHERE w.Keyword = @parm1", conn);
+                var parm = new SqlCeParameter("@parm1", SqlDbType.NVarChar);
+                cmd.Parameters.Add(parm);
+
+                foreach (var filePath in files)
+                {
+                    parm.Value = Path.GetFileNameWithoutExtension(filePath);
+                    string audioKey = (string)cmd.ExecuteScalar();
+                    if (string.IsNullOrEmpty(audioKey))
+                    {
+                        Console.WriteLine("Not found '{0}'", parm.Value);
+                        continue;
+                    }
+
+                    var fileDest = Path.Combine(baseFolder, string.Format("{0}.mp3", audioKey));
+                    if (File.Exists(fileDest))
+                    {
+                        Console.WriteLine("File exists '{0}'", audioKey);
+                        continue;
+                    }
+
+                    File.Copy(filePath, fileDest);
+                }
             }
         }
     }

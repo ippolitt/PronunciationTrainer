@@ -57,6 +57,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data.Entity" />
     <Reference Include="System.Data.Linq" />
+    <Reference Include="System.Data.SqlServerCe, Version=3.5.1.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
     <Reference Include="System.Web" />
@@ -107,7 +108,10 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="Providers\ExerciseId.cs" />
+    <Compile Include="Providers\IDictionaryProvider.cs" />
     <Compile Include="Providers\IndexEntry.cs" />
+    <Compile Include="Providers\LPDDatabaseProvider.cs" />
+    <Compile Include="Providers\LPDFileSystemProvider.cs" />
     <Compile Include="Providers\LPDProvider.cs" />
     <Compile Include="Providers\MultipartName.cs" />
     <Compile Include="Providers\PageInfo.cs" />

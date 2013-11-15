@@ -1,47 +1,21 @@
 var myAudioContext, isWebKit;
-var firstAudioUk, firstAudioUs, lastPlayedAudio;
 
 // 1 - read mp3 data directly from Base64 string and play via Web Audio API (doesn't work in IE)
 // 2 - read mp3 data directly from Base64 string and play via Audio element (doesn't work in mobile browsers)
 // 3 - play mp3 file via Audio element
-// 4 - pass mp3 data to play to the container
+// 4 - pass mp3 data to the container for playing
+// 5 - pass mp3 audio key to the container for playing
 var audioMode = 4;
 
 // *** Functions called by WebBrowser control
 //
-// 1 - Return first UK audio
-// 2 - Return first US audio
-// 3 - Return last played audio
-function extGetAudioData(audioType) {
-
-    var element;
-    switch (audioType) {
-        case 1:
-            element = firstAudioUk;
-            break;
-        case 2:
-            element = firstAudioUs;
-            break;
-        case 3:
-            element = lastPlayedAudio;
-            break;
-        default:
-            throw "Unsupported audio type: " + audioType;
-    }
-
-    if (element == null)
-        return null;
-
-    return GetAudioData(element);
-}
-
 function extGetAudioByKey(audioKey) {
     var elements = document.getElementsByClassName("audio_button");
     for (var i = 0; i < elements.length; i++) {
         var element = elements[i];
 
-        if (element.attributes["data-src"].value == audioKey)
-            return GetAudioData(element);
+        if (getAudioKey(element) == audioKey)
+            return getAudioData(element);
     }
 }
 // ***********
@@ -51,7 +25,15 @@ function registerHandlers() {
 }
 
 function loadPage(keyword) {
-    alert(keyword);
+    window.external.LoadPageExt(keyword);
+}
+
+function getAudioKey(element) {
+    return element.attributes["data-src"].value;
+}
+
+function getAudioData(element) {
+    return element.attributes["raw-data"].value;
 }
 
 function registerAudio() {
@@ -59,29 +41,10 @@ function registerAudio() {
     for (var i = 0; i < elements.length; i++) {
         var element = elements[i];
         element.addEventListener('click', playAudio, false);
-
-        if (firstAudioUk == null || firstAudioUs == null) {
-            var className = element.attributes["class"].value;
-
-            if (firstAudioUk == null && className.indexOf("audio_uk") >= 0) {
-                firstAudioUk = element;
-            }
-
-            if (firstAudioUs == null && className.indexOf("audio_us") >= 0) {
-                firstAudioUs = element;
-            }
-        }
     }
 }
 
 function playAudio() {
-    playAudioData(GetAudioData(this));
-
-    // We register last played audio only within this method (when it's been played explictly by clicking on the button)
-    lastPlayedAudio = this;
-}
-
-function playAudioData(data) {
     var func;
     switch (audioMode) {
         case 1:
@@ -96,20 +59,18 @@ function playAudioData(data) {
         case 4:
             func = rawDataViaContainer;
             break;
+        case 5:
+            func = audioKeyViaContainer;
+            break;
     }
 
-    func(data);
+    func(this);
 }
 
-function GetAudioData(element) {
-    if (audioMode == 3) {
-        return '../../Sounds/' + element.attributes["data-src"].value + '.mp3';
-    } else {
-        return element.attributes["raw-data"].value;
-    }
-}
-
-function rawDataViaApi(raw_data) {
+function rawDataViaApi(element) {
+    var rawData = getAudioData(element);
+    if (!rawData)
+        return;
 
     if (myAudioContext == null) {
         if ('AudioContext' in window) {
@@ -125,7 +86,7 @@ function rawDataViaApi(raw_data) {
     }
 
     try {
-        var arrayBuff = Base64Binary.decodeArrayBuffer(raw_data);
+        var arrayBuff = Base64Binary.decodeArrayBuffer(rawData);
         var mySource = myAudioContext.createBufferSource();
         //        myAudioContext.decodeAudioData(arrayBuff, function (audioData) {
         //            myBuffer = audioData;
@@ -148,19 +109,38 @@ function rawDataViaApi(raw_data) {
     }
 }
 
-function rawDataViaAudio(raw_data) {
+function rawDataViaAudio(element) {
+    var rawData = getAudioData(element);
+    if (!rawData)
+        return;
 
-    var audio = new Audio("data:audio/mpeg;base64," + raw_data);
+    var audio = new Audio("data:audio/mpeg;base64," + rawData);
     audio.addEventListener("error", function (e) { alert(this.error.code); });
     audio.play();
 }
 
-function rawDataViaContainer(raw_data) {
-    window.external.PlayAudioExt(raw_data);
+function rawDataViaContainer(element) {
+    var rawData = getAudioData(element);
+    if (!rawData)
+        return;
+
+    window.external.PlayAudioExt(getAudioKey(element), rawData);
 }
 
-function fileViaAudio(filePath) {
+function audioKeyViaContainer(element) {
+    var audioKey = getAudioKey(element);
+    if (!audioKey)
+        return;
 
+    window.external.PlayAudioExt(audioKey, null);
+}
+
+function fileViaAudio(element) {
+    var audioKey = getAudioKey(element);
+    if (!audioKey)
+        return;
+
+    var filePath = '../../Sounds/' + audioKey + '.mp3';
     var audio = new Audio(filePath);
     audio.addEventListener("error", function (e) { alert(this.error.code); });
     audio.play();

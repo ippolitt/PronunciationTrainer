@@ -35,10 +35,11 @@ namespace Pronunciation.Trainer
             public IndexEntry Entry;
         }
 
-        private LPDProvider _provider;
+        private IDictionaryProvider _provider;
         private DictionaryAudioContext _audioContext;
         private IndexEntry[] _wordsIndex;
         private TokenizedIndexEntry[] _tokensIndex;
+        private DictionaryContainerScriptingProxy _scriptingProxy;
         private PageInfo _loadingPage;
         private PageInfo _currentPage;
 
@@ -46,7 +47,7 @@ namespace Pronunciation.Trainer
         private ExecuteActionCommand _commandForward;
 
         private const int MaxNumberOfSuggestions = 100;
-        private const string MoreSuggestionsKey = "...";
+        private const string MoreSuggestionsPageName = "@";
 
         public DictionaryContainer()
         {
@@ -55,11 +56,20 @@ namespace Pronunciation.Trainer
 
         private void UserControl_Initialized(object sender, EventArgs e)
         {
-            _provider = new LPDProvider(AppSettings.Instance.Folders.Dictionary, AppSettings.Instance.Folders.DictionaryRecordings);
-            
-            _audioContext = new DictionaryAudioContext(_provider, GetPageAudioData);
+            //_provider = new LPDFileSystemProvider(AppSettings.Instance.Folders.DictionaryFile,
+            //    AppSettings.Instance.Folders.DictionaryRecordings, CallScriptMethod);
+
+            _provider = new LPDDatabaseProvider(AppSettings.Instance.Folders.DictionaryDB,
+                AppSettings.Instance.Folders.DictionaryRecordings, 
+                AppSettings.Instance.Connections.LPD);
+
+            _audioContext = new DictionaryAudioContext(_provider);
             audioPanel.AttachContext(_audioContext);
-            browser.ObjectForScripting = _audioContext;
+
+            _scriptingProxy = new DictionaryContainerScriptingProxy(
+                (x,y) => _audioContext.PlayScriptAudio(x, y),
+                (x) => LoadPage(x));
+            browser.ObjectForScripting = _scriptingProxy;
 
             BuildIndex(_provider.GetWords());
 
@@ -80,6 +90,18 @@ namespace Pronunciation.Trainer
 
             this.InputBindings.Add(new KeyBinding(_commandBack, KeyGestures.NavigateBack));
             this.InputBindings.Add(new KeyBinding(_commandForward, KeyGestures.NavigateForward));
+        }
+
+        public void LoadPage(string wordName)
+        {
+            if (string.IsNullOrEmpty(wordName))
+                return;
+
+            var wordIndex = _wordsIndex.FirstOrDefault(x => !x.IsCollocation && x.Text == wordName);
+            if (wordIndex == null)
+                return;
+
+            NavigateWord(wordIndex);
         }
 
         protected override void OnVisualTreeBuilt(bool isFirstBuild)
@@ -117,24 +139,24 @@ namespace Pronunciation.Trainer
             _loadingPage = null;
 
             // It means that the page has been loaded by clicking on a hyperlink inside a previous page
-            if (_currentPage == null)
+            if (_currentPage == null && e.Uri != null)
             {
-                _currentPage = _provider.GetPageInfo(e.Uri);
+                _currentPage = _provider.InitPageFromUrl(e.Uri);
             }
 
-            IndexEntry wordIndex = null;
+            IndexEntry currentWord = null;
             if (_currentPage != null && _currentPage.IsArticle)
             {
                 if (_currentPage.Index != null && !_currentPage.Index.IsCollocation)
                 {
-                    wordIndex = _currentPage.Index;
+                    currentWord = _currentPage.Index;
                 }
                 else
                 {
-                    wordIndex = _wordsIndex.FirstOrDefault(x => x.Key == _currentPage.PageName && !x.IsCollocation);
+                    currentWord = _wordsIndex.FirstOrDefault(x => x.PageKey == _currentPage.PageKey && !x.IsCollocation);
                     if (_currentPage.Index == null)
                     {
-                        _currentPage.Index = wordIndex;
+                        _currentPage.Index = currentWord;
                     }
                 }
             }
@@ -148,9 +170,9 @@ namespace Pronunciation.Trainer
             else if (_currentPage.IsArticle)
             {
                 // We register only recent words, not collocations
-                if (wordIndex != null)
+                if (currentWord != null)
                 { 
-                    RegisterRecentWord(wordIndex);
+                    RegisterRecentWord(currentWord);
                 }
 
                 // Move keyboard focus to another control
@@ -232,7 +254,7 @@ namespace Pronunciation.Trainer
             var items = FindWordsByText(txtSearch.Text, false, MaxNumberOfSuggestions);
             if (items != null && items.Count == MaxNumberOfSuggestions)
             {
-                items.Add(new IndexEntry(MoreSuggestionsKey, "...", false));
+                items.Add(new IndexEntry(MoreSuggestionsPageName, "...", false));
             }
             lstSuggestions.ItemsSource = items;
             if (lstSuggestions.Items.Count > 0)
@@ -343,17 +365,13 @@ namespace Pronunciation.Trainer
         private void NavigateListboxItem(ListBox listBox)
         {
             var selectedItem = listBox.SelectedItem as IndexEntry;
-            if (selectedItem == null || selectedItem.Key == MoreSuggestionsKey)
+            if (selectedItem == null || selectedItem.PageKey == MoreSuggestionsPageName)
                 return;
 
-            if (_currentPage != null && _currentPage.IsArticle && _currentPage.PageName == selectedItem.Key)
+            if (_currentPage != null && _currentPage.IsArticle && _currentPage.PageKey == selectedItem.PageKey)
             {
                 // The same page - just play the sound without reloading the page
-                if (_currentPage.Index != null && _currentPage.Index != selectedItem)
-                {
-                    RefreshAudioContext(selectedItem);
-                }
-
+                RefreshAudioContext(selectedItem);
                 return;
             }
 
@@ -362,16 +380,28 @@ namespace Pronunciation.Trainer
 
         private void NavigateWord(IndexEntry entry)
         {
-            Uri pageUrl = _provider.BuildWordPath(entry.Key);
-            _loadingPage = new PageInfo(true, entry.Key) { Index = entry };
-            browser.Navigate(PrepareNavigationUri(pageUrl));
+            PageInfo page = _provider.LoadArticlePage(entry.PageKey);
+            page.Index = entry;
+            NavigatePage(page);
         }
 
         private void NavigateList(string listName)
         {
-            Uri pageUrl = _provider.BuildWordListPath(listName);
-            _loadingPage = new PageInfo(false, listName);
-            browser.Navigate(PrepareNavigationUri(pageUrl));
+            PageInfo page = _provider.LoadListPage(listName);
+            NavigatePage(page);
+        }
+
+        private void NavigatePage(PageInfo page)
+        {
+            _loadingPage = page;
+            if (page.LoadByUrl)
+            {
+                browser.Navigate(PrepareNavigationUri(page.PageUrl));
+            }
+            else
+            {
+                browser.NavigateToString(page.PageHtml);
+            }
         }
 
         private Uri PrepareNavigationUri(Uri pageUrl)
@@ -393,10 +423,10 @@ namespace Pronunciation.Trainer
             return pageUrl;
         }
 
-        private string GetPageAudioData(string methodName, object[] methodArgs)
+        private string CallScriptMethod(string methodName, object[] methodArgs)
         {
             object scriptResult = browser.InvokeScript(methodName, methodArgs);
-            return (scriptResult is DBNull) ? null : (string)scriptResult;
+            return (scriptResult is DBNull ? null : (string)scriptResult);
         }
 
         private void BuildIndex(IEnumerable<IndexEntry> entries)

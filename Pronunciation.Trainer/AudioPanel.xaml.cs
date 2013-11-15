@@ -358,7 +358,8 @@ namespace Pronunciation.Trainer
             {
                 IsReferenceAudio = true,
                 IsFilePath = args.IsFilePath,
-                PlaybackData = args.PlaybackData,
+                FilePath = args.FilePath,
+                RawData = args.RawData,
                 PlaybackVolumeDb = AppSettings.Instance.ReferenceDataVolume
             });
         }
@@ -374,7 +375,8 @@ namespace Pronunciation.Trainer
             {
                 IsReferenceAudio = false,
                 IsFilePath = args.IsFilePath,
-                PlaybackData = args.PlaybackData,
+                FilePath = args.FilePath,
+                RawData = args.RawData,
                 SkipMs = AppSettings.Instance.SkipRecordedAudioMs
             });
         }

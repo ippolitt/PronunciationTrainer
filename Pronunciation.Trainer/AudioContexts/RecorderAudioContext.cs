@@ -71,7 +71,7 @@ namespace Pronunciation.Trainer.AudioContexts
             if (!File.Exists(recordingPath))
                 return null;
 
-            return new PlaybackSettings(true, recordingPath);
+            return new PlaybackSettings(recordingPath);
         }
 
         public RecordingSettings GetRecordingSettings()

@@ -69,7 +69,7 @@ namespace Pronunciation.Trainer.AudioContexts
             if (_exerciseContext == null || string.IsNullOrEmpty(_recordingName))
                 return null;
 
-            return new PlaybackSettings(true, _provider.BuildReferenceAudioPath(_exerciseContext, _recordingName));
+            return new PlaybackSettings(_provider.BuildReferenceAudioPath(_exerciseContext, _recordingName));
         }
 
         public PlaybackSettings GetRecordedAudio()
@@ -81,7 +81,7 @@ namespace Pronunciation.Trainer.AudioContexts
             if (!File.Exists(audioPath))
                 return null;
 
-            return new PlaybackSettings(true, audioPath);
+            return new PlaybackSettings(audioPath);
         }
 
         public RecordingSettings GetRecordingSettings()

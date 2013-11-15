@@ -7,7 +7,7 @@ namespace Pronunciation.Core.Providers
 {
     public class IndexEntry
     {
-        public string Key { get; private set; }
+        public string PageKey { get; private set; }
         public string Text { get; private set; }
         public bool IsCollocation { get; private set; }
         public string SoundKeyUK { get; private set; }
@@ -18,15 +18,15 @@ namespace Pronunciation.Core.Providers
             return Text;
         }
 
-        public IndexEntry(string key, string text, bool isCollocation)
+        public IndexEntry(string pageKey, string text, bool isCollocation)
         {
-            Key = key;
+            PageKey = pageKey;
             Text = text;
             IsCollocation = isCollocation;
         }
 
-        public IndexEntry(string key, string text, bool isCollocation, string soundKeyUK, string soundKeyUS)
-            : this (key, text, isCollocation)
+        public IndexEntry(string pageKey, string text, bool isCollocation, string soundKeyUK, string soundKeyUS)
+            : this(pageKey, text, isCollocation)
         {
             SoundKeyUK = soundKeyUK;
             SoundKeyUS = soundKeyUS;

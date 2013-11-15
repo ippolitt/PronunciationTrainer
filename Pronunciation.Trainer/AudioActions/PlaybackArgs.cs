@@ -9,7 +9,8 @@ namespace Pronunciation.Trainer.AudioActions
     {
         public bool IsReferenceAudio;
         public bool IsFilePath;
-        public string PlaybackData;
+        public string FilePath;
+        public byte[] RawData;
         public float PlaybackVolumeDb;
         public int SkipMs;
     }

@@ -38,11 +38,11 @@ namespace Pronunciation.Trainer.AudioActions
 
                 if (args.IsFilePath)
                 {
-                    result = player.PlayFile(args.PlaybackData, volumeDb, args.SkipMs);
+                    result = player.PlayFile(args.FilePath, volumeDb, args.SkipMs);
                 }
                 else
                 {
-                    result = player.PlayRawData(args.PlaybackData, volumeDb, args.SkipMs);
+                    result = player.PlayRawData(args.RawData, volumeDb, args.SkipMs);
                 }
             }
 

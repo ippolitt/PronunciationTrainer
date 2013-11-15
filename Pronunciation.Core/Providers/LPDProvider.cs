@@ -3,65 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using System.Web;
+using Pronunciation.Core.Contexts;
 
 namespace Pronunciation.Core.Providers
 {
-    public class LPDProvider
+    public abstract class LPDProvider
     {
-        private readonly string _sourceFolder;
-        private readonly string _dictionaryFolder;
-        private readonly string _recordingsFolder;
+        protected string BaseFolder { get; private set; }
+        protected string RecordingsFolder { get; private set; }
 
-        private const string _dictionaryFolderName = "Dic";
-        private const string _indexFileName = "Index.txt";
-
-        public LPDProvider(string sourceFolder, string recordingsFolder)
+        public LPDProvider(string baseFolder, string recordingsFolder)
         {
-            _sourceFolder = sourceFolder;
-            _recordingsFolder = recordingsFolder;
-            _dictionaryFolder = Path.Combine(sourceFolder, _dictionaryFolderName);
-        }
-
-        public Uri BuildWordPath(string wordName)
-        {
-            string fileName = wordName.ToLower();
-
-            return new Uri(Path.Combine(_dictionaryFolder,
-                string.Format(@"{0}\{1}.html", BuildSubfolderName(fileName), fileName)));
-        }
-
-        public Uri BuildWordListPath(string listName)
-        {
-            return new Uri(Path.Combine(_sourceFolder, string.Format(@"{0}.html", listName.ToLower())));
-        }
-
-        public string BuildRecordingFilePath(string wordName)
-        {
-            return Path.Combine(_recordingsFolder,
-                string.Format(@"{0}\{1}.mp3", BuildSubfolderName(wordName), wordName));
-        }
-
-        public List<IndexEntry> GetWords()
-        {
-            string indexFile = Path.Combine(_sourceFolder, _indexFileName);
-            if (!File.Exists(indexFile))
-                return null;
-
-            var words = new List<IndexEntry>();
-            using (var reader = new StreamReader(indexFile, Encoding.UTF8))
-            {
-                while (!reader.EndOfStream)
-                {
-                    string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 5)
-                        throw new InvalidOperationException("Index file is broken!");
-
-                    words.Add(new IndexEntry(data[1], data[0], data[2] == "1" ? true : false, data[3], data[4]));
-                }
-            }
-
-            return words;
+            BaseFolder = baseFolder;
+            RecordingsFolder = recordingsFolder;
         }
 
         public List<KeyTextPair<string>> GetWordLists()
@@ -75,26 +29,38 @@ namespace Pronunciation.Core.Providers
             };
         }
 
-        public PageInfo GetPageInfo(Uri pageUrl)
+        public PageInfo LoadListPage(string pageKey)
         {
-            string[] segments = pageUrl.Segments;
-            string fileName = HttpUtility.UrlDecode(segments[segments.Length - 1]);
-
-            // Check if URI ends with "Dic/[subfolder]/[page name]"
-            bool isArticle = segments.Length >= 3 
-                ? string.Equals(segments[segments.Length - 3], _dictionaryFolderName + "/", StringComparison.OrdinalIgnoreCase)
-                : false;
-
-            string key = Path.GetFileNameWithoutExtension(fileName);
-            if (!File.Exists((isArticle ? BuildWordPath(key) : BuildWordListPath(key)).LocalPath))
-                return null;
-
-            return new PageInfo(isArticle, key);
+            return new PageInfo(false, pageKey, BuildWordListPath(pageKey));
         }
 
-        private string BuildSubfolderName(string fileName)
+        public PlaybackSettings GetRecordedAudio(string audioKey)
         {
-            return fileName.Substring(0, 1);
+            string recordedFilePath = BuildRecordingFilePath(audioKey);
+            if (!File.Exists(recordedFilePath))
+                return null;
+
+            return new PlaybackSettings(recordedFilePath);
+        }
+
+        public bool IsRecordedAudioExists(string audioKey)
+        {
+            return File.Exists(BuildRecordingFilePath(audioKey));
+        }
+
+        public RecordingSettings GetRecordingSettings(string audioKey)
+        {
+            return new RecordingSettings(BuildRecordingFilePath(audioKey));
+        }
+
+        private string BuildRecordingFilePath(string audioKey)
+        {
+            return Path.Combine(RecordingsFolder, string.Format(@"{0}.mp3", audioKey));
+        }
+
+        protected Uri BuildWordListPath(string listName)
+        {
+            return new Uri(Path.Combine(BaseFolder, string.Format(@"{0}.html", listName.ToLower())));
         }
     }
 }

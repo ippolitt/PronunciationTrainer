@@ -33,6 +33,7 @@ namespace Pronunciation.Trainer
         public float ReferenceDataVolume { get; set; }
 
         public AppFolders Folders { get; private set; }
+        public ConnectionStrings Connections { get; private set; }
 
         private readonly static Lazy<AppSettings> _instance = new Lazy<AppSettings>(() => new AppSettings());
 
@@ -51,6 +52,7 @@ namespace Pronunciation.Trainer
             SkipRecordedAudioMs = Settings.Default.SkipRecordedAudioMs;
 
             Folders = new AppFolders(Settings.Default.BaseFolder);
+            Connections = new ConnectionStrings();
         }
 
         public void Save()

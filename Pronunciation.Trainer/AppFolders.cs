@@ -13,7 +13,9 @@ namespace Pronunciation.Trainer
 
         private const string _recordingsFolderName = "Recordings";
         private const string _recorderFolderName = "Recorder";
-        private const string _dictionaryFolderName = "LPD";
+        private const string _dictionaryRecordingsFolderName = "LPD";
+        private const string _dictionaryFileFolderName = "LPD_File";
+        private const string _dictionaryDBFolderName = "LPD_DB";
         private const string _exercisesFolderName = "Exercises";
         private const string _databaseFolderName = "Database";
 
@@ -28,14 +30,19 @@ namespace Pronunciation.Trainer
             get { return _baseFolder; }
         }
 
-        public string Dictionary
+        public string DictionaryFile
         {
-            get { return Path.Combine(_baseFolder, _dictionaryFolderName); }
+            get { return Path.Combine(_baseFolder, _dictionaryFileFolderName); }
+        }
+
+        public string DictionaryDB
+        {
+            get { return Path.Combine(_baseFolder, _dictionaryDBFolderName); }
         }
 
         public string DictionaryRecordings
         {
-            get { return Path.Combine(_recordingsFolder, _dictionaryFolderName); }
+            get { return Path.Combine(_recordingsFolder, _dictionaryRecordingsFolderName); }
         }
 
         public string Exercises

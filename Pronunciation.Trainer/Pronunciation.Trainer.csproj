@@ -44,6 +44,7 @@
       <HintPath>..\packages\EntityFramework.5.0.0\lib\net40\EntityFramework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Entity" />
     <Reference Include="System.Data.Linq" />
@@ -75,7 +76,9 @@
     <Compile Include="AudioList.cs" />
     <Compile Include="BindingErrorTraceListener.cs" />
     <Compile Include="Commands\ExecuteActionCommand.cs" />
+    <Compile Include="ConnectionStrings.cs" />
     <Compile Include="ControlsHelper.cs" />
+    <Compile Include="DictionaryContainerScriptingProxy.cs" />
     <Compile Include="TabItemExt.cs" />
     <Compile Include="DataImporter.xaml.cs">
       <DependentUpon>DataImporter.xaml</DependentUpon>

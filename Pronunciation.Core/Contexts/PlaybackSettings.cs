@@ -8,12 +8,19 @@ namespace Pronunciation.Core.Contexts
     public class PlaybackSettings
     {
         public bool IsFilePath { get; private set; }
-        public string PlaybackData { get; private set; }
+        public string FilePath { get; private set; }
+        public byte[] RawData { get; private set; }
 
-        public PlaybackSettings(bool isFilePath, string playbackData)
+        public PlaybackSettings(string filePath)
         {
-            IsFilePath = isFilePath;
-            PlaybackData = playbackData;
+            IsFilePath = true;
+            FilePath = filePath;
+        }
+
+        public PlaybackSettings(byte[] rawData)
+        {
+            IsFilePath = false;
+            RawData = rawData;
         }
     }
 }

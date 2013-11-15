@@ -28,16 +28,18 @@ Migration to DB:
 	Can we specify base folder for the browser control and put all other stuff (css, js, images) there?
 	Reponse time is very fast.
 - Generation:
+	Migrate my recordings to be linked by sound key
 	Test word lists
 - Code:
+	implement back/forward
+	Ensure that my recordings aren't lost because the keys (and subfolders) will be different in DB provider
 	We don't need to get firstUK/Us audio from jScript anymore (we have a relation in the database). 
 	But don't forget that the last played audio should always be used
-	Check if back/forward still works
 	Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
 	Cache last N files and played audio (preload only one audio? based on the playback settings)
-	Generate words index based on the records from DB
 
 Other:
+- When I change language and click "Play" it still plays the old audio
 - Add a handler for the double-click on the audio list item
 - Add a switch to hide/display exercise desription
 - Add recording duration to the recordings list
