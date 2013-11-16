@@ -212,6 +212,13 @@ namespace Pronunciation.Core.Actions
         public Action<ActionContext> Worker { get; protected set; }
         public Action<ActionContext, ActionResult> ResultProcessor { get; protected set; }
 
+        public BackgroundActionWithoutArgs(Action<ActionContext> worker, 
+            Action<ActionContext, ActionResult> resultProcessor)
+        {
+            Worker = worker;
+            ResultProcessor = resultProcessor;
+        }
+
         public BackgroundActionWithoutArgs(Func<ActionContext, bool> validator,
             Action<ActionContext> worker, Action<ActionContext, ActionResult> resultProcessor)
         {
@@ -222,7 +229,7 @@ namespace Pronunciation.Core.Actions
 
         protected override ActionArgs<object> PrepareArgs(ActionContext context)
         {
-            bool isAllowed = Validator == null ? false : Validator(context);
+            bool isAllowed = Validator == null ? true : Validator(context);
             return new ActionArgs<object>(isAllowed, null);
         }
 
@@ -244,6 +251,13 @@ namespace Pronunciation.Core.Actions
         public Func<ActionContext, TResult> Worker { get; protected set; }
         public Action<ActionContext, ActionResult<TResult>> ResultProcessor { get; protected set; }
 
+        public BackgroundActionWithoutArgs(Func<ActionContext, TResult> worker, 
+            Action<ActionContext, ActionResult<TResult>> resultProcessor)
+        {
+            Worker = worker;
+            ResultProcessor = resultProcessor;
+        }
+
         public BackgroundActionWithoutArgs(Func<ActionContext, bool> validator,
             Func<ActionContext, TResult> worker, Action<ActionContext, ActionResult<TResult>> resultProcessor)
         {
@@ -254,7 +268,7 @@ namespace Pronunciation.Core.Actions
 
         protected override ActionArgs<object> PrepareArgs(ActionContext context)
         {
-            bool isAllowed = Validator == null ? false : Validator(context);
+            bool isAllowed = Validator == null ? true : Validator(context);
             return new ActionArgs<object>(isAllowed, null);
         }
 

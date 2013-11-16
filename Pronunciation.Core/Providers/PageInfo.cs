@@ -34,5 +34,31 @@ namespace Pronunciation.Core.Providers
             LoadByUrl = false;
             PageHtml = pageHtml;
         }
+
+        public override bool Equals(object obj)
+        {
+            return AreEqual(this, (PageInfo)obj);
+        }
+
+        public static bool operator ==(PageInfo a, PageInfo b)
+        {
+            return AreEqual(a, b);
+        }
+
+        public static bool operator !=(PageInfo a, PageInfo b)
+        {
+            return !AreEqual(a, b);
+        }
+
+        private static bool AreEqual(PageInfo a, PageInfo b)
+        {
+            if (ReferenceEquals(a, null))
+                return ReferenceEquals(b, null);
+
+            if (ReferenceEquals(b, null))
+                return false;
+            
+            return (a.IsArticle == b.IsArticle) && string.Equals(a.PageKey, b.PageKey);
+        }
     }
 }

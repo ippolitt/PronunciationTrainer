@@ -16,25 +16,6 @@ Waveforms:
 - Play sound along with moving a slider on waveform
 
 Migration to DB:
-- Try loading .html page from a database. Test performance. 
-- Results:
-	DB size: 2GB vs. 1GB in file system. To reduce size:
-		- zip content to make (2x smaller) 
-		- store binary data (image) instead of ntext to use UTF8
-		- store mp3 separately to avoid Base64 conversion (1/4 smaller)
-		- use Int32 keys instead of Guids (a few Mbs smaller)
-	Need to change all hyperlinks on a page to call jscript function which calls external function
-	What about images? Should we also embed them?
-	Can we specify base folder for the browser control and put all other stuff (css, js, images) there?
-	Reponse time is very fast.
-- Generation:
-	Migrate my recordings to be linked by sound key
-	Test word lists
-- Code:
-	implement back/forward
-	Ensure that my recordings aren't lost because the keys (and subfolders) will be different in DB provider
-	We don't need to get firstUK/Us audio from jScript anymore (we have a relation in the database). 
-	But don't forget that the last played audio should always be used
 	Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
 	Cache last N files and played audio (preload only one audio? based on the playback settings)
 

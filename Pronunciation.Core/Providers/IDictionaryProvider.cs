@@ -8,7 +8,8 @@ namespace Pronunciation.Core.Providers
 {
     public interface IDictionaryProvider
     {
-        List<IndexEntry> GetWords();
+        bool IsWordsIndexCached { get; }
+        List<IndexEntry> GetWordsIndex();
         List<KeyTextPair<string>> GetWordLists();
 
         PageInfo LoadArticlePage(string pageKey);

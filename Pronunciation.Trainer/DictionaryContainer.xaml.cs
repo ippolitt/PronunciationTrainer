@@ -20,6 +20,7 @@ using System.Runtime.InteropServices;
 using System.Collections;
 using System.Diagnostics;
 using Pronunciation.Trainer.Commands;
+using Pronunciation.Core.Actions;
 
 namespace Pronunciation.Trainer
 {
@@ -40,6 +41,7 @@ namespace Pronunciation.Trainer
         private IndexEntry[] _wordsIndex;
         private TokenizedIndexEntry[] _tokensIndex;
         private DictionaryContainerScriptingProxy _scriptingProxy;
+        private NavigationHistory<PageInfo> _history;
         private PageInfo _loadingPage;
         private PageInfo _currentPage;
 
@@ -66,12 +68,11 @@ namespace Pronunciation.Trainer
             _audioContext = new DictionaryAudioContext(_provider);
             audioPanel.AttachContext(_audioContext);
 
+            _history = new NavigationHistory<PageInfo>();
             _scriptingProxy = new DictionaryContainerScriptingProxy(
                 (x,y) => _audioContext.PlayScriptAudio(x, y),
                 (x) => LoadPage(x));
             browser.ObjectForScripting = _scriptingProxy;
-
-            BuildIndex(_provider.GetWords());
 
             var wordLists = _provider.GetWordLists();
             if (wordLists != null)
@@ -90,6 +91,32 @@ namespace Pronunciation.Trainer
 
             this.InputBindings.Add(new KeyBinding(_commandBack, KeyGestures.NavigateBack));
             this.InputBindings.Add(new KeyBinding(_commandForward, KeyGestures.NavigateForward));
+
+            SplashScreen splash = null;
+            if (!_provider.IsWordsIndexCached)
+            {
+                splash = new SplashScreen("Resources/BuildingIndex.png");
+                splash.Show(false, true);
+            }
+
+            BuildIndex(_provider.GetWordsIndex());
+            if (splash != null)
+            {
+                splash.Close(TimeSpan.FromSeconds(1));
+            }
+        }
+
+        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            SetupControlsState();
+            if (string.IsNullOrEmpty(txtSearch.Text) && !txtSearch.IsKeyboardFocusWithin)
+            {
+                txtSearch.Focus();
+            }
+            else
+            {
+                CaptureKeyboardFocus();
+            }
         }
 
         public void LoadPage(string wordName)
@@ -112,19 +139,6 @@ namespace Pronunciation.Trainer
             {
                 btnBack.ToolTip += KeyGestures.NavigateBack.GetTooltipString();
                 btnForward.ToolTip += KeyGestures.NavigateForward.GetTooltipString();
-            }
-        }
-
-        private void UserControl_Loaded(object sender, RoutedEventArgs e)
-        {
-            SetupControlsState();
-            if (string.IsNullOrEmpty(txtSearch.Text) && !txtSearch.IsKeyboardFocusWithin)
-            {
-                txtSearch.Focus();
-            }
-            else
-            {
-                CaptureKeyboardFocus();
             }
         }
 
@@ -221,23 +235,23 @@ namespace Pronunciation.Trainer
 
         private void SetupControlsState()
         {
-            _commandBack.UpdateState(browser.CanGoBack);
-            _commandForward.UpdateState(browser.CanGoForward);
+            _commandBack.UpdateState(_history.CanGoBack);
+            _commandForward.UpdateState(_history.CanGoForward);
         }
 
         private void GoBack()
         {
-            if (browser.CanGoBack)
+            if (_history.CanGoBack)
             {
-                browser.GoBack();
+                NavigatePage(_history.GoBack(), false);
             }
         }
 
         private void GoForward()
         {
-            if (browser.CanGoForward)
+            if (_history.CanGoForward)
             {
-                browser.GoForward();
+                NavigatePage(_history.GoForward(), false);
             }
         }
 
@@ -382,17 +396,22 @@ namespace Pronunciation.Trainer
         {
             PageInfo page = _provider.LoadArticlePage(entry.PageKey);
             page.Index = entry;
-            NavigatePage(page);
+            NavigatePage(page, true);
         }
 
         private void NavigateList(string listName)
         {
             PageInfo page = _provider.LoadListPage(listName);
-            NavigatePage(page);
+            NavigatePage(page, true);
         }
 
-        private void NavigatePage(PageInfo page)
+        private void NavigatePage(PageInfo page, bool registerHistory)
         {
+            if (registerHistory)
+            {
+                _history.RegisterPage(page);
+            }
+
             _loadingPage = page;
             if (page.LoadByUrl)
             {

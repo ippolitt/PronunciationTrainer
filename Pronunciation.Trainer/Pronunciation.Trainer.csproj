@@ -66,7 +66,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="AppFolders.cs" />
     <Compile Include="AudioActions\PlayAudioAction.cs" />
     <Compile Include="AudioActions\PlaybackArgs.cs" />
     <Compile Include="AudioActions\RecordAudioAction.cs" />
@@ -76,7 +75,6 @@
     <Compile Include="AudioList.cs" />
     <Compile Include="BindingErrorTraceListener.cs" />
     <Compile Include="Commands\ExecuteActionCommand.cs" />
-    <Compile Include="ConnectionStrings.cs" />
     <Compile Include="ControlsHelper.cs" />
     <Compile Include="DictionaryContainerScriptingProxy.cs" />
     <Compile Include="TabItemExt.cs" />
@@ -185,7 +183,9 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <None Include="app.config" />
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -209,6 +209,7 @@
       <Link>lame.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Resource Include="Resources\BuildingIndex.png" />
     <Resource Include="Resources\AudioWaveform.png" />
     <Resource Include="Resources\AudioSlider.png" />
     <Resource Include="App.ico" />

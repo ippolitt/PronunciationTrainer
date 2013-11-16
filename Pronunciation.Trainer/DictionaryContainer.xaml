@@ -5,7 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d" 
-             d:DesignHeight="528" d:DesignWidth="826" Initialized="UserControl_Initialized" 
+             d:DesignHeight="528" d:DesignWidth="826" Initialized="UserControl_Initialized"
              Loaded="UserControl_Loaded" PreviewKeyDown="UserControl_PreviewKeyDown">
     <UserControl.Resources>
         <Style x:Key="GreyedImage" TargetType="Image">

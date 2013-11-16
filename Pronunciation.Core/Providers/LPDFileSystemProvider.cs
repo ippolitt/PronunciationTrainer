@@ -13,8 +13,8 @@ namespace Pronunciation.Core.Providers
         private readonly string _dictionaryFolder;
         private readonly CallScriptMethodHandler _scriptMethodInvoker;
 
-        private const string _dictionaryFolderName = "Dic";
-        private const string _indexFileName = "Index.txt";
+        private const string DictionaryFolderName = "Dic";
+        private const string IndexFileName = "Index.txt";
         private const string GetAudioMethodName = "extGetAudioByKey";
 
         public delegate string CallScriptMethodHandler(string methodName, object[] methodArgs);
@@ -24,7 +24,7 @@ namespace Pronunciation.Core.Providers
         {
             _scriptMethodInvoker = scriptMethodInvoker;
 
-            _dictionaryFolder = Path.Combine(baseFolder, _dictionaryFolderName);
+            _dictionaryFolder = Path.Combine(baseFolder, DictionaryFolderName);
         }
 
         public PageInfo LoadArticlePage(string pageKey)
@@ -39,7 +39,7 @@ namespace Pronunciation.Core.Providers
 
             // Check if URI ends with "Dic/[subfolder]/[page name]"
             bool isArticle = segments.Length >= 3
-                ? string.Equals(segments[segments.Length - 3], _dictionaryFolderName + "/", StringComparison.OrdinalIgnoreCase)
+                ? string.Equals(segments[segments.Length - 3], DictionaryFolderName + "/", StringComparison.OrdinalIgnoreCase)
                 : false;
 
             string pageKey = Path.GetFileNameWithoutExtension(fileName);
@@ -65,9 +65,14 @@ namespace Pronunciation.Core.Providers
             return string.IsNullOrEmpty(scriptData) ? null : new PlaybackSettings(Convert.FromBase64String(scriptData));
         }
 
-        public List<IndexEntry> GetWords()
+        public bool IsWordsIndexCached 
         {
-            string indexFile = Path.Combine(BaseFolder, _indexFileName);
+            get { return true; }
+        }
+
+        public List<IndexEntry> GetWordsIndex()
+        {
+            string indexFile = Path.Combine(BaseFolder, IndexFileName);
             if (!File.Exists(indexFile))
                 return null;
 

@@ -13,18 +13,29 @@ namespace Pronunciation.Core.Providers
     {
         private readonly string _connectionString;
         private readonly string _pageTemplate;
+        private readonly string _indexFilePath;
 
         private const string PageTemplateFileName = "PageTemplate.html";
+        private const string IndexFileName = "Index.txt";
 
         public LPDDatabaseProvider(string baseFolder, string recordingsFolder, string connectionString)
             : base(baseFolder, recordingsFolder)
         {
             _connectionString = connectionString;
+            _indexFilePath = Path.Combine(baseFolder, IndexFileName);
             _pageTemplate = File.ReadAllText(Path.Combine(baseFolder, PageTemplateFileName));
         }
 
-        public List<IndexEntry> GetWords()
+        public bool IsWordsIndexCached
         {
+            get { return File.Exists(_indexFilePath); }
+        }
+
+        public List<IndexEntry> GetWordsIndex()
+        {
+            if (IsWordsIndexCached)
+                return GetCachedWordsIndex();
+
             var index = new List<IndexEntry>();
             using (SqlCeConnection conn = new SqlCeConnection(_connectionString))
             {
@@ -48,9 +59,9 @@ FROM Collocations c
     LEFT JOIN Sounds s1 ON c.SoundIdUK = s1.SoundId
     LEFT JOIN Sounds s2 ON c.SoundIdUS = s2.SoundId";
                 AddIndexEntries(cmd, true, index);
-
             }
 
+            CacheWordsIndex(index);
             return index;
         }
 
@@ -84,17 +95,9 @@ WHERE WordId = @wordId", conn);
             return new PageInfo(true, pageKey, BuildPageHtml(keyword, pageBody));
         }
 
-        // We can only parse URLs of the word lists
         public PageInfo InitPageFromUrl(Uri pageUrl)
         {
-            string[] segments = pageUrl.Segments;
-            string pageKey = Path.GetFileNameWithoutExtension(HttpUtility.UrlDecode(segments[segments.Length - 1]));
-
-            Uri listUrl = BuildWordListPath(pageKey);
-            if (!File.Exists(listUrl.LocalPath))
-                return null;
-
-            return new PageInfo(false, pageKey, listUrl);
+            throw new NotSupportedException();
         }
 
         public PlaybackSettings GetReferenceAudio(string audioKey)
@@ -154,6 +157,37 @@ WHERE SoundKey = @soundKey", conn);
                 pageBase += "/";
             }
             return string.Format(_pageTemplate, title, pageBase, pageBody);
+        }
+
+        private void CacheWordsIndex(List<IndexEntry> index)
+        {
+            var bld = new StringBuilder();
+            foreach (var entry in index)
+            {
+                bld.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}",
+                    entry.Text, entry.PageKey, entry.IsCollocation ? 1 : 0,
+                    entry.SoundKeyUK, entry.SoundKeyUS));
+            }
+
+            File.WriteAllText(_indexFilePath, bld.ToString(), Encoding.UTF8);
+        }
+
+        private List<IndexEntry> GetCachedWordsIndex()
+        {
+            var words = new List<IndexEntry>();
+            using (var reader = new StreamReader(_indexFilePath, Encoding.UTF8))
+            {
+                while (!reader.EndOfStream)
+                {
+                    string[] data = reader.ReadLine().Split('\t');
+                    if (data.Length != 5)
+                        throw new InvalidOperationException("Index file is broken!");
+
+                    words.Add(new IndexEntry(data[1], data[0], data[2] == "1" ? true : false, data[3], data[4]));
+                }
+            }
+
+            return words;
         }
     }
 }
