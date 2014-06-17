@@ -20,7 +20,7 @@ namespace Pronunciation.Core.Audio
         private TimeSpan _totalLength = TimeSpan.Zero;
         private readonly bool _collectSamples;
         private readonly object _syncLock = new object();
-        private static readonly object _playLock = new object(); // Allow only one active playback per process
+        private readonly object _playLock = new object();
 
         public delegate void PlayerStateChangedDelegate(Mp3Player player);
 
@@ -85,7 +85,7 @@ namespace Pronunciation.Core.Audio
                 throw new InvalidOperationException("The player has been disposed!");
 
             if (!Monitor.TryEnter(_playLock))
-                throw new InvalidOperationException("Only one audio file can be played at a time!");
+                throw new InvalidOperationException("Another playback is currently in progress!");
 
             try
             {

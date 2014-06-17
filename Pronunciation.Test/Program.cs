@@ -29,6 +29,7 @@ namespace Pronunciation.Test
             }
             finally
             {
+                Console.WriteLine("Finished");
                 Console.ReadLine();
             }
         }
