@@ -11,7 +11,6 @@
         <Canvas Name="header" Height="34" DockPanel.Dock="Top">
             <Button Canvas.Left="0" Canvas.Top="6" Content="Add" Height="23" Name="btnAdd" Width="68" Click="btnAdd_Click" />
             <Button Canvas.Left="74" Canvas.Top="6" Content="Delete" Height="23" Name="btnDelete" Width="68" Click="btnDelete_Click" />
-            <Button Canvas.Right="0" Canvas.Top="6" Content="Save" Height="23" Name="btnSave" Width="68" Click="btnSave_Click" />
         </Canvas>
         <Canvas Name="footer" Height="35" DockPanel.Dock="Bottom"></Canvas>
         <DataGrid DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}, 

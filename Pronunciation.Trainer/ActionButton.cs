@@ -12,23 +12,38 @@ namespace Pronunciation.Trainer
 {
     public class ActionButton : Button
     {
-        private object _originalContent;
+        public enum ActionButtonState
+        {
+            Stopped,
+            Running,
+            Paused
+        }
+
         private BackgroundAction _target;
 
-        public string StopText { get; set; }
+        public string DefaultTooltip { get; set; }
+        public string RunningTooltip { get; set; }
+        public string PausedTooltip { get; set; }
 
-        public static readonly DependencyProperty IsRunningProperty = DependencyProperty.Register(
-            "IsRunning", typeof(bool), typeof(ActionButton));
-
-        public bool IsRunning
-        {
-            get { return (bool)GetValue(IsRunningProperty); }
-            set { SetValue(IsRunningProperty, value); }
-        }
+        public static readonly DependencyProperty ButtonStateProperty = DependencyProperty.Register(
+            "ButtonState", typeof(ActionButtonState), typeof(ActionButton));
+        public static readonly DependencyProperty DynamicTooltipProperty = DependencyProperty.Register(
+            "DynamicTooltip", typeof(string), typeof(ActionButton));
 
         public ActionButton()
         {
             DataContext = this;
+        }
+
+        public void RefreshDefaultTooltip()
+        {
+            SetValue(DynamicTooltipProperty, DefaultTooltip);
+        }
+
+        protected override void OnInitialized(EventArgs e)
+        {
+            SetValue(DynamicTooltipProperty, DefaultTooltip);
+            base.OnInitialized(e);
         }
 
         [Browsable(false)]
@@ -48,29 +63,47 @@ namespace Pronunciation.Trainer
 
                     _target.ActionCompleted -= Target_ActionCompleted;
                     _target.ActionCompleted += Target_ActionCompleted;
+
+                    _target.ActionStateChanged -= Target_ActionStateChanged;
+                    _target.ActionStateChanged += Target_ActionStateChanged;
                 }
             }
         }
 
+        private void Target_ActionStateChanged(BackgroundAction action)
+        {
+            ActionButtonState state;
+            string tooltip;
+            switch (action.ActionState)
+            {
+                case BackgroundActionState.Running:
+                    state = ActionButtonState.Running;
+                    tooltip = string.IsNullOrEmpty(RunningTooltip) ? DefaultTooltip : RunningTooltip;
+                    break;
+
+                case BackgroundActionState.Suspended:
+                    state = ActionButtonState.Paused;
+                    tooltip = string.IsNullOrEmpty(PausedTooltip) ? DefaultTooltip : PausedTooltip;
+                    break;
+
+                default:
+                    state = ActionButtonState.Stopped;
+                    tooltip = DefaultTooltip;
+                    break;
+            }
+
+            SetValue(ButtonStateProperty, state);
+            SetValue(DynamicTooltipProperty, tooltip);
+        }
+
         private void Target_ActionStarted(BackgroundAction action)
         {
-            IsRunning = true;
             IsEnabled = action.IsAbortable;
-            if (action.IsAbortable && !string.IsNullOrEmpty(StopText))
-            {
-                _originalContent = Content;
-                Content = StopText;
-            }
         }
 
         private void Target_ActionCompleted(BackgroundAction action)
         {
-            IsRunning = false;
             IsEnabled = true;
-            if (_originalContent != null)
-            {
-                Content = _originalContent;
-            }
         }
 
         protected override void OnClick()

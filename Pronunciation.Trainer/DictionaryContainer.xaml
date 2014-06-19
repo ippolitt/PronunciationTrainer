@@ -46,12 +46,12 @@
             <TextBlock Height="23" Name="textBlock1" Text="Recent words:" Grid.Column="6" Margin="0,6,0,0" HorizontalAlignment="Left" />
             <Button Height="23" Name="btnBack" HorizontalAlignment="Stretch" Focusable="False" 
                 Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                ToolTip="Go to the previous page">
+                ToolTip="Go to the previous page [{0}]">
                 <Image Source="Resources/ArrowBack.png" Stretch="None" Style="{StaticResource GreyedImage}" />
             </Button>
             <Button Height="23" Name="btnForward" HorizontalAlignment="Stretch" Grid.Column="1" Focusable="False" 
                 Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                ToolTip="Go to the next page">
+                ToolTip="Go to the next page [{0}]">
                 <Image Source="Resources/ArrowForward.png" Stretch="None" Style="{StaticResource GreyedImage}" />
             </Button>
         </Grid>

@@ -1,0 +1,68 @@
+﻿<Window x:Class="Pronunciation.Trainer.RecordingDetails"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Pronunciation.Trainer"
+        Title="Recording"
+        Initialized="Window_Initialized" Loaded="Window_Loaded" Closing="Window_Closing" Height="576" Width="782">
+    <DockPanel Name="rootPanel" Margin="10"
+               DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=ActiveRecord}">
+        <local:AudioPanel DockPanel.Dock="Top" Height="32" x:Name="audioPanel" />
+
+        <Grid DockPanel.Dock="Top" Name="recordingHeader">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="60"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="70"></ColumnDefinition>
+                <ColumnDefinition Width="200"></ColumnDefinition>                
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="60"></RowDefinition>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Title:"/>
+            <TextBox Grid.Row="0" Grid.Column="1" Name="txtTitle" Margin="0,3,0,2" TabIndex="10"
+                Text="{Binding Path=Title, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" />
+
+            <TextBlock Grid.Row="0" Grid.Column="2" Margin="10,0,0,0" VerticalAlignment="Center" Text="Category:"/>
+            <TextBox Grid.Row="0" Grid.Column="3" Name="txtCategory" Margin="0,3,0,2" TabIndex="20"
+                Text="{Binding Path=Category, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" />
+            
+            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,5,0,0" VerticalAlignment="Top" Text="Notes:" />
+            <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,3" Name="txtNotes" TabIndex="30"
+                TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="False" 
+                Text="{Binding Path=Notes, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}"  AllowDrop="False" />
+        </Grid>
+        
+        <StackPanel Name="footer" Height="35" DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="OK" Height="23" Margin="5,0,0,0" Name="btnOK" IsDefault="true" Width="75" Click="btnOK_Click" TabIndex="110" />
+            <Button Content="Apply" Height="23" Margin="5,0,0,0" Name="btnApply" TabIndex="115" Width="75" Click="btnApply_Click" />
+            <Button Content="Cancel" Height="23" Margin="5,0,0,0" Name="btnCancel" IsCancel="True" Width="75" Click="btnCancel_Click" TabIndex="120" />
+        </StackPanel>
+
+        <Grid Name="recordingBody" Margin="0,5,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="160"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Top" Text="Text:" />
+            <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Top" Text="Audio:" />
+
+            <TextBox Grid.Row="1" Grid.Column="0" Margin="0,3,10,3" Name="txtText" TabIndex="40"
+                TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="False" VerticalScrollBarVisibility="Auto" 
+                Text="{Binding Path=RecordingText, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}"  AllowDrop="False" />
+
+            <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,3,1,3" Orientation="Vertical" VerticalAlignment="Top" >
+                <local:AudioList Grid.Row="1" Grid.Column="1" x:Name="lstRecords" TabIndex="50" Height="200" SelectionMode="Extended"
+                    SelectionChanged="lstRecords_SelectionChanged" MouseDoubleClick="lstRecords_MouseDoubleClick" />
+                <Button Margin="0,5,0,0" Content="Delete selected" Name="btnDeleteSelected" Click="btnDeleteSelected_Click" />
+                <Button Margin="0,5,0,0" Content="Explore audio folder" Name="btnExploreFolder" Click="btnExploreFolder_Click" />
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</Window>

@@ -15,6 +15,7 @@ using Pronunciation.Trainer.AudioContexts;
 using Pronunciation.Core.Providers;
 using System.ComponentModel;
 using Pronunciation.Core;
+using System.IO;
 
 namespace Pronunciation.Trainer
 {
@@ -23,8 +24,8 @@ namespace Pronunciation.Trainer
     /// </summary>
     public partial class Recorder : UserControlExt, ISupportsKeyboardFocus
     {
-        private RecorderProvider _provider;
-        private RecorderAudioContext _audioContext;
+        private QuickRecorderProvider _provider;
+        private QuickRecorderAudioContext _audioContext;
 
         public Recorder()
         {
@@ -33,15 +34,12 @@ namespace Pronunciation.Trainer
 
         private void UserControl_Initialized(object sender, EventArgs e)
         {
-            _provider = new RecorderProvider(AppSettings.Instance.Folders.Recorder);
-            _audioContext = new RecorderAudioContext(_provider);
+            _provider = new QuickRecorderProvider(AppSettings.Instance.Folders.QuickRecorder);
+            _audioContext = new QuickRecorderAudioContext(_provider);
 
             audioPanel.RecordingCompleted += AudioPanel_RecordingCompleted;
             lstRecordings.Items.SortDescriptions.Add(new SortDescription("Text", ListSortDirection.Descending));
-        }
 
-        private void UserControl_Loaded(object sender, RoutedEventArgs e)
-        {
             audioPanel.AttachContext(_audioContext);
             lstRecordings.AttachPanel(audioPanel);
 
@@ -51,6 +49,11 @@ namespace Pronunciation.Trainer
                 lstRecordings.SelectedIndex = 0;
                 lstRecordings.Focus();
             }
+        }
+
+        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        {
+
         }
 
         public void CaptureKeyboardFocus()
@@ -64,21 +67,6 @@ namespace Pronunciation.Trainer
             lstRecordings.ItemsSource = _provider.GetRecordingsList().ToList();
             lstRecordings.SelectedItem = lstRecordings.Items.Cast<KeyTextPair<string>>().Single(x => x.Key == recordingName);
             lstRecordings.Focus();
-        }
-
-        private void btnClear_Click(object sender, RoutedEventArgs e)
-        {
-            bool isSuccess = _provider.DeleteAllRecordings();
-            RefreshList(isSuccess);
-        }
-
-        private void btnDeleteSelected_Click(object sender, RoutedEventArgs e)
-        {
-            if (lstRecordings.SelectedItems.Count <= 0)
-                return;
-
-            bool isSuccess = _provider.DeleteRecordings(lstRecordings.SelectedItems.Cast<KeyTextPair<string>>().Select(x => x.Key));
-            RefreshList(isSuccess);
         }
 
         private void RefreshList(bool isSuccess)
@@ -116,6 +104,74 @@ namespace Pronunciation.Trainer
                 return;
 
             _audioContext.RefreshContext(selectedItem.Key, true);
+        }
+
+        private void btnDeleteSelected_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstRecordings.SelectedItems.Count <= 0)
+                return;
+
+            var result = MessageBox.Show(
+                "Are you sure that you want to delete the selected records?",
+                "Confirm deletion", MessageBoxButton.YesNo);
+            if (result == MessageBoxResult.Yes)
+            {
+                bool isSuccess = _provider.DeleteRecordings(lstRecordings.SelectedItems.Cast<KeyTextPair<string>>().Select(x => x.Key));
+                RefreshList(isSuccess);
+            }
+        }
+
+        private void btnCopyToNew_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstRecordings.SelectedItems.Count <= 0)
+                return;
+
+            var files = lstRecordings.SelectedItems.Cast<KeyTextPair<string>>()
+                .Select(x => _provider.BuildRecordingPath(x.Key)).ToList();
+
+            var dialog = new RecordingDetails();
+            dialog.NeedsDialogResult = true;
+            dialog.CreateNew = true;
+            if (dialog.ShowDialog() == true && dialog.ActiveRecord != null)
+            {
+                CopyFilesToRecording(dialog.ActiveRecord.RecordingId, files);
+                MessageBox.Show(string.Format(
+                    "Succesfully copied the selected files to the newly created recording '{0}'.",
+                    dialog.ActiveRecord.Title), "Success");
+            }
+        }
+
+        private void btnCopyToExisting_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstRecordings.SelectedItems.Count <= 0)
+                return;
+
+            var files = lstRecordings.SelectedItems.Cast<KeyTextPair<string>>()
+                .Select(x => _provider.BuildRecordingPath(x.Key)).ToList();
+
+            var dialog = new RecordingSelectionDialog();
+            if (dialog.ShowDialog() == true && dialog.SelectedRecording != null)
+            {
+                CopyFilesToRecording(dialog.SelectedRecording.RecordingId, files);
+                MessageBox.Show(string.Format(
+                    "Succesfully copied the selected files to the existing recording '{0}'.", 
+                    dialog.SelectedRecording.Title), "Success");
+            }
+        }
+
+        private void CopyFilesToRecording(Guid recordingId, IEnumerable<string> sourceFiles)
+        {
+            var provider = new RecordingProvider(AppSettings.Instance.Folders.Recordings);
+            foreach (var sourceFile in sourceFiles)
+            {
+                string targetFile = provider.BuildAudioFilePath(recordingId, provider.GetAudioName(sourceFile));
+                string targetFolder = System.IO.Path.GetDirectoryName(targetFile);
+                if (!Directory.Exists(targetFolder))
+                {
+                    Directory.CreateDirectory(targetFolder);
+                }
+                File.Copy(sourceFile, targetFile, false);
+            }
         }
     }
 }

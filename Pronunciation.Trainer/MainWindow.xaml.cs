@@ -32,10 +32,6 @@ namespace Pronunciation.Trainer
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             AppSettings.Instance.Save();
-            if (!exersises.SaveChanges())
-            {
-                e.Cancel = true;
-            }
         }
 
         //private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

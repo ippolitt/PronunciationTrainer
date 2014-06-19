@@ -23,11 +23,11 @@ namespace Pronunciation.Core.Actions
             HardAbort
         }
 
-        public delegate void ActionStartedDelegate(BackgroundAction action);
-        public delegate void ActionCompletedDelegate(BackgroundAction action);
+        public delegate void ActionStateChangedDelegate(BackgroundAction action);
 
-        public event ActionStartedDelegate ActionStarted;
-        public event ActionCompletedDelegate ActionCompleted; 
+        public event ActionStateChangedDelegate ActionStarted;
+        public event ActionStateChangedDelegate ActionCompleted;
+        public event ActionStateChangedDelegate ActionStateChanged;
 
         private readonly BackgroundWorker _worker;
         private Action<object> _progressReporter;
@@ -70,6 +70,14 @@ namespace Pronunciation.Core.Actions
         public BackgroundActionState ActionState
         {
             get { return _actionState; }
+            set 
+            { 
+                _actionState = value;
+                if (ActionStateChanged != null)
+                {
+                    ActionStateChanged(this);
+                }
+            }
         }
 
         public bool IsAbortRequested
@@ -84,7 +92,7 @@ namespace Pronunciation.Core.Actions
 
         public bool StartAction(object contextData, BackgroundActionSequence actionSequence)
         {
-            if (_actionState == BackgroundActionState.Running || _actionState == BackgroundActionState.Suspended)
+            if (ActionState == BackgroundActionState.Running || ActionState == BackgroundActionState.Suspended)
                 return false;
 
             _abortRequest = AbortRequest.None;
@@ -101,12 +109,11 @@ namespace Pronunciation.Core.Actions
 
             _worker.RunWorkerAsync(new ExecutionInfo { Context = context, Args = actionArgs.Args });
 
-            _actionState = BackgroundActionState.Running;
+            ActionState = BackgroundActionState.Running;
             if (ActionStarted != null)
             {
                 ActionStarted(this);
             }
-
             return true;
         }
 
@@ -132,12 +139,12 @@ namespace Pronunciation.Core.Actions
 
         protected void RegisterSuspended()
         {
-            _actionState = BackgroundActionState.Suspended;
+            ActionState = BackgroundActionState.Suspended;
         }
 
         protected void RegisterResumed()
         {
-            _actionState = BackgroundActionState.Running;
+            ActionState = BackgroundActionState.Running;
         }
 
         public void ReportProgress(object progress)
@@ -191,8 +198,8 @@ namespace Pronunciation.Core.Actions
             }
             finally
             {
-                _actionState = isSuccess ? BackgroundActionState.Completed : BackgroundActionState.Aborted;
                 _abortRequest = AbortRequest.None;
+                ActionState = isSuccess ? BackgroundActionState.Completed : BackgroundActionState.Aborted;
                 if (ActionCompleted != null)
                 {
                     ActionCompleted(this);

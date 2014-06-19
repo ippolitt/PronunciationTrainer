@@ -26,8 +26,10 @@ namespace Pronunciation.Trainer
     public partial class ExerciseDetails : Window
     {
         public bool CreateNew { get; set; }
+        public bool NeedsDialogResult { get; set; }
         public Guid? ExerciseId { get; set; }
 
+        private bool _silentSelectionChange;
         private Entities _dbRecordContext;
         private TrainingAudioContext _audioContext;
         private TrainingProvider _provider;
@@ -38,22 +40,14 @@ namespace Pronunciation.Trainer
             InitializeComponent();
         }
 
+        // For use in XAML
         public Exercise ActiveRecord
         {
             get
             {
                 if (_activeRecord == null)
                 {
-                    if (CreateNew)
-                    {
-                        _activeRecord = _dbRecordContext.Exercises.Create();
-                        _activeRecord.ExerciseId = Guid.NewGuid();
-                        _dbRecordContext.Exercises.Add(_activeRecord);
-                    }
-                    else
-                    {
-                        _activeRecord = _dbRecordContext.Exercises.Single(x => x.ExerciseId == ExerciseId.Value);
-                    }
+                    InitActiveRecord();
                 }
                 return _activeRecord;
             }
@@ -70,38 +64,55 @@ namespace Pronunciation.Trainer
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            ExerciseKey exerciseKey = BuildExerciseKey(ActiveRecord);
+            if (_activeRecord == null)
+            {
+                InitActiveRecord();
+            }
+            ExerciseKey exerciseKey = BuildExerciseKey(_activeRecord);
 
             _audioContext = new TrainingAudioContext(_provider, exerciseKey);
             audioPanel.AttachContext(_audioContext);
             lstRecords.AttachPanel(audioPanel);
 
             LoadExercise(exerciseKey);
-            lstRecords.Focus();
+            if (lstRecords.Items.Count > 0)
+            {
+                _silentSelectionChange = true;
+                lstRecords.SelectedIndex = 0;
+                lstRecords.Focus();
+            }
+        }
+
+        private void InitActiveRecord()
+        {
+            if (CreateNew)
+            {
+                _activeRecord = _dbRecordContext.Exercises.Create();
+                _activeRecord.ExerciseId = Guid.NewGuid();
+                ExerciseId = _activeRecord.ExerciseId;
+                _dbRecordContext.Exercises.Add(_activeRecord);
+            }
+            else
+            {
+                _activeRecord = _dbRecordContext.Exercises.Single(x => x.ExerciseId == ExerciseId.Value);
+            }
         }
 
         private void btnOK_Click(object sender, RoutedEventArgs e)
         {
             // In case user pressed "Enter" and current focus is in a textbox
             btnOK.Focus();
+
             SaveChanges();
+            if (NeedsDialogResult)
+            {
+                DialogResult = true;
+            }
             this.Close();
         }
 
         private void btnCancel_Click(object sender, RoutedEventArgs e)
         {
-            // In case user pressed "Esc" and current focus is in a textbox
-            btnCancel.Focus();
-            if (_dbRecordContext.HasChanges())
-            {
-                var result = MessageBox.Show(
-                    "You have some pending changes. Are you sure you want to discard them?",
-                    "Confirm discarding changes",
-                    MessageBoxButton.YesNo);
-                if (result == MessageBoxResult.No)
-                    return;
-            }
-
             this.Close();
         }
 
@@ -110,8 +121,8 @@ namespace Pronunciation.Trainer
             btnApply.Focus();
             SaveChanges();
 
-            ExerciseKey exerciseKey = BuildExerciseKey(ActiveRecord);
-            _audioContext.ResetExerciseContect(exerciseKey);
+            ExerciseKey exerciseKey = BuildExerciseKey(_activeRecord);
+            _audioContext.ResetExerciseContext(exerciseKey);
             LoadExercise(exerciseKey);
         }
 
@@ -120,9 +131,9 @@ namespace Pronunciation.Trainer
             if (_dbRecordContext.HasChanges())
             {
                 _dbRecordContext.SaveChanges();
-                ((PronunciationDbContext)DataContext).NotifyExerciseChanged(ActiveRecord.ExerciseId, CreateNew);
-
                 CreateNew = false;
+
+                PronunciationDbContext.Instance.NotifyExerciseChanged(_activeRecord.ExerciseId, CreateNew);
             }
         }
 
@@ -157,16 +168,55 @@ namespace Pronunciation.Trainer
 
         private void lstRecords_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (_silentSelectionChange)
+            {
+                _silentSelectionChange = false;
+                RefreshAudioContext(false);
+            }
+            else
+            {
+                RefreshAudioContext(true);
+            }
+        }
+
+        private void lstRecords_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            RefreshAudioContext(true);
+        }
+
+        private void RefreshAudioContext(bool playAudio)
+        {
             var selectedItem = lstRecords.SelectedItem as KeyTextPair<string>;
             if (selectedItem == null)
                 return;
 
-            _audioContext.RefreshContext(selectedItem.Key, true);
+            _audioContext.RefreshContext(selectedItem.Key, playAudio);
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             audioPanel.StopAction(false);
+
+            // This will commit latest changes in case if focus is in a textbox
+            btnCancel.Focus();
+
+            if (_dbRecordContext.HasChanges())
+            {
+                var result = MessageBox.Show(
+                    "You have some pending changes. Are you sure you want to discard them?",
+                    "Confirm discarding changes",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
+                if (result == MessageBoxResult.No)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
+            if (NeedsDialogResult)
+            {
+                DialogResult = !_dbRecordContext.HasChanges();
+            }
         }
 
         private ExerciseKey BuildExerciseKey(Exercise record)

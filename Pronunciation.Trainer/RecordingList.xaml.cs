@@ -11,19 +11,17 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using Pronunciation.Core.Database;
-using System.Data.Linq;
 using System.ComponentModel;
-using Pronunciation.Core.Providers;
+using Pronunciation.Core.Database;
 
 namespace Pronunciation.Trainer
 {
     /// <summary>
-    /// Interaction logic for ExerciseList.xaml
+    /// Interaction logic for RecordingList.xaml
     /// </summary>
-    public partial class ExerciseList : UserControl
+    public partial class RecordingList : UserControl
     {
-        public ExerciseList()
+        public RecordingList()
         {
             InitializeComponent();
         }
@@ -31,44 +29,42 @@ namespace Pronunciation.Trainer
         private void UserControl_Initialized(object sender, EventArgs e)
         {
             DataContext = PronunciationDbContext.Instance;
-            PronunciationDbContext.Instance.ExerciseChanged += _dbContext_ExerciseChanged;
+            PronunciationDbContext.Instance.RecordingChanged += _dbContext_RecordingChanged;
 
-            var sort = exerciseDataGrid.Items.SortDescriptions;
-            sort.Add(new SortDescription("BookId", ListSortDirection.Ascending));
-            sort.Add(new SortDescription("SourceCD", ListSortDirection.Ascending));
-            sort.Add(new SortDescription("SourceTrack", ListSortDirection.Ascending));
+            var sort = recordingsDataGrid.Items.SortDescriptions;
+            sort.Add(new SortDescription("Created", ListSortDirection.Descending));
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
         }
 
-        private void _dbContext_ExerciseChanged(Guid exerciseId, bool isAdded)
+        private void _dbContext_RecordingChanged(Guid recordingId, bool isAdded)
         {
-            exerciseDataGrid.Items.Refresh();
+            recordingsDataGrid.Items.Refresh();
         }
 
-        private void exerciseDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void recordingsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            Exercise activeRecord = exerciseDataGrid.SelectedItem as Exercise;
+            Recording activeRecord = recordingsDataGrid.SelectedItem as Recording;
             if (activeRecord == null)
                 return;
 
-            ExerciseDetails dialog = new ExerciseDetails();
-            dialog.ExerciseId = activeRecord.ExerciseId;
+            RecordingDetails dialog = new RecordingDetails();
+            dialog.RecordingId = activeRecord.RecordingId;
             dialog.Show();
         }
 
         private void btnAdd_Click(object sender, RoutedEventArgs e)
         {
-            ExerciseDetails dialog = new ExerciseDetails();
+            RecordingDetails dialog = new RecordingDetails();
             dialog.CreateNew = true;
             dialog.Show();
         }
 
         private void btnDelete_Click(object sender, RoutedEventArgs e)
         {
-            if (exerciseDataGrid.SelectedItems.Count <= 0)
+            if (recordingsDataGrid.SelectedItems.Count <= 0)
                 return;
 
             var result = MessageBox.Show(
@@ -76,10 +72,10 @@ namespace Pronunciation.Trainer
                 "Confirm deletion", MessageBoxButton.YesNo);
             if (result == MessageBoxResult.Yes)
             {
-                var selectedRecords = exerciseDataGrid.SelectedItems.Cast<Exercise>().ToArray();
+                var selectedRecords = recordingsDataGrid.SelectedItems.Cast<Recording>().ToArray();
                 foreach (var record in selectedRecords)
                 {
-                    PronunciationDbContext.Instance.Exercises.Remove(record);
+                    PronunciationDbContext.Instance.Recordings.Remove(record);
                 }
                 PronunciationDbContext.Instance.Target.SaveChanges();
             }

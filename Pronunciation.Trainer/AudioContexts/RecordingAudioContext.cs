@@ -8,16 +8,18 @@ using System.IO;
 
 namespace Pronunciation.Trainer.AudioContexts
 {
-    public class RecorderAudioContext : IAudioContext
+    public class RecordingAudioContext : IAudioContext
     {
         public event AudioContextChangedHandler ContextChanged;
 
-        private readonly RecorderProvider _provider;
+        private readonly RecordingProvider _provider;
+        private readonly Guid _recordingId;
         private string _recordingName;
 
-        public RecorderAudioContext(RecorderProvider provider)
+        public RecordingAudioContext(RecordingProvider provider, Guid recordingId)
         {
             _provider = provider;
+            _recordingId = recordingId;
         }
 
         public void RefreshContext(string recordingName, bool playImmediately)
@@ -47,7 +49,7 @@ namespace Pronunciation.Trainer.AudioContexts
                 if (string.IsNullOrEmpty(_recordingName))
                     return false;
 
-                var recordingPath = _provider.BuildRecordingPath(_recordingName);
+                var recordingPath = _provider.BuildAudioFilePath(_recordingId, _recordingName);
                 return File.Exists(recordingPath);
             }
         }
@@ -67,7 +69,7 @@ namespace Pronunciation.Trainer.AudioContexts
             if (string.IsNullOrEmpty(_recordingName))
                 return null;
 
-            var recordingPath = _provider.BuildRecordingPath(_recordingName);
+            var recordingPath = _provider.BuildAudioFilePath(_recordingId, _recordingName);
             if (!File.Exists(recordingPath))
                 return null;
 
@@ -76,8 +78,8 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public RecordingSettings GetRecordingSettings()
         {
-            var newRecordingName = _provider.BuildNewRecordingName();
-            return new RecordingSettings(_provider.BuildRecordingPath(newRecordingName));
+            var newRecordingName = _provider.BuildNewAudioName();
+            return new RecordingSettings(_provider.BuildAudioFilePath(_recordingId, newRecordingName));
         }
     }
 }

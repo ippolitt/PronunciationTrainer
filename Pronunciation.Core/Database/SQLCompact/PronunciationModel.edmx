@@ -9,6 +9,7 @@
           <EntitySet Name="Book" EntityType="PronunciationModel.Store.Book" store:Type="Tables" />
           <EntitySet Name="Exercise" EntityType="PronunciationModel.Store.Exercise" store:Type="Tables" />
           <EntitySet Name="ExerciseType" EntityType="PronunciationModel.Store.ExerciseType" store:Type="Tables" />
+          <EntitySet Name="Recording" EntityType="PronunciationModel.Store.Recording" store:Type="Tables" />
           <EntitySet Name="Topic" EntityType="PronunciationModel.Store.Topic" store:Type="Tables" />
           <AssociationSet Name="FK_Exercise_Book" Association="PronunciationModel.Store.FK_Exercise_Book">
             <End Role="Book" EntitySet="Book" />
@@ -62,6 +63,17 @@
           <Property Name="ExerciseTypeId" Type="int" Nullable="false" />
           <Property Name="ExerciseTypeName" Type="nvarchar" Nullable="false" MaxLength="50" />
           <Property Name="Ordinal" Type="int" />
+        </EntityType>
+        <EntityType Name="Recording">
+          <Key>
+            <PropertyRef Name="RecordingId" />
+          </Key>
+          <Property Name="RecordingId" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="RecordingText" Type="nvarchar" />
+          <Property Name="Title" Type="nvarchar" MaxLength="200" />
+          <Property Name="Created" Type="datetime" />
+          <Property Name="Notes" Type="nvarchar" MaxLength="500" />
+          <Property Name="Category" Type="nvarchar" MaxLength="100" />
         </EntityType>
         <EntityType Name="Topic">
           <Key>
@@ -163,6 +175,7 @@
             <End Role="Topic" EntitySet="Topics" />
             <End Role="Topic1" EntitySet="Topics" />
           </AssociationSet>
+          <EntitySet Name="Recordings" EntityType="PronunciationModel.Recording" />
         </EntityContainer>
         <EntityType Name="Book">
           <Key>
@@ -277,6 +290,17 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <EntityType Name="Recording">
+          <Key>
+            <PropertyRef Name="RecordingId" />
+          </Key>
+          <Property Type="Guid" Name="RecordingId" Nullable="false" />
+          <Property Type="String" Name="RecordingText" MaxLength="4000" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="Title" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Type="DateTime" Name="Created" />
+          <Property Type="String" Name="Notes" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="Category" MaxLength="100" FixedLength="false" Unicode="true" />
+        </EntityType>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -330,6 +354,18 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
+          <EntitySetMapping Name="Recordings">
+            <EntityTypeMapping TypeName="PronunciationModel.Recording">
+              <MappingFragment StoreEntitySet="Recording">
+                <ScalarProperty Name="Category" ColumnName="Category" />
+                <ScalarProperty Name="Notes" ColumnName="Notes" />
+                <ScalarProperty Name="Created" ColumnName="Created" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="RecordingText" ColumnName="RecordingText" />
+                <ScalarProperty Name="RecordingId" ColumnName="RecordingId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>
@@ -380,6 +416,7 @@
           <ConnectorPoint PointX="3.9784615384615383" PointY="10.816793619791667" />
           <ConnectorPoint PointX="3.9784615384615383" PointY="10.566793619791667" />
         </AssociationConnector>
+        <EntityTypeShape EntityType="PronunciationModel.Recording" Width="1.5" PointX="0.75" PointY="0.75" Height="1.9802864583333317" />
       </Diagram>
     </Diagrams>
   </Designer>

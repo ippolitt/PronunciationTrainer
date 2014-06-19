@@ -29,5 +29,6 @@ namespace Pronunciation.Core.Database
         public DbSet<ExerciseType> ExerciseTypes { get; set; }
         public DbSet<Topic> Topics { get; set; }
         public DbSet<Exercise> Exercises { get; set; }
+        public DbSet<Recording> Recordings { get; set; }
     }
 }

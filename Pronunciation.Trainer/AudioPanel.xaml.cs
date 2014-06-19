@@ -105,15 +105,26 @@ namespace Pronunciation.Trainer
                 container.InputBindings.Add(new KeyBinding(_playReferenceCommand, KeyGestures.PlayReference));
                 container.InputBindings.Add(new KeyBinding(_playRecordedCommand, KeyGestures.PlayRecorded));
                 container.InputBindings.Add(new KeyBinding(_startRecordingCommand, KeyGestures.StartRecording));
-                container.InputBindings.Add(new KeyBinding(_stopCommand, KeyGestures.PauseAudio));
+                container.InputBindings.Add(new KeyBinding(_stopCommand, KeyGestures.StopAudio));
                 container.InputBindings.Add(new KeyBinding(_showWaveformCommand, KeyGestures.ShowWaveform));
 
                 container.PreviewKeyDown += container_PreviewKeyDown;
 
-                btnPlayReference.ToolTip += KeyGestures.PlayReference.GetTooltipString();
-                btnPlayRecorded.ToolTip += KeyGestures.PlayRecorded.GetTooltipString();
-                btnRecord.ToolTip += KeyGestures.StartRecording.GetTooltipString();
-                btnShowWaveforms.ToolTip += KeyGestures.ShowWaveform.GetTooltipString();
+                btnPlayReference.DefaultTooltip = string.Format(btnPlayReference.DefaultTooltip, KeyGestures.PlayReference.DisplayString);
+                btnPlayReference.RunningTooltip = string.Format(btnPlayReference.RunningTooltip, KeyGestures.StopAudio.DisplayString);
+                btnPlayReference.PausedTooltip = string.Format(btnPlayReference.PausedTooltip, KeyGestures.StopAudio.DisplayString);
+                btnPlayReference.RefreshDefaultTooltip();
+
+                btnPlayRecorded.DefaultTooltip = string.Format(btnPlayRecorded.DefaultTooltip, KeyGestures.PlayRecorded.DisplayString);
+                btnPlayRecorded.RunningTooltip = string.Format(btnPlayRecorded.RunningTooltip, KeyGestures.StopAudio.DisplayString);
+                btnPlayRecorded.PausedTooltip = string.Format(btnPlayRecorded.PausedTooltip, KeyGestures.StopAudio.DisplayString);
+                btnPlayRecorded.RefreshDefaultTooltip();
+
+                btnRecord.DefaultTooltip = string.Format(btnRecord.DefaultTooltip, KeyGestures.StartRecording.DisplayString);
+                btnRecord.RunningTooltip = string.Format(btnRecord.RunningTooltip, KeyGestures.StopAudio.DisplayString);
+                btnRecord.RefreshDefaultTooltip();
+
+                btnShowWaveforms.ToolTip = string.Format(btnShowWaveforms.ToolTip.ToString(), KeyGestures.ShowWaveform.DisplayString);
             }
         }
 

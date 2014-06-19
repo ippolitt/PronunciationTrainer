@@ -6,22 +6,22 @@ using System.IO;
 
 namespace Pronunciation.Core.Providers
 {
-    public class RecorderProvider
+    public class QuickRecorderProvider
     {
-        private readonly string _recordingsFolder;
+        private readonly string _recorderFolder;
 
-        public RecorderProvider(string recordingsFolder)
+        public QuickRecorderProvider(string recorderFolder)
         {
-            _recordingsFolder = recordingsFolder;
-            if (!Directory.Exists(_recordingsFolder))
+            _recorderFolder = recorderFolder;
+            if (!Directory.Exists(_recorderFolder))
             {
-                Directory.CreateDirectory(_recordingsFolder);
+                Directory.CreateDirectory(_recorderFolder);
             }
         }
 
         public IEnumerable<KeyTextPair<string>> GetRecordingsList()
         {
-            return Directory.GetFiles(_recordingsFolder, "*.mp3", SearchOption.TopDirectoryOnly)
+            return Directory.GetFiles(_recorderFolder, "*.mp3", SearchOption.TopDirectoryOnly)
                 .Select(x => BuildRecordingInfo(x));
         }
 
@@ -32,7 +32,7 @@ namespace Pronunciation.Core.Providers
 
         public string BuildRecordingPath(string recordingName)
         {
-            return Path.Combine(_recordingsFolder, string.Format("{0}.mp3", recordingName));
+            return Path.Combine(_recorderFolder, string.Format("{0}.mp3", recordingName));
         }
 
         public string BuildNewRecordingName()
@@ -42,7 +42,7 @@ namespace Pronunciation.Core.Providers
 
         public bool DeleteAllRecordings()
         {
-            return DeleteFiles(Directory.GetFiles(_recordingsFolder, "*.mp3", SearchOption.TopDirectoryOnly));
+            return DeleteFiles(Directory.GetFiles(_recorderFolder, "*.mp3", SearchOption.TopDirectoryOnly));
         }
 
         public bool DeleteRecordings(IEnumerable<string> recordings)

@@ -15,11 +15,23 @@ namespace Pronunciation.Trainer
         private readonly Lazy<ObservableCollection<Topic>> _topics;
         private readonly Lazy<ObservableCollection<ExerciseType>> _exerciseTypes;
         private readonly Lazy<ObservableCollection<Book>> _books;
+        private readonly Lazy<ObservableCollection<Recording>> _recordings;
 
         public delegate void ExerciseChangedHandler(Guid exerciseId, bool isAdded);
-        public event ExerciseChangedHandler ExerciseChanged;
+        public delegate void RecordingChangedHandler(Guid recordingId, bool isAdded);
 
-        public PronunciationDbContext()
+        public event ExerciseChangedHandler ExerciseChanged;
+        public event RecordingChangedHandler RecordingChanged;
+
+        private readonly static Lazy<PronunciationDbContext> _instance = new Lazy<PronunciationDbContext>(
+            () => new PronunciationDbContext());
+
+        public static PronunciationDbContext Instance
+        {
+            get { return _instance.Value; }
+        }
+
+        private PronunciationDbContext()
         {
             _dbContext = new Entities();
 
@@ -43,6 +55,11 @@ namespace Pronunciation.Trainer
                 _dbContext.Books.Load();
                 return _dbContext.Books.Local;
             });
+            _recordings = new Lazy<ObservableCollection<Recording>>(() =>
+            {
+                _dbContext.Recordings.Load();
+                return _dbContext.Recordings.Local;
+            });
         }
 
         public ObservableCollection<Exercise> Exercises
@@ -65,6 +82,11 @@ namespace Pronunciation.Trainer
             get { return _books.Value; }
         }
 
+        public ObservableCollection<Recording> Recordings
+        {
+            get { return _recordings.Value; }
+        }
+
         public Entities Target
         {
             get { return _dbContext; }
@@ -85,6 +107,24 @@ namespace Pronunciation.Trainer
             if (ExerciseChanged != null)
             {
                 ExerciseChanged(exerciseId, isAdded);
+            }
+        }
+
+        public void NotifyRecordingChanged(Guid recordingId, bool isAdded)
+        {
+            if (isAdded)
+            {
+                _dbContext.Recordings.Load();
+            }
+            else
+            {
+                var recording = _dbContext.Recordings.Single(x => x.RecordingId == recordingId);
+                _dbContext.Entry(recording).Reload();
+            }
+
+            if (RecordingChanged != null)
+            {
+                RecordingChanged(recordingId, isAdded);
             }
         }
 

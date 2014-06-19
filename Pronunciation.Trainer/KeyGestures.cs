@@ -33,7 +33,7 @@ namespace Pronunciation.Trainer
             get { return new KeyGesture(Key.R, ModifierKeys.Alt, "Alt+R"); }
         }
 
-        public static KeyGesture PauseAudio
+        public static KeyGesture StopAudio
         {
             get { return new KeyGesture(Key.X, ModifierKeys.Alt, "Alt+X"); }
         }
@@ -41,14 +41,6 @@ namespace Pronunciation.Trainer
         public static KeyGesture ShowWaveform
         {
             get { return new KeyGesture(Key.W, ModifierKeys.Alt, "Alt+W"); }
-        }
-
-        public static string GetTooltipString(this KeyGesture gesture)
-        {
-            if (gesture == null)
-                return null;
-
-            return string.Format(" ({0})", gesture.DisplayString);
         }
     }
 }

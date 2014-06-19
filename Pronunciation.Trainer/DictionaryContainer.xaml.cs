@@ -137,8 +137,8 @@ namespace Pronunciation.Trainer
 
             if (isFirstBuild)
             {
-                btnBack.ToolTip += KeyGestures.NavigateBack.GetTooltipString();
-                btnForward.ToolTip += KeyGestures.NavigateForward.GetTooltipString();
+                btnBack.ToolTip = string.Format(btnBack.ToolTip.ToString(), KeyGestures.NavigateBack.DisplayString);
+                btnForward.ToolTip = string.Format(btnForward.ToolTip.ToString(), KeyGestures.NavigateForward.DisplayString);
             }
         }
 
@@ -297,7 +297,8 @@ namespace Pronunciation.Trainer
                 e.Handled = true;
                 if (lstSuggestions.Items.Count <= 0)
                 {
-                    MessageBox.Show(string.Format("Dictionary article for word '{0}' doesn't exist!", txtSearch.Text));  
+                    MessageBox.Show(string.Format("Dictionary article for word '{0}' doesn't exist!", txtSearch.Text));
+                    txtSearch.Focus(); // return focus to correct the error
                 }
                 else
                 {

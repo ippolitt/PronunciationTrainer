@@ -1,24 +1,28 @@
 Top:
-- Improve recorder: add content, header, ability to save
-- Allow to save "Recorder" recordings and rename them
-- Allow to assign text to recording
 - Bug when sequence is scheduled and I start another action
-- Add the ability to Stop recording in UI (now only with Alt+X)
 - Allow to make several recordings per source and select the best one
-- Allow exercises without standard recordings
-- When I type a word with error put marker to the textbox to allow immidiate correction
-- Increase sample rate and compare Waveforms
+- Store history of the recordings. Save best recordings with the date so that I was able to compare them over time to check my progress
+- Allow to make several recordings and compare them
+- Allow comparison of my own pronunciations at the wave forms dialog (or several recorded ones)
+- Compare different reference pronunciation or different recorded ones
 - Add parent topic to the topics list(align  right)
 - Reduce startup time
 - Why it eats so much memory? Elaborate (try working without DB)
-- Backup tables schema (Trainer & Dictionary)
-- Allow to make several recordings and compare them
-- Store history of the recordings. Save best recordings with the date so that I was able to compare them over time to check my progress
-- Allow separate recording of words if dictionary entry has several meanings (I, II)
 - Add a button to remember/highlight a record in the Recorder
-- Allow comparison of my own pronunciations at the wave forms dialog (or several recorded ones)
-- Compare different reference pronunciation or different recorded ones
 - Add a shortcut for playing ref and rec sounds simultaneosuly
+- Create a text version of each sentence/phrase to be able to perform full text search
+- Play any word in the dictionary when I double click on it.
+- Bug: when I change CD number and save the sort order in the grid doesn't change
+- Bug: When I change language and click "Play" it still plays the old audio
+- Add a switch to hide/display exercise desription
+- Add recording duration to the recordings list
+- Add column "CD+Track" instead of page and sort by it
+- Create base MessageBox with predefined captions
+- Allow recording when the application is not active
+- Don't load all tabs on startup
+- Open detailed dialogs as tabs of the Exercise list (as in MVVM article)
+- Add special signs explanation (LPD or Amazon)
+- generate html for pronunciation notes (from dictionary CD)
 
 Waveforms:
 - Implement logic of silence finder and automatically stop recording if there's a long pause
@@ -32,25 +36,6 @@ Migration to DB:
 	Move RegisterPage method to LoadCompleted event
 	Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
 	Cache last N files and played audio (preload only one audio? based on the playback settings)
-
-Other:
-- Create a text version of each sentence/phrase to be able to perform full text search
-- Add confirmation to "Delete/Delete all" button in the Recorder
-- Load dictionary entry with doubleclick?
-- Bug: when I change CD number and save the sort order in the grid doesn't change
-- Bug: When I change language and click "Play" it still plays the old audio
-- Add a handler for the double-click on the audio list item
-- Add a switch to hide/display exercise desription
-- Add recording duration to the recordings list
-- Add column "CD+Track" instead of page and sort by it
-- Add special signs explanation (LPD or Amazon)
-- generate html for pronunciation notes (from dictionary CD)
-- Create base MessageBox with predefined captions
-- Allow recording when the application is not active
-- Don't load all tabs on startup
-- Open detailed dialogs as tabs of the Exercise list (as in MVVM article)
-- Add text to exercises to enable full text search (?)
-- Play any word in the dictionary when I double click on it
 
 Generation of the pages:
 - check errors in "don't" - AmE is not separated 

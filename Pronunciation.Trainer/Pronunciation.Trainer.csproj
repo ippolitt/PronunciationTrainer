@@ -70,13 +70,23 @@
     <Compile Include="AudioActions\PlaybackArgs.cs" />
     <Compile Include="AudioActions\RecordAudioAction.cs" />
     <Compile Include="AudioActions\RecordingArgs.cs" />
-    <Compile Include="AudioContexts\RecorderAudioContext.cs" />
+    <Compile Include="AudioContexts\RecordingAudioContext.cs" />
+    <Compile Include="AudioContexts\QuickRecorderAudioContext.cs" />
     <Compile Include="AudioContexts\TrainingAudioContext.cs" />
     <Compile Include="AudioList.cs" />
     <Compile Include="BindingErrorTraceListener.cs" />
     <Compile Include="Commands\ExecuteActionCommand.cs" />
     <Compile Include="ControlsHelper.cs" />
     <Compile Include="DictionaryContainerScriptingProxy.cs" />
+    <Compile Include="RecordingDetails.xaml.cs">
+      <DependentUpon>RecordingDetails.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RecordingList.xaml.cs">
+      <DependentUpon>RecordingList.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RecordingSelectionDialog.xaml.cs">
+      <DependentUpon>RecordingSelectionDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="TabItemExt.cs" />
     <Compile Include="DataImporter.xaml.cs">
       <DependentUpon>DataImporter.xaml</DependentUpon>
@@ -151,6 +161,18 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="RecordingDetails.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="RecordingList.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="RecordingSelectionDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="SettingsPanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -209,6 +231,7 @@
       <Link>lame.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Resource Include="Resources\AudioPlay.png" />
     <Resource Include="Resources\BuildingIndex.png" />
     <Resource Include="Resources\AudioWaveform.png" />
     <Resource Include="Resources\AudioSlider.png" />

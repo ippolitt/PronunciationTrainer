@@ -84,6 +84,7 @@
     <Compile Include="Database\Entities.cs" />
     <Compile Include="Database\Exercise.cs" />
     <Compile Include="Database\ExerciseType.cs" />
+    <Compile Include="Database\Recording.cs" />
     <Compile Include="Database\SQLCompact\PronunciationModel.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -108,7 +109,8 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Providers\ExerciseId.cs" />
+    <Compile Include="Providers\RecordingProvider.cs" />
+    <Compile Include="Providers\ExerciseKey.cs" />
     <Compile Include="Providers\IDictionaryProvider.cs" />
     <Compile Include="Providers\IndexEntry.cs" />
     <Compile Include="Providers\LPDDatabaseProvider.cs" />
@@ -116,7 +118,7 @@
     <Compile Include="Providers\LPDProvider.cs" />
     <Compile Include="Providers\MultipartName.cs" />
     <Compile Include="Providers\PageInfo.cs" />
-    <Compile Include="Providers\RecorderProvider.cs" />
+    <Compile Include="Providers\QuickRecorderProvider.cs" />
     <Compile Include="Providers\ScriptArgs.cs" />
     <Compile Include="Providers\TrainingProvider.cs" />
   </ItemGroup>
@@ -156,6 +158,7 @@
       <Generator>EntityModelCodeGenerator</Generator>
       <LastGenOutput>PronunciationModel.Designer.cs</LastGenOutput>
     </EntityDeploy>
+    <None Include="App.Config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

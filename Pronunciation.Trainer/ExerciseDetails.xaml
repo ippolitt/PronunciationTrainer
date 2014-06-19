@@ -28,7 +28,7 @@
             <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Book:"/>
             <ComboBox Grid.Row="0" Grid.Column="1" Name="bookIdComboBox" Margin="0,3" Width="120" HorizontalAlignment="Left" TabIndex="10"
                 SelectedValue="{Binding Path=BookId, Mode=TwoWay}" DisplayMemberPath="Author" SelectedValuePath="BookId" 
-                ItemsSource="{Binding ElementName=rootPanel, Path=DataContext.Books}">
+                ItemsSource="{Binding Source={x:Static local:PronunciationDbContext.Instance}, Path=Books}">
                 <ComboBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel />
@@ -64,7 +64,7 @@
             <ComboBox Grid.Row="1" Grid.Column="3" Name="exerciseTypeIdComboBox" Margin="0,3" TabIndex="60"
                     SelectedValue="{Binding Path=ExerciseTypeId, Mode=TwoWay}" 
                     DisplayMemberPath="ExerciseTypeName" SelectedValuePath="ExerciseTypeId" 
-                    ItemsSource="{Binding ElementName=rootPanel, Path=DataContext.ExerciseTypes }">
+                    ItemsSource="{Binding Source={x:Static local:PronunciationDbContext.Instance}, Path=ExerciseTypes }">
                 <ComboBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel />
@@ -116,7 +116,7 @@
                 </ScrollViewer>
             </Border>
             <local:AudioList Grid.Row="1" Grid.Column="1" Margin="0,5,1,0" x:Name="lstRecords" TabIndex="100" 
-                SelectionChanged="lstRecords_SelectionChanged" />
+                SelectionChanged="lstRecords_SelectionChanged" MouseDoubleClick="lstRecords_MouseDoubleClick" />
             <!--<Rectangle Height="302" Name="rectangle1" Stroke="Black" Width="742" RadiusX="10" RadiusY="10" />-->
         </Grid>
     </DockPanel>

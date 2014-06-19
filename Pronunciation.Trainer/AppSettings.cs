@@ -80,10 +80,11 @@ namespace Pronunciation.Trainer
         public class AppFolders
         {
             private readonly string _baseFolder;
-            private readonly string _recordingsFolder;
+            private readonly string _audioFolder;
 
+            private const string _audioFolderName = "RecordedAudio";
+            private const string _recorderFolderName = "QuickRecorder";
             private const string _recordingsFolderName = "Recordings";
-            private const string _recorderFolderName = "Recorder";
             private const string _dictionaryRecordingsFolderName = "LPD";
             private const string _dictionaryFileFolderName = "LPD_File";
             private const string _dictionaryDBFolderName = "LPD_DB";
@@ -93,7 +94,7 @@ namespace Pronunciation.Trainer
             public AppFolders(string baseFolder)
             {
                 _baseFolder = baseFolder;
-                _recordingsFolder = Path.Combine(baseFolder, _recordingsFolderName);
+                _audioFolder = Path.Combine(baseFolder, _audioFolderName);
             }
 
             public string Base
@@ -113,7 +114,7 @@ namespace Pronunciation.Trainer
 
             public string DictionaryRecordings
             {
-                get { return Path.Combine(_recordingsFolder, _dictionaryRecordingsFolderName); }
+                get { return Path.Combine(_audioFolder, _dictionaryRecordingsFolderName); }
             }
 
             public string Exercises
@@ -123,12 +124,17 @@ namespace Pronunciation.Trainer
 
             public string ExercisesRecordings
             {
-                get { return Path.Combine(_recordingsFolder, _exercisesFolderName); }
+                get { return Path.Combine(_audioFolder, _exercisesFolderName); }
             }
 
-            public string Recorder
+            public string QuickRecorder
             {
-                get { return Path.Combine(_recordingsFolder, _recorderFolderName); }
+                get { return Path.Combine(_audioFolder, _recorderFolderName); }
+            }
+
+            public string Recordings
+            {
+                get { return Path.Combine(_audioFolder, _recordingsFolderName); }
             }
 
             public string Database

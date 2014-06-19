@@ -22,7 +22,7 @@ namespace Pronunciation.Trainer.AudioContexts
             _exerciseContext = exerciseContext;
         }
 
-        public void ResetExerciseContect(ExerciseKey exerciseContext)
+        public void ResetExerciseContext(ExerciseKey exerciseContext)
         {
             _exerciseContext = exerciseContext;
             _recordingName = null;

@@ -11,8 +11,8 @@
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200"></ColumnDefinition>
-                <ColumnDefinition Width="110"></ColumnDefinition>
-                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="188"></ColumnDefinition>
+                <ColumnDefinition Width="502*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"></RowDefinition>
@@ -22,8 +22,9 @@
             <local:AudioList Grid.Column="0" Grid.Row="1" Margin="0" x:Name="lstRecordings" 
                      MouseDoubleClick="lstRecordings_MouseDoubleClick" SelectionChanged="lstRecordings_SelectionChanged" SelectionMode="Extended" />
             <StackPanel Grid.Column="1" Grid.Row="1" Margin="10,0,0,0" Orientation="Vertical" VerticalAlignment="Top" >
-                <Button Margin="0,0,0,5" Content="Delete selected" Name="btnDeleteSelected" Click="btnDeleteSelected_Click" />                
-                <Button Margin="0,0,0,5" Content="Delete all" Name="btnClear" Click="btnClear_Click" />
+                <Button Margin="0,0,0,5" Content="Delete" Name="btnDeleteSelected" Click="btnDeleteSelected_Click" />
+                <Button Margin="0,0,0,5" Content="Copy to a new 'Recording'" Name="btnCopyToNew" Click="btnCopyToNew_Click" />
+                <Button Margin="0,0,0,5" Content="Copy to an existing 'Recording'" Name="btnCopyToExisting" Click="btnCopyToExisting_Click" />
             </StackPanel>
         </Grid>
     </DockPanel>
