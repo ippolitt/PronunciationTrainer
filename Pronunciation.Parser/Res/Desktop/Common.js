@@ -5,7 +5,7 @@ var myAudioContext, isWebKit;
 // 3 - play mp3 file via Audio element
 // 4 - pass mp3 data to the container for playing
 // 5 - pass mp3 audio key to the container for playing
-var audioMode = 4;
+var audioMode = 5; // use '5' for DB mode and '2' for file system mode (in Chrome)
 
 // *** Functions called by WebBrowser control
 //

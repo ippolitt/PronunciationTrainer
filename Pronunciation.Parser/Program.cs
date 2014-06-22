@@ -12,24 +12,26 @@ namespace Pronunciation.Parser
 {
     class Program
     {
-        private const string HtmlFolderPath = @"D:\LEARN\English\Pronunciation\LPD";
         private const string RootFolderPath = @"..\..\..\";
-
         private const string DataFolder = @"Data\";
         private const string AnalysisFolder = @"Analysis\";
 
-        private const string SourceFile = DataFolder + "En-En-Longman_Pronunciation.dsl";
-        private const string TopWordsFile = DataFolder + "TopWords.txt";
+        // Used for generation
         private const string SoundsFolder = DataFolder + "Sounds";
         private const string SoundsCacheFolder = DataFolder + "SoundsCache";
+        private const string HtmlSourceFile = DataFolder + "Results - Final.xml";
+        private const string TopWordsFile = DataFolder + "TopWords.txt";
 
+        private const string HtmlFolderDB = @"D:\LEARN\English\Pronunciation\Trainer\LPD_DB";
+        private const string HtmlFolderFiles = @"D:\LEARN\English\Pronunciation\Trainer\LPD_File";
+        private const string DbConnectionString = @"Data Source=D:\LEARN\English\Pronunciation\Trainer\Database\LPD.sdf;Max Database Size=4000;";
+
+        // Used for analysis
+        private const string SourceFile = DataFolder + "En-En-Longman_Pronunciation.dsl";
         private const string NormalizedFile = AnalysisFolder + "Results_Normalize.txt";
         private const string XmlFile = AnalysisFolder + "Results.xml";
         private const string XmlLogFile = AnalysisFolder + "XmlConvert.log";
-        private const string HtmlSourceFile = AnalysisFolder + "Results - Final.xml";
         private const string HtmlLogFile = AnalysisFolder + "HtmlConvert.log";
-
-        private const string DbConnectionString = @"Data Source=D:\LEARN\English\Pronunciation\Trainer\Database\LPD.sdf;Max Database Size=4000;";
 
         static void Main(string[] args)
         {
@@ -38,7 +40,6 @@ namespace Pronunciation.Parser
                 //UploadFiles();
                 //UploadFilesBulk();
                 //TestUpload();
-                //CleanDatabase();
                 //MigrateRecordings();
                 //return;
 
@@ -65,6 +66,11 @@ namespace Pronunciation.Parser
                 //    true, false);
 
                 bool isDatabaseMode = true;
+                bool isFakeMode = true;
+                if (isDatabaseMode && !isFakeMode)
+                {
+                    CleanDatabase();
+                }
 
                 var fileLoader = new FileLoader(
                     Path.Combine(rootFolder, SoundsFolder),
@@ -78,7 +84,9 @@ namespace Pronunciation.Parser
                     Path.Combine(rootFolder, TopWordsFile));
                 htmlBuilder.ConvertToHtml(
                     Path.Combine(rootFolder, HtmlSourceFile),
-                    HtmlFolderPath, -1, true);
+                    isDatabaseMode ? HtmlFolderDB : HtmlFolderFiles, 
+                    -1,
+                    isFakeMode);
 
                 //var topBuilder = new TopWordsBuilder();
                 //topBuilder.MergeTopWords();

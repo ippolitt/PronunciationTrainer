@@ -192,15 +192,12 @@ namespace Pronunciation.Parser
             });
         }
 
-        public void ConvertToHtml(string sourceXml, string rootFolder, int maxWords, bool isFakeMode)
+        public void ConvertToHtml(string sourceXml, string htmlFolder, int maxWords, bool isFakeMode)
         {
             File.AppendAllText(_logFile, "********* Starting conversion ***********\r\n\r\n");
 
             var words = ParseFile(sourceXml);
-            if (_usageBuilder != null)
-            {
-                _usageBuilder.Initialize(words.Select(x => x.Keyword));
-            }
+            _usageBuilder.Initialize(words.Select(x => x.Keyword));
 
             var soundStats = new StringBuilder();
             if (_isDatabaseMode)
@@ -209,16 +206,13 @@ namespace Pronunciation.Parser
             }
             else
             {
-                GenerateInFileSystem(words, rootFolder, soundStats, maxWords, isFakeMode);
+                GenerateInFileSystem(words, htmlFolder, soundStats, maxWords, isFakeMode);
             }
 
             File.AppendAllText(_logFile, "\r\nSound stats:\r\n" + soundStats.ToString());
 
-            if (_usageBuilder != null)
-            {
-                GenerateTopList(rootFolder);
-                Console.WriteLine("Generated top words lists");
-            }
+            GenerateTopList(htmlFolder);
+            Console.WriteLine("Generated top words lists");
 
             File.AppendAllText(_logFile, "Ended conversion.\r\n\r\n");
         }
@@ -420,7 +414,7 @@ namespace Pronunciation.Parser
             { 
                 Text = word.Keyword,
                 Sounds = new List<SoundInfo>(),
-                UsageInfo = _usageBuilder == null ? null : _usageBuilder.GetUsage(word.Keyword)
+                UsageInfo = _usageBuilder.GetUsage(word.Keyword)
             };
 
             // Parse XML
