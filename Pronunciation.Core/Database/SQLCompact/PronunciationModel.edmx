@@ -69,11 +69,12 @@
             <PropertyRef Name="RecordingId" />
           </Key>
           <Property Name="RecordingId" Type="uniqueidentifier" Nullable="false" />
-          <Property Name="RecordingText" Type="nvarchar" />
+          <Property Name="RecordingText" Type="ntext" />
           <Property Name="Title" Type="nvarchar" MaxLength="200" />
           <Property Name="Created" Type="datetime" />
           <Property Name="Notes" Type="nvarchar" MaxLength="500" />
           <Property Name="Category" Type="nvarchar" MaxLength="100" />
+          <Property Name="RecordingContent" Type="image" />
         </EntityType>
         <EntityType Name="Topic">
           <Key>
@@ -300,6 +301,7 @@
           <Property Type="DateTime" Name="Created" />
           <Property Type="String" Name="Notes" MaxLength="500" FixedLength="false" Unicode="true" />
           <Property Type="String" Name="Category" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Type="Binary" Name="RecordingContent" MaxLength="Max" FixedLength="false" />
         </EntityType>
       </Schema>
     </edmx:ConceptualModels>
@@ -357,6 +359,7 @@
           <EntitySetMapping Name="Recordings">
             <EntityTypeMapping TypeName="PronunciationModel.Recording">
               <MappingFragment StoreEntitySet="Recording">
+                <ScalarProperty Name="RecordingContent" ColumnName="RecordingContent" />
                 <ScalarProperty Name="Category" ColumnName="Category" />
                 <ScalarProperty Name="Notes" ColumnName="Notes" />
                 <ScalarProperty Name="Created" ColumnName="Created" />
@@ -416,7 +419,7 @@
           <ConnectorPoint PointX="3.9784615384615383" PointY="10.816793619791667" />
           <ConnectorPoint PointX="3.9784615384615383" PointY="10.566793619791667" />
         </AssociationConnector>
-        <EntityTypeShape EntityType="PronunciationModel.Recording" Width="1.5" PointX="0.75" PointY="0.75" Height="1.9802864583333317" />
+        <EntityTypeShape EntityType="PronunciationModel.Recording" Width="1.5" PointX="3.375" PointY="0.75" Height="2.3648893229166656" />
       </Diagram>
     </Diagrams>
   </Designer>

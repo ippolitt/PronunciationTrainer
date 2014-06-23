@@ -13,6 +13,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.ComponentModel;
 using Pronunciation.Core.Database;
+using Pronunciation.Trainer.Views;
 
 namespace Pronunciation.Trainer
 {
@@ -29,7 +30,6 @@ namespace Pronunciation.Trainer
         private void UserControl_Initialized(object sender, EventArgs e)
         {
             DataContext = PronunciationDbContext.Instance;
-            PronunciationDbContext.Instance.RecordingChanged += _dbContext_RecordingChanged;
 
             var sort = recordingsDataGrid.Items.SortDescriptions;
             sort.Add(new SortDescription("Created", ListSortDirection.Descending));
@@ -39,14 +39,9 @@ namespace Pronunciation.Trainer
         {
         }
 
-        private void _dbContext_RecordingChanged(Guid recordingId, bool isAdded)
-        {
-            recordingsDataGrid.Items.Refresh();
-        }
-
         private void recordingsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            Recording activeRecord = recordingsDataGrid.SelectedItem as Recording;
+            RecordingLight activeRecord = recordingsDataGrid.SelectedItem as RecordingLight;
             if (activeRecord == null)
                 return;
 
@@ -72,12 +67,8 @@ namespace Pronunciation.Trainer
                 "Confirm deletion", MessageBoxButton.YesNo);
             if (result == MessageBoxResult.Yes)
             {
-                var selectedRecords = recordingsDataGrid.SelectedItems.Cast<Recording>().ToArray();
-                foreach (var record in selectedRecords)
-                {
-                    PronunciationDbContext.Instance.Recordings.Remove(record);
-                }
-                PronunciationDbContext.Instance.Target.SaveChanges();
+                PronunciationDbContext.Instance.RemoveRecordings(recordingsDataGrid.SelectedItems
+                    .Cast<RecordingLight>().ToArray());
             }
         }
     }

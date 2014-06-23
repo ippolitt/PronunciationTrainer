@@ -34,6 +34,8 @@ namespace Pronunciation.Trainer
         private RecordingProvider _provider;
         private Recording _activeRecord;
 
+        private static readonly string ContentFormat = DataFormats.Rtf;
+
         public RecordingDetails()
         {
             InitializeComponent();
@@ -66,6 +68,7 @@ namespace Pronunciation.Trainer
             {
                 InitActiveRecord();
             }
+            LoadContent(_activeRecord);
 
             _audioContext = new RecordingAudioContext(_provider, _activeRecord.RecordingId);
             audioPanel.AttachContext(_audioContext);
@@ -205,6 +208,7 @@ namespace Pronunciation.Trainer
 
         private void SaveChanges()
         {
+            SetContent(_activeRecord);
             if (_dbRecordContext.HasChanges())
             {
                 if (CreateNew)
@@ -212,9 +216,8 @@ namespace Pronunciation.Trainer
                     _activeRecord.Created = DateTime.Now;
                 }
                 _dbRecordContext.SaveChanges();
-                CreateNew = false;
-
                 PronunciationDbContext.Instance.NotifyRecordingChanged(_activeRecord.RecordingId, CreateNew);
+                CreateNew = false;
             }
         }
 
@@ -242,6 +245,59 @@ namespace Pronunciation.Trainer
             {
                 DialogResult = !_dbRecordContext.HasChanges();
             }
+        }
+
+        private void LoadContent(Recording record)
+        {
+            if (record.RecordingContent == null)
+                return;
+
+            FlowDocument doc = rtxtContent.Document;
+            var range = new TextRange(doc.ContentStart, doc.ContentEnd);
+            range.Load(new MemoryStream(record.RecordingContent), ContentFormat);
+        }
+
+        private void SetContent(Recording record)
+        {
+            if (IsRichTextboxEmpty(rtxtContent))
+            {
+                if (record.RecordingContent != null && record.RecordingContent.Length > 0)
+                {
+                    record.RecordingContent = null;
+                    record.RecordingText = null;
+                }
+                return;
+            }
+
+            FlowDocument doc = rtxtContent.Document;
+            var range = new TextRange(doc.ContentStart, doc.ContentEnd);
+            using (MemoryStream buffer = new MemoryStream())
+            {
+                range.Save(buffer, ContentFormat);
+                var content = buffer.ToArray();
+                if (content.SequenceEqual(record.RecordingContent ?? new byte[0]))
+                {
+                    return;
+                }
+
+                record.RecordingContent = content;
+            }
+
+            using (MemoryStream buffer = new MemoryStream())
+            {
+                range.Save(buffer, DataFormats.Text);
+                record.RecordingText = Encoding.UTF8.GetString(buffer.ToArray());
+            }
+        }
+
+        private bool IsRichTextboxEmpty(RichTextBox rtb)
+        {
+            var start = rtb.Document.ContentStart;
+            var end = rtb.Document.ContentEnd;
+            int difference = start.GetOffsetToPosition(end);
+
+            // When we insert a single image from the Clipboard the difference=3
+            return difference == 0 || difference == 2 || difference == 4;
         }
     }
 }

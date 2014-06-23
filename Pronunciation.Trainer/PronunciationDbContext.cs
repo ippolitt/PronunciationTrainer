@@ -5,6 +5,7 @@ using System.Text;
 using Pronunciation.Core.Database;
 using System.Collections.ObjectModel;
 using System.Data.Entity;
+using Pronunciation.Trainer.Views;
 
 namespace Pronunciation.Trainer
 {
@@ -15,13 +16,7 @@ namespace Pronunciation.Trainer
         private readonly Lazy<ObservableCollection<Topic>> _topics;
         private readonly Lazy<ObservableCollection<ExerciseType>> _exerciseTypes;
         private readonly Lazy<ObservableCollection<Book>> _books;
-        private readonly Lazy<ObservableCollection<Recording>> _recordings;
-
-        public delegate void ExerciseChangedHandler(Guid exerciseId, bool isAdded);
-        public delegate void RecordingChangedHandler(Guid recordingId, bool isAdded);
-
-        public event ExerciseChangedHandler ExerciseChanged;
-        public event RecordingChangedHandler RecordingChanged;
+        private readonly Lazy<ObservableCollection<RecordingLight>> _recordings;
 
         private readonly static Lazy<PronunciationDbContext> _instance = new Lazy<PronunciationDbContext>(
             () => new PronunciationDbContext());
@@ -35,11 +30,6 @@ namespace Pronunciation.Trainer
         {
             _dbContext = new Entities();
 
-            _exercises = new Lazy<ObservableCollection<Exercise>>(() => 
-            { 
-                _dbContext.Exercises.Load();
-                return _dbContext.Exercises.Local;
-            });
             _topics = new Lazy<ObservableCollection<Topic>>(() =>
             {
                 _dbContext.Topics.Load();
@@ -55,10 +45,14 @@ namespace Pronunciation.Trainer
                 _dbContext.Books.Load();
                 return _dbContext.Books.Local;
             });
-            _recordings = new Lazy<ObservableCollection<Recording>>(() =>
+
+            _exercises = new Lazy<ObservableCollection<Exercise>>(() =>
             {
-                _dbContext.Recordings.Load();
-                return _dbContext.Recordings.Local;
+                return new ObservableCollection<Exercise>(_dbContext.Exercises.AsNoTracking());
+            });
+            _recordings = new Lazy<ObservableCollection<RecordingLight>>(() =>
+            {
+                return new ObservableCollection<RecordingLight>(_dbContext.Recordings.AsNoTracking().Select(FillRecordingLight));
             });
         }
 
@@ -82,7 +76,7 @@ namespace Pronunciation.Trainer
             get { return _books.Value; }
         }
 
-        public ObservableCollection<Recording> Recordings
+        public ObservableCollection<RecordingLight> Recordings
         {
             get { return _recordings.Value; }
         }
@@ -94,38 +88,75 @@ namespace Pronunciation.Trainer
 
         public void NotifyExerciseChanged(Guid exerciseId, bool isAdded)
         {
+            var exercise = _dbContext.Exercises.AsNoTracking().Single(x => x.ExerciseId == exerciseId);
             if (isAdded)
             {
-                _dbContext.Exercises.Load();
+                Exercises.Add(exercise);
             }
             else
             {
-                var exercise = _dbContext.Exercises.Single(x => x.ExerciseId == exerciseId);
-                _dbContext.Entry(exercise).Reload();
-            }
-
-            if (ExerciseChanged != null)
-            {
-                ExerciseChanged(exerciseId, isAdded);
+                Exercises.Remove(Exercises.Single(x => x.ExerciseId == exerciseId));
+                Exercises.Add(exercise);
             }
         }
 
         public void NotifyRecordingChanged(Guid recordingId, bool isAdded)
         {
+            var recording = _dbContext.Recordings.AsNoTracking()
+                .Where(x => x.RecordingId == recordingId)
+                .Select(FillRecordingLight).Single();
             if (isAdded)
             {
-                _dbContext.Recordings.Load();
+                Recordings.Add(recording);
             }
             else
             {
-                var recording = _dbContext.Recordings.Single(x => x.RecordingId == recordingId);
-                _dbContext.Entry(recording).Reload();
+                Recordings.Remove(Recordings.Single(x => x.RecordingId == recordingId));
+                Recordings.Add(recording);
             }
+        }
 
-            if (RecordingChanged != null)
+        public void RemoveExercises(Exercise[] exercises)
+        {
+            foreach (var exercise in exercises)
             {
-                RecordingChanged(recordingId, isAdded);
+                var fakeExercise = new Exercise { ExerciseId = exercise.ExerciseId };
+                _dbContext.Exercises.Attach(fakeExercise);
+                _dbContext.Exercises.Remove(fakeExercise);
             }
+            _dbContext.SaveChanges();
+
+            foreach (var exercise in exercises)
+            {
+                Exercises.Remove(exercise);
+            }
+        }
+
+        public void RemoveRecordings(RecordingLight[] recordings)
+        {
+            foreach (var recording in recordings)
+            {
+                var fakeRecording = new Recording { RecordingId = recording.RecordingId };
+                _dbContext.Recordings.Attach(fakeRecording);
+                _dbContext.Recordings.Remove(fakeRecording);
+            }
+            _dbContext.SaveChanges();
+
+            foreach (var recording in recordings)
+            {
+                Recordings.Remove(recording);
+            }
+        }
+
+        private RecordingLight FillRecordingLight(Recording x)
+        {
+            return new RecordingLight
+            {
+                RecordingId = x.RecordingId,
+                Title = x.Title,
+                Category = x.Category,
+                Created = x.Created
+            };
         }
 
         //((System.Data.Entity.Infrastructure.IObjectContextAdapter)_dataContext).ObjectContext

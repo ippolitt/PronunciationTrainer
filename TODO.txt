@@ -1,4 +1,6 @@
 Top:
+- Migrate all existing exercises to use images from DB?
+- Add handling for "EntityValidationErrors" (too long text etc)
 - Bug when sequence is scheduled and I start another action
 - Allow to make several recordings per source and select the best one
 - Store history of the recordings. Save best recordings with the date so that I was able to compare them over time to check my progress
@@ -12,7 +14,6 @@ Top:
 - Add a shortcut for playing ref and rec sounds simultaneosuly
 - Create a text version of each sentence/phrase to be able to perform full text search
 - Play any word in the dictionary when I double click on it.
-- Bug: when I change CD number and save the sort order in the grid doesn't change
 - Bug: When I change language and click "Play" it still plays the old audio
 - Add a switch to hide/display exercise desription
 - Add recording duration to the recordings list

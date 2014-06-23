@@ -31,7 +31,6 @@ namespace Pronunciation.Trainer
         private void UserControl_Initialized(object sender, EventArgs e)
         {
             DataContext = PronunciationDbContext.Instance;
-            PronunciationDbContext.Instance.ExerciseChanged += _dbContext_ExerciseChanged;
 
             var sort = exerciseDataGrid.Items.SortDescriptions;
             sort.Add(new SortDescription("BookId", ListSortDirection.Ascending));
@@ -41,11 +40,6 @@ namespace Pronunciation.Trainer
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-        }
-
-        private void _dbContext_ExerciseChanged(Guid exerciseId, bool isAdded)
-        {
-            exerciseDataGrid.Items.Refresh();
         }
 
         private void exerciseDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -76,12 +70,7 @@ namespace Pronunciation.Trainer
                 "Confirm deletion", MessageBoxButton.YesNo);
             if (result == MessageBoxResult.Yes)
             {
-                var selectedRecords = exerciseDataGrid.SelectedItems.Cast<Exercise>().ToArray();
-                foreach (var record in selectedRecords)
-                {
-                    PronunciationDbContext.Instance.Exercises.Remove(record);
-                }
-                PronunciationDbContext.Instance.Target.SaveChanges();
+                PronunciationDbContext.Instance.RemoveExercises(exerciseDataGrid.SelectedItems.Cast<Exercise>().ToArray());
             }
         }
     }

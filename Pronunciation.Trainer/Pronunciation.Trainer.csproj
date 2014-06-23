@@ -78,6 +78,7 @@
     <Compile Include="Commands\ExecuteActionCommand.cs" />
     <Compile Include="ControlsHelper.cs" />
     <Compile Include="DictionaryContainerScriptingProxy.cs" />
+    <Compile Include="Views\RecordingLight.cs" />
     <Compile Include="RecordingDetails.xaml.cs">
       <DependentUpon>RecordingDetails.xaml</DependentUpon>
     </Compile>
@@ -243,6 +244,7 @@
     <Resource Include="Resources\AudioPause.png" />
     <Resource Include="Resources\AudioStartRecording.png" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

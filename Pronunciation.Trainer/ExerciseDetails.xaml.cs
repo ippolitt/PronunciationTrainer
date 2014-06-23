@@ -131,9 +131,8 @@ namespace Pronunciation.Trainer
             if (_dbRecordContext.HasChanges())
             {
                 _dbRecordContext.SaveChanges();
-                CreateNew = false;
-
                 PronunciationDbContext.Instance.NotifyExerciseChanged(_activeRecord.ExerciseId, CreateNew);
+                CreateNew = false;
             }
         }
 

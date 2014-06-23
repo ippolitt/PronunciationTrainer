@@ -12,6 +12,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.ComponentModel;
 using Pronunciation.Core.Database;
+using Pronunciation.Trainer.Views;
 
 namespace Pronunciation.Trainer
 {
@@ -20,7 +21,7 @@ namespace Pronunciation.Trainer
     /// </summary>
     public partial class RecordingSelectionDialog : Window
     {
-        public Recording SelectedRecording { get; private set; }
+        public RecordingLight SelectedRecording { get; private set; }
 
         public RecordingSelectionDialog()
         {
@@ -48,7 +49,7 @@ namespace Pronunciation.Trainer
                 return;
             }
 
-            SelectedRecording = (Recording)recordingsDataGrid.SelectedItems[0];
+            SelectedRecording = (RecordingLight)recordingsDataGrid.SelectedItems[0];
             this.DialogResult = true;
             this.Close();
         }
@@ -62,7 +63,7 @@ namespace Pronunciation.Trainer
 
         private void recordingsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            Recording activeRecord = recordingsDataGrid.SelectedItem as Recording;
+            RecordingLight activeRecord = recordingsDataGrid.SelectedItem as RecordingLight;
             if (activeRecord == null)
                 return;
 

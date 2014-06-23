@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
-namespace Pronunciation.Core.Database
+namespace Pronunciation.Trainer.Views
 {
-    public partial class Recording
+    public class RecordingLight
     {
         public System.Guid RecordingId { get; set; }
-        public string RecordingText { get; set; }
-        public byte[] RecordingContent { get; set; }
         public string Title { get; set; }
         public Nullable<System.DateTime> Created { get; set; }
         public string Notes { get; set; }

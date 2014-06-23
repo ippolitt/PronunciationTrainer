@@ -50,18 +50,26 @@
                 <RowDefinition Height="*"></RowDefinition>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Top" Text="Text:" />
+            <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Top" Text="Text:" ToolTip="Formatted text is also supported" />
             <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Top" Text="Audio:" />
 
-            <TextBox Grid.Row="1" Grid.Column="0" Margin="0,3,10,3" Name="txtText" TabIndex="40"
+            <!--<TextBox Grid.Row="1" Grid.Column="0" Margin="0,3,10,3" Name="txtText" TabIndex="40"
                 TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="False" VerticalScrollBarVisibility="Auto" 
-                Text="{Binding Path=RecordingText, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}"  AllowDrop="False" />
+                Text="{Binding Path=RecordingText, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}"  AllowDrop="False" />-->
+            <RichTextBox Grid.Row="1" Grid.Column="0" Margin="0,3,10,3" Name="rtxtContent" TabIndex="40" 
+                         VerticalScrollBarVisibility="Auto">
+                <RichTextBox.Resources>
+                    <Style TargetType="{x:Type Paragraph}">
+                        <Setter Property="Margin" Value="0"/>
+                    </Style>
+                </RichTextBox.Resources>
+            </RichTextBox>
 
             <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,3,1,3" Orientation="Vertical" VerticalAlignment="Top" >
                 <local:AudioList Grid.Row="1" Grid.Column="1" x:Name="lstRecords" TabIndex="50" Height="200" SelectionMode="Extended"
                     SelectionChanged="lstRecords_SelectionChanged" MouseDoubleClick="lstRecords_MouseDoubleClick" />
-                <Button Margin="0,5,0,0" Content="Delete selected" Name="btnDeleteSelected" Click="btnDeleteSelected_Click" />
-                <Button Margin="0,5,0,0" Content="Explore audio folder" Name="btnExploreFolder" Click="btnExploreFolder_Click" />
+                <Button Margin="0,5,0,0" TabIndex="60" Content="Delete selected" Name="btnDeleteSelected" Click="btnDeleteSelected_Click" />
+                <Button Margin="0,5,0,0" TabIndex="70" Content="Explore audio folder" Name="btnExploreFolder" Click="btnExploreFolder_Click" />
             </StackPanel>
         </Grid>
     </DockPanel>
