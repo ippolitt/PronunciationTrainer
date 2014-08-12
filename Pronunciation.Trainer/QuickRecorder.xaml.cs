@@ -172,8 +172,8 @@ namespace Pronunciation.Trainer
             }
             else
             {
-                SetAudioButtonsState(false);
                 _audioContext.ResetContext();  
+                SetAudioButtonsState(false);
             }
         }
 

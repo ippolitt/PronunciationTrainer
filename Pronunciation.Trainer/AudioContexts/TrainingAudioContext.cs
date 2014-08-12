@@ -17,6 +17,7 @@ namespace Pronunciation.Trainer.AudioContexts
         private readonly TrainingTargetKey _trainingKey;
         private readonly IRecordingHistoryPolicy _recordingPolicy;
         private string _audioKey;
+        private byte[] _referenceAudio;
 
         public TrainingAudioContext(IRecordingProvider<TrainingTargetKey> recordingProvider, 
             TrainingTargetKey trainingKey, IRecordingHistoryPolicy recordingPolicy)
@@ -26,11 +27,9 @@ namespace Pronunciation.Trainer.AudioContexts
             _trainingKey = trainingKey;
         }
 
-        public void RefreshContext(string audioKey, bool playImmediately)
+        public void RefreshContext(byte[] referenceAudio, string audioKey, bool playImmediately)
         {
-            if (_audioKey == audioKey && !playImmediately)
-                return;
-
+            _referenceAudio = referenceAudio;
             _audioKey = audioKey;
             if (ContextChanged != null)
             {
@@ -38,18 +37,9 @@ namespace Pronunciation.Trainer.AudioContexts
             }
         }
 
-        public void ResetContext()
-        {
-            _audioKey = null;
-            if (ContextChanged != null)
-            {
-                ContextChanged(PlayAudioMode.None);
-            }
-        }
-
         public bool IsReferenceAudioExists
         {
-            get { return false; }
+            get { return _referenceAudio != null; }
         }
 
         public bool IsRecordedAudioExists
@@ -64,7 +54,7 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public PlaybackData GetReferenceAudio()
         {
-            return null;
+            return _referenceAudio == null ? null : new PlaybackData(_referenceAudio);
         }
 
         public PlaybackData GetRecordedAudio()

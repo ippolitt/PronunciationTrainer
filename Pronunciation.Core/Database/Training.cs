@@ -12,5 +12,7 @@
         public Nullable<System.DateTime> Created { get; set; }
         public string Notes { get; set; }
         public string Category { get; set; }
+        public byte[] ReferenceAudioData { get; set; }
+        public string ReferenceAudioName { get; set; }
     }
 }

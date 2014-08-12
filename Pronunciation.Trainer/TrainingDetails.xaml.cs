@@ -9,7 +9,6 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using Pronunciation.Core.Database;
 using Pronunciation.Trainer.AudioContexts;
 using Pronunciation.Core.Providers.Recording;
@@ -19,6 +18,7 @@ using Pronunciation.Core;
 using System.Diagnostics;
 using System.IO;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
+using Microsoft.Win32;
 
 namespace Pronunciation.Trainer
 {
@@ -89,6 +89,7 @@ namespace Pronunciation.Trainer
             }
             else
             {
+                _audioContext.RefreshContext(_activeRecord.ReferenceAudioData, null, false);
                 SetAudioButtonsState(false);
                 txtTitle.Focus();
             }
@@ -128,15 +129,14 @@ namespace Pronunciation.Trainer
         private void RefreshAudioContext(bool playAudio)
         {
             var selectedItem = lstAudios.SelectedItem as RecordedAudioListItem;
-            if (selectedItem == null)
-                return;
-
-            _audioContext.RefreshContext(selectedItem.AudioKey, playAudio);
+            _audioContext.RefreshContext(_activeRecord.ReferenceAudioData, 
+                selectedItem == null ? null : selectedItem.AudioKey, 
+                playAudio);
         }
 
         private void SetAudioButtonsState(bool isEnabled)
         {
-            btnDeleteSelected.IsEnabled = isEnabled;
+            btnDeleteRecorded.IsEnabled = isEnabled;
         }
 
         private void AudioPanel_RecordingCompleted(string recordedFilePath, bool isTemporaryFile)
@@ -165,7 +165,7 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void btnDeleteSelected_Click(object sender, RoutedEventArgs e)
+        private void btnDeleteRecorded_Click(object sender, RoutedEventArgs e)
         {
             if (lstAudios.SelectedItems.Count <= 0)
                 return;
@@ -182,9 +182,34 @@ namespace Pronunciation.Trainer
             }
             else
             {
+                _audioContext.RefreshContext(_activeRecord.ReferenceAudioData, null, false);
                 SetAudioButtonsState(false);
-                _audioContext.ResetContext();
             }
+        }
+
+        private void btnImportReference_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new OpenFileDialog();
+            dlg.Filter = "Audio files (*.mp3)|*.mp3|All files (*.*)|*.*";
+
+            bool? result = dlg.ShowDialog();
+            if (result == true)
+            {
+                _activeRecord.ReferenceAudioData = File.ReadAllBytes(dlg.FileName);
+                _activeRecord.ReferenceAudioName = Path.GetFileNameWithoutExtension(dlg.FileName);
+                txtReferenceAudio.Text = _activeRecord.ReferenceAudioName;
+
+                RefreshAudioContext(false);
+            }
+        }
+
+        private void btnDeleteReference_Click(object sender, RoutedEventArgs e)
+        {
+            _activeRecord.ReferenceAudioData = null;
+            _activeRecord.ReferenceAudioName = null;
+            txtReferenceAudio.Text = null;
+
+            RefreshAudioContext(false);
         }
 
         private void btnOK_Click(object sender, RoutedEventArgs e)

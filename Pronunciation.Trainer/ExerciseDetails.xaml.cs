@@ -200,7 +200,7 @@ namespace Pronunciation.Trainer
             if (selectedItem == null)
                 return;
 
-            _audioContext.RefreshContext(selectedItem.AudioName, new PlaybackData(selectedItem.RawData), playAudio);
+            _audioContext.RefreshContext(selectedItem.AudioName, selectedItem.RawData, playAudio);
         }
 
         private void SetAudioButtonsState(bool isEnabled)
@@ -305,8 +305,8 @@ namespace Pronunciation.Trainer
                 }
                 else
                 {
-                    SetAudioButtonsState(false);
                     _audioContext.ResetContext();
+                    SetAudioButtonsState(false);
                 }
             }
         }

@@ -1,5 +1,5 @@
 Top:
-- Add column "CD+Track"
+- Add ability to delete audio by "DEL" (at least in Training)
 - Optimize IsAudioExists calls (AudioPanel currently makes it twice)
 - Test InMemory recorder - how much memory does it eats for long recordings? Should we flush to disk?
 - Specify recording duration somewhere (both reference and recorded)
@@ -52,7 +52,6 @@ Migration to DB:
 
 Audio migration to DB:
 - Test:
-	- Test lowcase and uppercase audio name in Exercise
 	- Upload 20, 21, 23 manually
 	- Shrink database after migration (both LPD and Trainer)
 	- Check exercises that have no recordings (see log)

@@ -91,44 +91,42 @@
             <Button Content="Cancel" Height="23" Margin="5,0,0,0" Name="btnCancel" IsCancel="True" Width="75" Click="btnCancel_Click" TabIndex="130" />
         </StackPanel>
 
-        <Border Margin="0,0,0,0" BorderBrush="Black" BorderThickness="2">
-            <Grid Name="exerciseBody" Margin="5">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="100"></ColumnDefinition>
-                    <ColumnDefinition Width="*"></ColumnDefinition>
-                    <ColumnDefinition Width="70"></ColumnDefinition>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"></RowDefinition>
-                    <RowDefinition Height="*"></RowDefinition>
-                </Grid.RowDefinitions>
+        <Grid Name="exerciseBody" Margin="0,5,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="70"></ColumnDefinition>
+                <ColumnDefinition Width="100"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
 
-                <StackPanel Grid.Row="1" Grid.Column="0" Grid.RowSpan="2" Margin="0,5,0,0" Name="actions" Orientation="Vertical" VerticalAlignment="Top">
-                    <Button Content="Import content" Height="23" Margin="0,0,5,0" Name="btnImportContent"  Click="btnImportContent_Click"  TabIndex="110" />
-                    <Button Content="Import audio" Height="23" Margin="0,5,5,0" Name="btnImportAudio" Click="btnImportAudio_Click" TabIndex="112" />
-                    <Button Content="Delete audio" Height="23" Margin="0,5,5,0" Name="btnDeleteAudio" Click="btnDeleteAudio_Click"  TabIndex="114" />
-                </StackPanel>
+            <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Top" Text="Exercise content:" />
+            <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Top" Text="Audio:" />
 
-                <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Top" Text="Content:" />
-                <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Top" Text="Audio:" />
+            <Border Name="borderImage" Grid.Row="1" Grid.Column="0" Margin="0,3,5,0" Padding="5">
+                <ScrollViewer 
+                HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                HorizontalContentAlignment="Left" VerticalContentAlignment="Top" OpacityMask="{x:Null}">
+                    <Image Name="imgContent" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                    <!-- SnapsToDevicePixels="True" 
+                RenderOptions.BitmapScalingMode="NearestNeighbor" - works bad for jpeg  
+                RenderOptions.EdgeMode="Aliased"
+                UseLayoutRounding="True" (in Window)
+                -->
+                </ScrollViewer>
+            </Border>
 
-                <Border Name="borderImage" Grid.Row="1" Grid.Column="1" Margin="0,5,5,0" Padding="5">
-                    <ScrollViewer 
-                    HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
-                    HorizontalContentAlignment="Left" VerticalContentAlignment="Top" OpacityMask="{x:Null}">
-                        <Image Name="imgContent" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" />
-                        <!-- SnapsToDevicePixels="True" 
-                    RenderOptions.BitmapScalingMode="NearestNeighbor" - works bad for jpeg  
-                    RenderOptions.EdgeMode="Aliased"
-                    UseLayoutRounding="True" (in Window)
-                    -->
-                    </ScrollViewer>
-                </Border>
+            <local:AudioList Grid.Row="1" Grid.Column="1" Margin="0,3,5,0" x:Name="lstAudios" TabIndex="100" 
+                SelectionChanged="lstAudios_SelectionChanged" MouseDoubleClick="lstAudios_MouseDoubleClick" SelectionMode="Extended" />
 
-                <local:AudioList Grid.Row="1" Grid.Column="2" Margin="0,5,0,0" x:Name="lstAudios" TabIndex="100" 
-                    SelectionChanged="lstAudios_SelectionChanged" MouseDoubleClick="lstAudios_MouseDoubleClick" SelectionMode="Extended" />
-                <!--<Rectangle Height="302" Name="rectangle1" Stroke="Black" Width="742" RadiusX="10" RadiusY="10" />-->
-            </Grid>
-        </Border>
+            <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,3,0,0" Name="actions" Orientation="Vertical" VerticalAlignment="Top">
+                <Button Content="Import content" Height="23" Margin="0,0,0,0" Name="btnImportContent"  Click="btnImportContent_Click"  TabIndex="110" />
+                <Button Content="Import audio" Height="23" Margin="0,5,0,0" Name="btnImportAudio" Click="btnImportAudio_Click" TabIndex="112" />
+                <Button Content="Delete audio" Height="23" Margin="0,5,0,0" Name="btnDeleteAudio" Click="btnDeleteAudio_Click"  TabIndex="114" />
+            </StackPanel>
+            <!--<Rectangle Height="302" Name="rectangle1" Stroke="Black" Width="742" RadiusX="10" RadiusY="10" />-->
+        </Grid>
     </DockPanel>
 </Window>
