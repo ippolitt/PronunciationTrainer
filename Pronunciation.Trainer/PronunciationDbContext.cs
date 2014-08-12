@@ -6,17 +6,19 @@ using Pronunciation.Core.Database;
 using System.Collections.ObjectModel;
 using System.Data.Entity;
 using Pronunciation.Trainer.Views;
+using System.Linq.Expressions;
+using Pronunciation.Core;
 
 namespace Pronunciation.Trainer
 {
     public class PronunciationDbContext
     {
         private readonly Entities _dbContext;
-        private readonly Lazy<ObservableCollection<Exercise>> _exercises;
+        private readonly Lazy<ObservableCollection<ExerciseListItem>> _exercises;
         private readonly Lazy<ObservableCollection<Topic>> _topics;
         private readonly Lazy<ObservableCollection<ExerciseType>> _exerciseTypes;
         private readonly Lazy<ObservableCollection<Book>> _books;
-        private readonly Lazy<ObservableCollection<RecordingLight>> _recordings;
+        private readonly Lazy<ObservableCollection<TrainingListItem>> _trainings;
 
         private readonly static Lazy<PronunciationDbContext> _instance = new Lazy<PronunciationDbContext>(
             () => new PronunciationDbContext());
@@ -46,17 +48,17 @@ namespace Pronunciation.Trainer
                 return _dbContext.Books.Local;
             });
 
-            _exercises = new Lazy<ObservableCollection<Exercise>>(() =>
+            _exercises = new Lazy<ObservableCollection<ExerciseListItem>>(() =>
             {
-                return new ObservableCollection<Exercise>(_dbContext.Exercises.AsNoTracking());
+                return new ObservableCollection<ExerciseListItem>(_dbContext.Exercises.AsNoTracking().Select(SelectExerciseExpression));
             });
-            _recordings = new Lazy<ObservableCollection<RecordingLight>>(() =>
+            _trainings = new Lazy<ObservableCollection<TrainingListItem>>(() =>
             {
-                return new ObservableCollection<RecordingLight>(_dbContext.Recordings.AsNoTracking().Select(FillRecordingLight));
+                return new ObservableCollection<TrainingListItem>(_dbContext.Trainings.AsNoTracking().Select(SelectTrainingExpression));
             });
         }
 
-        public ObservableCollection<Exercise> Exercises
+        public ObservableCollection<ExerciseListItem> Exercises
         {
             get { return _exercises.Value; }
         }
@@ -76,9 +78,9 @@ namespace Pronunciation.Trainer
             get { return _books.Value; }
         }
 
-        public ObservableCollection<RecordingLight> Recordings
+        public ObservableCollection<TrainingListItem> Trainings
         {
-            get { return _recordings.Value; }
+            get { return _trainings.Value; }
         }
 
         public Entities Target
@@ -88,7 +90,10 @@ namespace Pronunciation.Trainer
 
         public void NotifyExerciseChanged(Guid exerciseId, bool isAdded)
         {
-            var exercise = _dbContext.Exercises.AsNoTracking().Single(x => x.ExerciseId == exerciseId);
+            var exercise = _dbContext.Exercises.AsNoTracking()
+                .Where(x => x.ExerciseId == exerciseId)
+                .Select(SelectExerciseExpression)
+                .Single();
             if (isAdded)
             {
                 Exercises.Add(exercise);
@@ -100,23 +105,24 @@ namespace Pronunciation.Trainer
             }
         }
 
-        public void NotifyRecordingChanged(Guid recordingId, bool isAdded)
+        public void NotifyTrainingChanged(Guid trainingId, bool isAdded)
         {
-            var recording = _dbContext.Recordings.AsNoTracking()
-                .Where(x => x.RecordingId == recordingId)
-                .Select(FillRecordingLight).Single();
+            var training = _dbContext.Trainings.AsNoTracking()
+                .Where(x => x.TrainingId == trainingId)
+                .Select(SelectTrainingExpression)
+                .Single();
             if (isAdded)
             {
-                Recordings.Add(recording);
+                Trainings.Add(training);
             }
             else
             {
-                Recordings.Remove(Recordings.Single(x => x.RecordingId == recordingId));
-                Recordings.Add(recording);
+                Trainings.Remove(Trainings.Single(x => x.TrainingId == trainingId));
+                Trainings.Add(training);
             }
         }
 
-        public void RemoveExercises(Exercise[] exercises)
+        public void RemoveExercises(ExerciseListItem[] exercises)
         {
             foreach (var exercise in exercises)
             {
@@ -132,31 +138,66 @@ namespace Pronunciation.Trainer
             }
         }
 
-        public void RemoveRecordings(RecordingLight[] recordings)
+        public ExerciseAudioListItem[] GetExerciseAudios(Guid[] exerciseIds)
         {
-            foreach (var recording in recordings)
+            return _dbContext.ExerciseAudios.AsNoTracking()
+                .Where(x => exerciseIds.Contains(x.ExerciseId))
+                .Select(x => new ExerciseAudioListItem 
+                    { 
+                        AudioId = x.AudioId,
+                        AudioName = x.AudioName, 
+                        ExerciseId = x.ExerciseId
+                    }).ToArray();
+        }
+
+        public void RemoveTrainings(TrainingListItem[] trainings)
+        {
+            foreach (var training in trainings)
             {
-                var fakeRecording = new Recording { RecordingId = recording.RecordingId };
-                _dbContext.Recordings.Attach(fakeRecording);
-                _dbContext.Recordings.Remove(fakeRecording);
+                var fakeTraining = new Training { TrainingId = training.TrainingId };
+                _dbContext.Trainings.Attach(fakeTraining);
+                _dbContext.Trainings.Remove(fakeTraining);
             }
             _dbContext.SaveChanges();
 
-            foreach (var recording in recordings)
+            foreach (var training in trainings)
             {
-                Recordings.Remove(recording);
+                Trainings.Remove(training);
             }
         }
 
-        private RecordingLight FillRecordingLight(Recording x)
+        private Expression<Func<Training, TrainingListItem>> SelectTrainingExpression
         {
-            return new RecordingLight
+            get 
             {
-                RecordingId = x.RecordingId,
-                Title = x.Title,
-                Category = x.Category,
-                Created = x.Created
-            };
+                return x => new TrainingListItem
+                {
+                    TrainingId = x.TrainingId,
+                    Title = x.Title,
+                    Category = x.Category,
+                    Created = x.Created
+                };
+            }
+        }
+
+        private Expression<Func<Exercise, ExerciseListItem>> SelectExerciseExpression
+        {
+            get 
+            {
+                return x => new ExerciseListItem
+                {
+                    ExerciseId = x.ExerciseId,
+                    Title = x.Title,
+                    TargetSound = x.TargetSound,
+                    SourcePage = x.SourcePage,
+                    SourceCD = x.SourceCD,
+                    SourceTrack = x.SourceTrack,
+
+                    ExerciseTypeId = x.ExerciseTypeId,
+                    BookId = x.BookId,
+                    TopicId = x.TopicId 
+                };
+            }
         }
 
         //((System.Data.Entity.Infrastructure.IObjectContextAdapter)_dataContext).ObjectContext

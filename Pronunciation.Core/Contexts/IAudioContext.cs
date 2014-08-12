@@ -19,8 +19,8 @@ namespace Pronunciation.Core.Contexts
         bool IsReferenceAudioExists { get; }
         bool IsRecordedAudioExists { get; }
         bool IsRecordingAllowed { get; }
-        PlaybackSettings GetReferenceAudio();
-        PlaybackSettings GetRecordedAudio();
+        PlaybackData GetReferenceAudio();
+        PlaybackData GetRecordedAudio();
         RecordingSettings GetRecordingSettings();
         event AudioContextChangedHandler ContextChanged;
     }

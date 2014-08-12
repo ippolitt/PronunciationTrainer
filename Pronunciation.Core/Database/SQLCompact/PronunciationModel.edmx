@@ -6,11 +6,15 @@
     <edmx:StorageModels>
     <Schema Namespace="PronunciationModel.Store" Alias="Self" Provider="System.Data.SqlServerCe.3.5" ProviderManifestToken="3.5" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/02/edm/ssdl">
         <EntityContainer Name="PronunciationModelStoreContainer">
+          <EntitySet Name="AudioTargetType" EntityType="PronunciationModel.Store.AudioTargetType" store:Type="Tables" />
           <EntitySet Name="Book" EntityType="PronunciationModel.Store.Book" store:Type="Tables" />
           <EntitySet Name="Exercise" EntityType="PronunciationModel.Store.Exercise" store:Type="Tables" />
+          <EntitySet Name="ExerciseAudio" EntityType="PronunciationModel.Store.ExerciseAudio" store:Type="Tables" />
           <EntitySet Name="ExerciseType" EntityType="PronunciationModel.Store.ExerciseType" store:Type="Tables" />
+          <EntitySet Name="RecordedAudio" EntityType="PronunciationModel.Store.RecordedAudio" store:Type="Tables" />
           <EntitySet Name="Recording" EntityType="PronunciationModel.Store.Recording" store:Type="Tables" />
           <EntitySet Name="Topic" EntityType="PronunciationModel.Store.Topic" store:Type="Tables" />
+          <EntitySet Name="Training" EntityType="PronunciationModel.Store.Training" store:Type="Tables" />
           <AssociationSet Name="FK_Exercise_Book" Association="PronunciationModel.Store.FK_Exercise_Book">
             <End Role="Book" EntitySet="Book" />
             <End Role="Exercise" EntitySet="Exercise" />
@@ -23,6 +27,14 @@
             <End Role="Topic" EntitySet="Topic" />
             <End Role="Exercise" EntitySet="Exercise" />
           </AssociationSet>
+          <AssociationSet Name="FK_ExerciseAudio_Exercise" Association="PronunciationModel.Store.FK_ExerciseAudio_Exercise">
+            <End Role="Exercise" EntitySet="Exercise" />
+            <End Role="ExerciseAudio" EntitySet="ExerciseAudio" />
+          </AssociationSet>
+          <AssociationSet Name="FK_RecordedAudio_AudioTargetType" Association="PronunciationModel.Store.FK_RecordedAudio_AudioTargetType">
+            <End Role="AudioTargetType" EntitySet="AudioTargetType" />
+            <End Role="RecordedAudio" EntitySet="RecordedAudio" />
+          </AssociationSet>
           <AssociationSet Name="FK_Topic_Book" Association="PronunciationModel.Store.FK_Topic_Book">
             <End Role="Book" EntitySet="Book" />
             <End Role="Topic" EntitySet="Topic" />
@@ -32,6 +44,13 @@
             <End Role="Topic1" EntitySet="Topic" />
           </AssociationSet>
         </EntityContainer>
+        <EntityType Name="AudioTargetType">
+          <Key>
+            <PropertyRef Name="TargetTypeId" />
+          </Key>
+          <Property Name="TargetTypeId" Type="int" Nullable="false" />
+          <Property Name="TargetTypeName" Type="nvarchar" MaxLength="50" />
+        </EntityType>
         <EntityType Name="Book">
           <Key>
             <PropertyRef Name="BookId" />
@@ -55,6 +74,16 @@
           <Property Name="SourceCD" Type="int" />
           <Property Name="SourceTrack" Type="int" />
           <Property Name="ExerciseId" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="ExerciseData" Type="image" />
+        </EntityType>
+        <EntityType Name="ExerciseAudio">
+          <Key>
+            <PropertyRef Name="AudioId" />
+          </Key>
+          <Property Name="AudioId" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="RawData" Type="image" />
+          <Property Name="ExerciseId" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="AudioName" Type="nvarchar" Nullable="false" MaxLength="50" />
         </EntityType>
         <EntityType Name="ExerciseType">
           <Key>
@@ -63,6 +92,16 @@
           <Property Name="ExerciseTypeId" Type="int" Nullable="false" />
           <Property Name="ExerciseTypeName" Type="nvarchar" Nullable="false" MaxLength="50" />
           <Property Name="Ordinal" Type="int" />
+        </EntityType>
+        <EntityType Name="RecordedAudio">
+          <Key>
+            <PropertyRef Name="AudioId" />
+          </Key>
+          <Property Name="AudioId" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="RawData" Type="image" />
+          <Property Name="TargetKey" Type="nvarchar" Nullable="false" MaxLength="100" />
+          <Property Name="TargetTypeId" Type="int" Nullable="false" />
+          <Property Name="Recorded" Type="datetime" Nullable="false" />
         </EntityType>
         <EntityType Name="Recording">
           <Key>
@@ -86,6 +125,18 @@
           <Property Name="ParentTopicId" Type="int" />
           <Property Name="BookId" Type="int" />
           <Property Name="Ordinal" Type="int" />
+        </EntityType>
+        <EntityType Name="Training">
+          <Key>
+            <PropertyRef Name="TrainingId" />
+          </Key>
+          <Property Name="TrainingId" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="Title" Type="nvarchar" MaxLength="200" />
+          <Property Name="Created" Type="datetime" />
+          <Property Name="Notes" Type="nvarchar" MaxLength="500" />
+          <Property Name="Category" Type="nvarchar" MaxLength="100" />
+          <Property Name="TrainingData" Type="image" />
+          <Property Name="TrainingText" Type="ntext" />
         </EntityType>
         <Association Name="FK_Exercise_Book">
           <End Role="Book" Type="PronunciationModel.Store.Book" Multiplicity="0..1" />
@@ -120,6 +171,32 @@
             </Principal>
             <Dependent Role="Exercise">
               <PropertyRef Name="TopicId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ExerciseAudio_Exercise">
+          <End Role="Exercise" Type="PronunciationModel.Store.Exercise" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ExerciseAudio" Type="PronunciationModel.Store.ExerciseAudio" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Exercise">
+              <PropertyRef Name="ExerciseId" />
+            </Principal>
+            <Dependent Role="ExerciseAudio">
+              <PropertyRef Name="ExerciseId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_RecordedAudio_AudioTargetType">
+          <End Role="AudioTargetType" Type="PronunciationModel.Store.AudioTargetType" Multiplicity="1" />
+          <End Role="RecordedAudio" Type="PronunciationModel.Store.RecordedAudio" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="AudioTargetType">
+              <PropertyRef Name="TargetTypeId" />
+            </Principal>
+            <Dependent Role="RecordedAudio">
+              <PropertyRef Name="TargetTypeId" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -177,6 +254,18 @@
             <End Role="Topic1" EntitySet="Topics" />
           </AssociationSet>
           <EntitySet Name="Recordings" EntityType="PronunciationModel.Recording" />
+          <EntitySet Name="AudioTargetTypes" EntityType="PronunciationModel.AudioTargetType" />
+          <EntitySet Name="Trainings" EntityType="PronunciationModel.Training" />
+          <EntitySet Name="RecordedAudios" EntityType="PronunciationModel.RecordedAudio" />
+          <AssociationSet Name="FK_RecordedAudio_AudioTargetType" Association="PronunciationModel.FK_RecordedAudio_AudioTargetType">
+            <End Role="AudioTargetType" EntitySet="AudioTargetTypes" />
+            <End Role="RecordedAudio" EntitySet="RecordedAudios" />
+          </AssociationSet>
+          <EntitySet Name="ExerciseAudios" EntityType="PronunciationModel.ExerciseAudio" />
+          <AssociationSet Name="FK_ExerciseAudio_Exercise" Association="PronunciationModel.FK_ExerciseAudio_Exercise">
+            <End Role="Exercise" EntitySet="Exercises" />
+            <End Role="ExerciseAudio" EntitySet="ExerciseAudios" />
+          </AssociationSet>
         </EntityContainer>
         <EntityType Name="Book">
           <Key>
@@ -206,6 +295,8 @@
           <NavigationProperty Name="Book" Relationship="PronunciationModel.FK_Exercise_Book" FromRole="Exercise" ToRole="Book" />
           <NavigationProperty Name="ExerciseType" Relationship="PronunciationModel.FK_Exercise_ExerciseType" FromRole="Exercise" ToRole="ExerciseType" />
           <NavigationProperty Name="Topic" Relationship="PronunciationModel.FK_Exercise_Topic" FromRole="Exercise" ToRole="Topic" />
+          <Property Type="Binary" Name="ExerciseData" MaxLength="Max" FixedLength="false" />
+          <NavigationProperty Name="ExerciseAudios" Relationship="PronunciationModel.FK_ExerciseAudio_Exercise" FromRole="Exercise" ToRole="ExerciseAudio" />
         </EntityType>
         <EntityType Name="ExerciseType">
           <Key>
@@ -303,6 +394,71 @@
           <Property Type="String" Name="Category" MaxLength="100" FixedLength="false" Unicode="true" />
           <Property Type="Binary" Name="RecordingContent" MaxLength="Max" FixedLength="false" />
         </EntityType>
+        <EntityType Name="AudioTargetType">
+          <Key>
+            <PropertyRef Name="TargetTypeId" />
+          </Key>
+          <Property Type="Int32" Name="TargetTypeId" Nullable="false" />
+          <Property Type="String" Name="TargetTypeName" MaxLength="50" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="RecordedAudios" Relationship="PronunciationModel.FK_RecordedAudio_AudioTargetType" FromRole="AudioTargetType" ToRole="RecordedAudio" />
+        </EntityType>
+        <EntityType Name="Training">
+          <Key>
+            <PropertyRef Name="TrainingId" />
+          </Key>
+          <Property Type="Guid" Name="TrainingId" Nullable="false" />
+          <Property Type="String" Name="Title" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Type="DateTime" Name="Created" />
+          <Property Type="String" Name="Notes" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="Category" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Type="Binary" Name="TrainingData" MaxLength="Max" FixedLength="false" />
+          <Property Type="String" Name="TrainingText" MaxLength="Max" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="RecordedAudio">
+          <Key>
+            <PropertyRef Name="AudioId" />
+          </Key>
+          <Property Type="Guid" Name="AudioId" Nullable="false" />
+          <Property Type="Binary" Name="RawData" MaxLength="Max" FixedLength="false" />
+          <Property Type="String" Name="TargetKey" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Type="Int32" Name="TargetTypeId" Nullable="false" />
+          <Property Type="DateTime" Name="Recorded" Nullable="false" />
+          <NavigationProperty Name="AudioTargetType" Relationship="PronunciationModel.FK_RecordedAudio_AudioTargetType" FromRole="RecordedAudio" ToRole="AudioTargetType" />
+        </EntityType>
+        <Association Name="FK_RecordedAudio_AudioTargetType">
+          <End Type="PronunciationModel.AudioTargetType" Role="AudioTargetType" Multiplicity="1" />
+          <End Type="PronunciationModel.RecordedAudio" Role="RecordedAudio" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="AudioTargetType">
+              <PropertyRef Name="TargetTypeId" />
+            </Principal>
+            <Dependent Role="RecordedAudio">
+              <PropertyRef Name="TargetTypeId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityType Name="ExerciseAudio">
+          <Key>
+            <PropertyRef Name="AudioId" />
+          </Key>
+          <Property Type="Guid" Name="AudioId" Nullable="false" />
+          <Property Type="Binary" Name="RawData" MaxLength="Max" FixedLength="false" />
+          <Property Type="Guid" Name="ExerciseId" Nullable="false" />
+          <NavigationProperty Name="Exercise" Relationship="PronunciationModel.FK_ExerciseAudio_Exercise" FromRole="ExerciseAudio" ToRole="Exercise" />
+          <Property Type="String" Name="AudioName" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <Association Name="FK_ExerciseAudio_Exercise">
+          <End Type="PronunciationModel.Exercise" Role="Exercise" Multiplicity="1" />
+          <End Type="PronunciationModel.ExerciseAudio" Role="ExerciseAudio" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Exercise">
+              <PropertyRef Name="ExerciseId" />
+            </Principal>
+            <Dependent Role="ExerciseAudio">
+              <PropertyRef Name="ExerciseId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -322,6 +478,7 @@
           <EntitySetMapping Name="Exercises">
             <EntityTypeMapping TypeName="PronunciationModel.Exercise">
               <MappingFragment StoreEntitySet="Exercise">
+                <ScalarProperty Name="ExerciseData" ColumnName="ExerciseData" />
                 <ScalarProperty Name="ExerciseId" ColumnName="ExerciseId" />
                 <ScalarProperty Name="SourceTrack" ColumnName="SourceTrack" />
                 <ScalarProperty Name="SourceCD" ColumnName="SourceCD" />
@@ -369,6 +526,48 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
+          <EntitySetMapping Name="AudioTargetTypes">
+            <EntityTypeMapping TypeName="PronunciationModel.AudioTargetType">
+              <MappingFragment StoreEntitySet="AudioTargetType">
+                <ScalarProperty Name="TargetTypeName" ColumnName="TargetTypeName" />
+                <ScalarProperty Name="TargetTypeId" ColumnName="TargetTypeId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Trainings">
+            <EntityTypeMapping TypeName="PronunciationModel.Training">
+              <MappingFragment StoreEntitySet="Training">
+                <ScalarProperty Name="TrainingText" ColumnName="TrainingText" />
+                <ScalarProperty Name="TrainingData" ColumnName="TrainingData" />
+                <ScalarProperty Name="Category" ColumnName="Category" />
+                <ScalarProperty Name="Notes" ColumnName="Notes" />
+                <ScalarProperty Name="Created" ColumnName="Created" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="TrainingId" ColumnName="TrainingId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RecordedAudios">
+            <EntityTypeMapping TypeName="PronunciationModel.RecordedAudio">
+              <MappingFragment StoreEntitySet="RecordedAudio">
+                <ScalarProperty Name="Recorded" ColumnName="Recorded" />
+                <ScalarProperty Name="TargetTypeId" ColumnName="TargetTypeId" />
+                <ScalarProperty Name="TargetKey" ColumnName="TargetKey" />
+                <ScalarProperty Name="RawData" ColumnName="RawData" />
+                <ScalarProperty Name="AudioId" ColumnName="AudioId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ExerciseAudios">
+            <EntityTypeMapping TypeName="PronunciationModel.ExerciseAudio">
+              <MappingFragment StoreEntitySet="ExerciseAudio">
+                <ScalarProperty Name="AudioName" ColumnName="AudioName" />
+                <ScalarProperty Name="ExerciseId" ColumnName="ExerciseId" />
+                <ScalarProperty Name="RawData" ColumnName="RawData" />
+                <ScalarProperty Name="AudioId" ColumnName="AudioId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>
@@ -410,8 +609,8 @@
           <ConnectorPoint PointX="5.25" PointY="5.7064925130208337" />
         </AssociationConnector>
         <AssociationConnector Association="PronunciationModel.FK_Exercise_Topic" >
-          <ConnectorPoint PointX="4.5" PointY="8.2593489583333337" />
-          <ConnectorPoint PointX="5.25" PointY="8.2593489583333337" />
+          <ConnectorPoint PointX="4.5" PointY="8.451650390625" />
+          <ConnectorPoint PointX="5.25" PointY="8.451650390625" />
         </AssociationConnector>
         <AssociationConnector Association="PronunciationModel.FK_Topic_Topic" >
           <ConnectorPoint PointX="3.5319230769230767" PointY="10.566793619791667" />
@@ -420,6 +619,18 @@
           <ConnectorPoint PointX="3.9784615384615383" PointY="10.566793619791667" />
         </AssociationConnector>
         <EntityTypeShape EntityType="PronunciationModel.Recording" Width="1.5" PointX="3.375" PointY="0.75" Height="2.3648893229166656" />
+        <EntityTypeShape EntityType="PronunciationModel.AudioTargetType" Width="1.5" PointX="5.375" PointY="1.25" Height="1.5956835937499996" />
+        <EntityTypeShape EntityType="PronunciationModel.Training" Width="1.5" PointX="0.75" PointY="0.625" Height="2.3648893229166674" />
+        <EntityTypeShape EntityType="PronunciationModel.RecordedAudio" Width="1.5" PointX="7.625" PointY="1" Height="2.1725878906249996" />
+        <AssociationConnector Association="PronunciationModel.FK_RecordedAudio_AudioTargetType" >
+          <ConnectorPoint PointX="6.875" PointY="2.047841796875" />
+          <ConnectorPoint PointX="7.625" PointY="2.047841796875" />
+        </AssociationConnector>
+        <EntityTypeShape EntityType="PronunciationModel.ExerciseAudio" Width="1.5" PointX="7.5" PointY="6.375" Height="1.7879850260416657" />
+        <AssociationConnector Association="PronunciationModel.FK_ExerciseAudio_Exercise" >
+          <ConnectorPoint PointX="6.75" PointY="7.2689925130208328" />
+          <ConnectorPoint PointX="7.5" PointY="7.2689925130208328" />
+        </AssociationConnector>
       </Diagram>
     </Diagrams>
   </Designer>

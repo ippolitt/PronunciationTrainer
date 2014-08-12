@@ -9,17 +9,17 @@ using Pronunciation.Core.Audio;
 
 namespace Pronunciation.Trainer.AudioActions
 {
-    public class RecordAudioAction : BackgroundActionWithArgs<RecordingArgs, string>
+    public class RecordAudioAction : BackgroundActionWithArgs<RecordingArgs>
     {
         public RecordAudioAction(Func<ActionContext, ActionArgs<RecordingArgs>> argsBuilder,
-            Action<ActionContext, ActionResult<string>> resultProcessor)
+            Action<ActionContext, RecordingArgs, ActionResult> resultProcessor)
             : base(argsBuilder, null, resultProcessor)
         {
             base.Worker = RecordAudio;
             IsAbortable = true;
         }
 
-        private string RecordAudio(ActionContext context, RecordingArgs args)
+        private void RecordAudio(ActionContext context, RecordingArgs args)
         {
             using (var recorder = new Mp3Recorder(AppSettings.Instance.SampleRate))
             {
@@ -56,8 +56,6 @@ namespace Pronunciation.Trainer.AudioActions
 
                 recorder.Stop();
             }
-
-            return args.FilePath;
         }
     }
 }

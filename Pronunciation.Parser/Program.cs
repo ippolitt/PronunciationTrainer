@@ -24,7 +24,8 @@ namespace Pronunciation.Parser
 
         private const string HtmlFolderDB = @"D:\LEARN\English\Pronunciation\Trainer\LPD_DB";
         private const string HtmlFolderFiles = @"D:\LEARN\English\Pronunciation\Trainer\LPD_File";
-        private const string DbConnectionString = @"Data Source=D:\LEARN\English\Pronunciation\Trainer\Database\LPD.sdf;Max Database Size=4000;";
+        private const string LPDConnectionString = @"Data Source=D:\LEARN\English\Pronunciation\Trainer\Database\LPD.sdf;Max Database Size=4000;";
+        private const string TrainerConnectionString = @"Data Source=D:\LEARN\English\Pronunciation\Trainer\Database\PronunciationTrainer.sdf;Max Database Size=1000;";
 
         // Used for analysis
         private const string SourceFile = DataFolder + "En-En-Longman_Pronunciation.dsl";
@@ -37,11 +38,12 @@ namespace Pronunciation.Parser
         {
             try
             {
+                MigrateRecordingsToDB();
                 //UploadFiles();
                 //UploadFilesBulk();
                 //TestUpload();
                 //MigrateRecordings();
-                //return;
+                return;
 
                 var rootFolder = Path.GetFullPath(Path.Combine(
                     Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), RootFolderPath));
@@ -78,7 +80,7 @@ namespace Pronunciation.Parser
                     true);
                 var htmlBuilder = new HtmlBuilder(
                     isDatabaseMode,
-                    DbConnectionString,
+                    LPDConnectionString,
                     Path.Combine(rootFolder, HtmlLogFile),
                     fileLoader,
                     Path.Combine(rootFolder, TopWordsFile));
@@ -179,7 +181,7 @@ namespace Pronunciation.Parser
 
         private static void CleanDatabase()
         {
-            using (SqlCeConnection conn = new SqlCeConnection(DbConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(LPDConnectionString))
             {
                 conn.Open();
 
@@ -199,7 +201,7 @@ namespace Pronunciation.Parser
 
         private static void UploadFiles()
         {
-            using (SqlCeConnection conn = new SqlCeConnection(DbConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(LPDConnectionString))
             {
                 conn.Open();
 
@@ -227,7 +229,7 @@ namespace Pronunciation.Parser
 
         private static void UploadFilesBulk()
         {
-            using (SqlCeConnection conn = new SqlCeConnection(DbConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(LPDConnectionString))
             {
                 conn.Open();
 
@@ -251,7 +253,7 @@ namespace Pronunciation.Parser
 
         private static void TestUpload()
         {
-            using (SqlCeConnection conn = new SqlCeConnection(DbConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(LPDConnectionString))
             {
                 conn.Open();
                // SqlCeCommand cmd = new SqlCeCommand(
@@ -288,7 +290,7 @@ namespace Pronunciation.Parser
             var baseFolder = @"D:\LEARN\English\Pronunciation\Trainer\Recordings\LPD";
             var files = Directory.GetFiles(baseFolder, "*.mp3", SearchOption.AllDirectories);
 
-            using (SqlCeConnection conn = new SqlCeConnection(DbConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(LPDConnectionString))
             {
                 conn.Open();
 
@@ -318,6 +320,62 @@ namespace Pronunciation.Parser
 
                     File.Copy(filePath, fileDest);
                 }
+            }
+        }
+
+        private static void UploadExercises()
+        {
+            byte[] data = File.ReadAllBytes(@"D:\temp\main.png");
+            byte[] audio1 = File.ReadAllBytes(@"D:\temp\1.1.mp3");
+            byte[] audio2 = File.ReadAllBytes(@"D:\temp\1.2.mp3");
+
+            //byte[] data = new byte[] { 23, 45, 67 };
+            using (SqlCeConnection conn = new SqlCeConnection(TrainerConnectionString))
+            {
+                conn.Open();
+
+                SqlCeCommand cmd = new SqlCeCommand("Exercise", conn);
+                cmd.CommandType = CommandType.TableDirect;
+                SqlCeResultSet resultSet = cmd.ExecuteResultSet(ResultSetOptions.Updatable);
+
+                SqlCeCommand cmdAudio = new SqlCeCommand("ExerciseAudio", conn);
+                cmdAudio.CommandType = CommandType.TableDirect;
+                SqlCeResultSet resultSetAudio = cmdAudio.ExecuteResultSet(ResultSetOptions.Updatable);
+
+                while(resultSet.Read())
+                {
+                    resultSet.SetValue(resultSet.GetOrdinal("ExerciseData"), data);
+                    resultSet.Update();
+
+                    Guid exerciseId = resultSet.GetGuid(resultSet.GetOrdinal("ExerciseId"));
+
+                    var record1 = resultSetAudio.CreateRecord();
+                    FillExercisesAudio(record1, exerciseId, "1.1", audio1);
+                    resultSetAudio.Insert(record1);
+
+                    var record2 = resultSetAudio.CreateRecord();
+                    FillExercisesAudio(record2, exerciseId, "1.2", audio2);
+                    resultSetAudio.Insert(record2);
+                }
+            }
+        }
+
+        private static void FillExercisesAudio(SqlCeUpdatableRecord record, Guid exerciseId, string audioName, byte[] data)
+        {
+            record["AudioId"] = Guid.NewGuid();
+            record["ExerciseId"] = exerciseId;
+            record["AudioName"] = audioName;
+            record["RawData"] = data;
+        }
+
+        private static void MigrateRecordingsToDB()
+        {
+            using (SqlCeConnection conn = new SqlCeConnection(TrainerConnectionString))
+            {
+                conn.Open();
+
+                var migration = new RecordingsMigration(conn);
+                migration.Migrate();
             }
         }
     }

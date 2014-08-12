@@ -9,5 +9,6 @@ namespace Pronunciation.Trainer.AudioActions
     {
         public float Duration;
         public string FilePath;
+        public bool IsTemporaryFile;
     }
 }

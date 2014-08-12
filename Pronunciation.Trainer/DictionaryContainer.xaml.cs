@@ -11,7 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 //using System.Windows.Shapes;
-using Pronunciation.Core.Providers;
+using Pronunciation.Core.Providers.Dictionary;
 using Pronunciation.Trainer.AudioContexts;
 using Pronunciation.Core.Contexts;
 using Pronunciation.Core;
@@ -21,6 +21,8 @@ using System.Collections;
 using System.Diagnostics;
 using Pronunciation.Trainer.Commands;
 using Pronunciation.Core.Actions;
+using Pronunciation.Core.Providers.Recording;
+using Pronunciation.Core.Providers.Recording.HistoryPolicies;
 
 namespace Pronunciation.Trainer
 {
@@ -36,7 +38,7 @@ namespace Pronunciation.Trainer
             public IndexEntry Entry;
         }
 
-        private IDictionaryProvider _provider;
+        private IDictionaryProvider _dictionaryProvider;
         private DictionaryAudioContext _audioContext;
         private IndexEntry[] _wordsIndex;
         private TokenizedIndexEntry[] _tokensIndex;
@@ -58,15 +60,13 @@ namespace Pronunciation.Trainer
 
         private void UserControl_Initialized(object sender, EventArgs e)
         {
-            //_provider = new LPDFileSystemProvider(AppSettings.Instance.Folders.DictionaryFile,
-            //    AppSettings.Instance.Folders.DictionaryRecordings, CallScriptMethod);
+            //_dictionaryProvider = new LPDFileSystemProvider(AppSettings.Instance.Folders.DictionaryFile, CallScriptMethod);
+            _dictionaryProvider = new LPDDatabaseProvider(AppSettings.Instance.Folders.DictionaryDB, AppSettings.Instance.Connections.LPD);
 
-            _provider = new LPDDatabaseProvider(AppSettings.Instance.Folders.DictionaryDB,
-                AppSettings.Instance.Folders.DictionaryRecordings, 
-                AppSettings.Instance.Connections.LPD);
-
-            _audioContext = new DictionaryAudioContext(_provider);
+            _audioContext = new DictionaryAudioContext(_dictionaryProvider, AppSettings.Instance.Recorders.LPD,
+                new AlwaysOverrideRecordingPolicy());
             audioPanel.AttachContext(_audioContext);
+            audioPanel.RecordingCompleted += AudioPanel_RecordingCompleted;
 
             _history = new NavigationHistory<PageInfo>();
             _scriptingProxy = new DictionaryContainerScriptingProxy(
@@ -74,7 +74,7 @@ namespace Pronunciation.Trainer
                 (x) => LoadPage(x));
             browser.ObjectForScripting = _scriptingProxy;
 
-            var wordLists = _provider.GetWordLists();
+            var wordLists = _dictionaryProvider.GetWordLists();
             if (wordLists != null)
             {
                 cboWordLists.ItemsSource = wordLists;
@@ -93,13 +93,13 @@ namespace Pronunciation.Trainer
             this.InputBindings.Add(new KeyBinding(_commandForward, KeyGestures.NavigateForward));
 
             SplashScreen splash = null;
-            if (!_provider.IsWordsIndexCached)
+            if (!_dictionaryProvider.IsWordsIndexCached)
             {
                 splash = new SplashScreen("Resources/BuildingIndex.png");
                 splash.Show(false, true);
             }
 
-            BuildIndex(_provider.GetWordsIndex());
+            BuildIndex(_dictionaryProvider.GetWordsIndex());
             if (splash != null)
             {
                 splash.Close(TimeSpan.FromSeconds(1));
@@ -155,7 +155,7 @@ namespace Pronunciation.Trainer
             // It means that the page has been loaded by clicking on a hyperlink inside a previous page
             if (_currentPage == null && e.Uri != null)
             {
-                _currentPage = _provider.InitPageFromUrl(e.Uri);
+                _currentPage = _dictionaryProvider.InitPageFromUrl(e.Uri);
             }
 
             IndexEntry currentWord = null;
@@ -199,6 +199,11 @@ namespace Pronunciation.Trainer
             }
 
             SetupControlsState();
+        }
+
+        private void AudioPanel_RecordingCompleted(string recordedFilePath, bool isTemporaryFile)
+        {
+            _audioContext.RegisterRecordedAudio(recordedFilePath, DateTime.Now);
         }
 
         private void RefreshAudioContext(IndexEntry index)
@@ -395,14 +400,14 @@ namespace Pronunciation.Trainer
 
         private void NavigateWord(IndexEntry entry)
         {
-            PageInfo page = _provider.LoadArticlePage(entry.PageKey);
+            PageInfo page = _dictionaryProvider.LoadArticlePage(entry.PageKey);
             page.Index = entry;
             NavigatePage(page, true);
         }
 
         private void NavigateList(string listName)
         {
-            PageInfo page = _provider.LoadListPage(listName);
+            PageInfo page = _dictionaryProvider.LoadListPage(listName);
             NavigatePage(page, true);
         }
 

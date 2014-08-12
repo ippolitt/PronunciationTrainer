@@ -6,6 +6,11 @@ using System.Configuration;
 using Pronunciation.Trainer.Properties;
 using System.IO;
 using Pronunciation.Core.Providers;
+using Pronunciation.Core.Providers.Recording;
+using Pronunciation.Core.Providers.Training;
+using Pronunciation.Core.Providers.Dictionary;
+using Pronunciation.Core.Providers.Recording.Providers;
+using Pronunciation.Core.Providers.Exercise;
 
 namespace Pronunciation.Trainer
 {
@@ -35,6 +40,7 @@ namespace Pronunciation.Trainer
 
         public AppFolders Folders { get; private set; }
         public ConnectionStrings Connections { get; private set; }
+        public RecordingProviders Recorders { get; private set; }
 
         private readonly static Lazy<AppSettings> _instance = new Lazy<AppSettings>(() => new AppSettings());
 
@@ -54,6 +60,7 @@ namespace Pronunciation.Trainer
 
             Folders = new AppFolders(Settings.Default.BaseFolder);
             Connections = new ConnectionStrings();
+            Recorders = new RecordingProviders(Connections.Trainer, Folders.Recordings, Folders.Temp);
         }
 
         public void Save()
@@ -66,35 +73,34 @@ namespace Pronunciation.Trainer
 
         public class ConnectionStrings
         {
-            private const string _lpdDatabaseKey = "LPD";
+            private const string LPDConnectionKey = "LPD";
+            private const string TrainerConnectionKey = "Trainer";
 
             public string LPD { get; private set; }
+            public string Trainer { get; private set; }
 
             public ConnectionStrings()
             {
-                ConnectionStringSettings settings = ConfigurationManager.ConnectionStrings[_lpdDatabaseKey];
-                LPD = settings.ConnectionString;
+                LPD = ConfigurationManager.ConnectionStrings[LPDConnectionKey].ConnectionString;
+                Trainer = ConfigurationManager.ConnectionStrings[TrainerConnectionKey].ConnectionString;
             }
         }
 
         public class AppFolders
         {
             private readonly string _baseFolder;
-            private readonly string _audioFolder;
 
-            private const string _audioFolderName = "RecordedAudio";
-            private const string _recorderFolderName = "QuickRecorder";
-            private const string _recordingsFolderName = "Recordings";
-            private const string _dictionaryRecordingsFolderName = "LPD";
-            private const string _dictionaryFileFolderName = "LPD_File";
-            private const string _dictionaryDBFolderName = "LPD_DB";
-            private const string _exercisesFolderName = "Exercises";
-            private const string _databaseFolderName = "Database";
+            private const string AudioFolderName = "RecordedAudio";
+            private const string RecordingsFolderName = "Recordings";
+            private const string DictionaryFileFolderName = "LPD_File";
+            private const string DictionaryDBFolderName = "LPD_DB";
+            private const string ExercisesFolderName = "Exercises";
+            private const string DatabaseFolderName = "Database";
+            private const string TempFolderName = "Temp";
 
             public AppFolders(string baseFolder)
             {
                 _baseFolder = baseFolder;
-                _audioFolder = Path.Combine(baseFolder, _audioFolderName);
             }
 
             public string Base
@@ -104,42 +110,53 @@ namespace Pronunciation.Trainer
 
             public string DictionaryFile
             {
-                get { return Path.Combine(_baseFolder, _dictionaryFileFolderName); }
+                get { return Path.Combine(_baseFolder, DictionaryFileFolderName); }
             }
 
             public string DictionaryDB
             {
-                get { return Path.Combine(_baseFolder, _dictionaryDBFolderName); }
-            }
-
-            public string DictionaryRecordings
-            {
-                get { return Path.Combine(_audioFolder, _dictionaryRecordingsFolderName); }
+                get { return Path.Combine(_baseFolder, DictionaryDBFolderName); }
             }
 
             public string Exercises
             {
-                get { return Path.Combine(_baseFolder, _exercisesFolderName); }
+                get { return Path.Combine(_baseFolder, ExercisesFolderName); }
             }
 
             public string ExercisesRecordings
             {
-                get { return Path.Combine(_audioFolder, _exercisesFolderName); }
-            }
-
-            public string QuickRecorder
-            {
-                get { return Path.Combine(_audioFolder, _recorderFolderName); }
+                get { return Path.Combine(_baseFolder, AudioFolderName, ExercisesFolderName); }
             }
 
             public string Recordings
             {
-                get { return Path.Combine(_audioFolder, _recordingsFolderName); }
+                get { return Path.Combine(_baseFolder, RecordingsFolderName); }
+            }
+
+            public string Temp
+            {
+                get { return Path.Combine(_baseFolder, TempFolderName); }
             }
 
             public string Database
             {
-                get { return Path.Combine(_baseFolder, _databaseFolderName); }
+                get { return Path.Combine(_baseFolder, DatabaseFolderName); }
+            }
+        }
+
+        public class RecordingProviders
+        {
+            public IRecordingProvider<TrainingTargetKey> Training { get; private set; }
+            public IRecordingProvider<QuickRecorderTargetKey> QuickRecorder { get; private set; }
+            public IRecordingProvider<LPDTargetKey> LPD { get; private set; }
+            public IRecordingProvider<ExerciseTargetKey> Exercise { get; private set; }
+
+            public RecordingProviders(string connectionString, string recordingsFolder, string tempFolder)
+            {
+                Training = new DatabaseRecordingProvider<TrainingTargetKey>(connectionString, tempFolder); 
+                QuickRecorder = new DatabaseRecordingProvider<QuickRecorderTargetKey>(connectionString, tempFolder);
+                LPD = new DatabaseRecordingProvider<LPDTargetKey>(connectionString, tempFolder);
+                Exercise = new DatabaseRecordingProvider<ExerciseTargetKey>(connectionString, tempFolder);
             }
         }
     }

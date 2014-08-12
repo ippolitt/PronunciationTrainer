@@ -79,12 +79,15 @@
     <Compile Include="Audio\Mp3Player.cs" />
     <Compile Include="Audio\InMemoryRecorder.cs" />
     <Compile Include="Audio\SamplesCollector.cs" />
+    <Compile Include="CollectionChangeTracker.cs" />
+    <Compile Include="Database\AudioTargetType.cs" />
     <Compile Include="Database\Book.cs" />
     <Compile Include="Database\DbExtensions.cs" />
     <Compile Include="Database\Entities.cs" />
     <Compile Include="Database\Exercise.cs" />
+    <Compile Include="Database\ExerciseAudio.cs" />
     <Compile Include="Database\ExerciseType.cs" />
-    <Compile Include="Database\Recording.cs" />
+    <Compile Include="Database\Training.cs" />
     <Compile Include="Database\SQLCompact\PronunciationModel.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -99,7 +102,7 @@
     <Compile Include="Database\TopicExt.cs" />
     <Compile Include="KeyTextPair.cs" />
     <Compile Include="Contexts\IAudioContext.cs" />
-    <Compile Include="Contexts\PlaybackSettings.cs" />
+    <Compile Include="Contexts\PlaybackData.cs" />
     <Compile Include="Contexts\RecordingSettings.cs" />
     <Compile Include="NavigationHistory.cs" />
     <Compile Include="Parsers\TopicParser.cs" />
@@ -109,18 +112,28 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Providers\RecordingProvider.cs" />
-    <Compile Include="Providers\ExerciseKey.cs" />
-    <Compile Include="Providers\IDictionaryProvider.cs" />
-    <Compile Include="Providers\IndexEntry.cs" />
-    <Compile Include="Providers\LPDDatabaseProvider.cs" />
-    <Compile Include="Providers\LPDFileSystemProvider.cs" />
-    <Compile Include="Providers\LPDProvider.cs" />
-    <Compile Include="Providers\MultipartName.cs" />
-    <Compile Include="Providers\PageInfo.cs" />
-    <Compile Include="Providers\QuickRecorderProvider.cs" />
-    <Compile Include="Providers\ScriptArgs.cs" />
-    <Compile Include="Providers\TrainingProvider.cs" />
+    <Compile Include="Providers\Dictionary\LPDTargetKey.cs" />
+    <Compile Include="Providers\Exercise\ExerciseTargetKey.cs" />
+    <Compile Include="Providers\Recording\RecordedAudioListItem.cs" />
+    <Compile Include="Providers\Recording\HistoryPolicies\AlwaysAddRecordingPolicy.cs" />
+    <Compile Include="Providers\Recording\HistoryPolicies\AlwaysOverrideRecordingPolicy.cs" />
+    <Compile Include="Providers\Recording\Providers\IDatabaseTargetKey.cs" />
+    <Compile Include="Providers\Recording\Providers\FileSystemRecordingProvider.cs" />
+    <Compile Include="Providers\Recording\Providers\IFileSystemTargetKey.cs" />
+    <Compile Include="Providers\Recording\IRecordingHistoryPolicy.cs" />
+    <Compile Include="Providers\Recording\IRecordingProvider.cs" />
+    <Compile Include="Database\RecordedAudio.cs" />
+    <Compile Include="Providers\Recording\Providers\DatabaseRecordingProvider.cs" />
+    <Compile Include="Providers\Recording\IRecordingTargetKey.cs" />
+    <Compile Include="Providers\Training\QuickRecorderTargetKey.cs" />
+    <Compile Include="Providers\Dictionary\IDictionaryProvider.cs" />
+    <Compile Include="Providers\Dictionary\IndexEntry.cs" />
+    <Compile Include="Providers\Dictionary\LPDDatabaseProvider.cs" />
+    <Compile Include="Providers\Dictionary\LPDFileSystemProvider.cs" />
+    <Compile Include="Providers\Dictionary\LPDProviderBase.cs" />
+    <Compile Include="Providers\Exercise\MultipartName.cs" />
+    <Compile Include="Providers\Dictionary\PageInfo.cs" />
+    <Compile Include="Providers\Training\TrainingTargetKey.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">

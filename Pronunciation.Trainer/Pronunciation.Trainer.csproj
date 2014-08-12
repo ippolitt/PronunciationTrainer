@@ -70,23 +70,26 @@
     <Compile Include="AudioActions\PlaybackArgs.cs" />
     <Compile Include="AudioActions\RecordAudioAction.cs" />
     <Compile Include="AudioActions\RecordingArgs.cs" />
-    <Compile Include="AudioContexts\RecordingAudioContext.cs" />
-    <Compile Include="AudioContexts\QuickRecorderAudioContext.cs" />
     <Compile Include="AudioContexts\TrainingAudioContext.cs" />
+    <Compile Include="AudioContexts\QuickRecorderAudioContext.cs" />
+    <Compile Include="AudioContexts\ExerciseAudioContext.cs" />
     <Compile Include="AudioList.cs" />
     <Compile Include="BindingErrorTraceListener.cs" />
     <Compile Include="Commands\ExecuteActionCommand.cs" />
     <Compile Include="ControlsHelper.cs" />
     <Compile Include="DictionaryContainerScriptingProxy.cs" />
-    <Compile Include="Views\RecordingLight.cs" />
-    <Compile Include="RecordingDetails.xaml.cs">
-      <DependentUpon>RecordingDetails.xaml</DependentUpon>
+    <Compile Include="RecordedAudioHistoryTracker.cs" />
+    <Compile Include="Views\ExerciseAudioListItem.cs" />
+    <Compile Include="Views\ExerciseListItem.cs" />
+    <Compile Include="Views\TrainingListItem.cs" />
+    <Compile Include="TrainingDetails.xaml.cs">
+      <DependentUpon>TrainingDetails.xaml</DependentUpon>
     </Compile>
-    <Compile Include="RecordingList.xaml.cs">
-      <DependentUpon>RecordingList.xaml</DependentUpon>
+    <Compile Include="TrainingList.xaml.cs">
+      <DependentUpon>TrainingList.xaml</DependentUpon>
     </Compile>
-    <Compile Include="RecordingSelectionDialog.xaml.cs">
-      <DependentUpon>RecordingSelectionDialog.xaml</DependentUpon>
+    <Compile Include="TrainingSelectionDialog.xaml.cs">
+      <DependentUpon>TrainingSelectionDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="TabItemExt.cs" />
     <Compile Include="DataImporter.xaml.cs">
@@ -105,8 +108,8 @@
       <DependentUpon>ExerciseDetails.xaml</DependentUpon>
     </Compile>
     <Compile Include="KeyboardMapper.cs" />
-    <Compile Include="Recorder.xaml.cs">
-      <DependentUpon>Recorder.xaml</DependentUpon>
+    <Compile Include="QuickRecorder.xaml.cs">
+      <DependentUpon>QuickRecorder.xaml</DependentUpon>
     </Compile>
     <Compile Include="SettingsPanel.xaml.cs">
       <DependentUpon>SettingsPanel.xaml</DependentUpon>
@@ -158,19 +161,19 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Recorder.xaml">
+    <Page Include="QuickRecorder.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="RecordingDetails.xaml">
+    <Page Include="TrainingDetails.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="RecordingList.xaml">
+    <Page Include="TrainingList.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="RecordingSelectionDialog.xaml">
+    <Page Include="TrainingSelectionDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

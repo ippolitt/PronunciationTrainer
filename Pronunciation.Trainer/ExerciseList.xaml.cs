@@ -15,6 +15,8 @@ using Pronunciation.Core.Database;
 using System.Data.Linq;
 using System.ComponentModel;
 using Pronunciation.Core.Providers;
+using Pronunciation.Trainer.Views;
+using Pronunciation.Core.Providers.Exercise;
 
 namespace Pronunciation.Trainer
 {
@@ -34,8 +36,7 @@ namespace Pronunciation.Trainer
 
             var sort = exerciseDataGrid.Items.SortDescriptions;
             sort.Add(new SortDescription("BookId", ListSortDirection.Ascending));
-            sort.Add(new SortDescription("SourceCD", ListSortDirection.Ascending));
-            sort.Add(new SortDescription("SourceTrack", ListSortDirection.Ascending));
+            sort.Add(new SortDescription("TrackDisplayName", ListSortDirection.Ascending));
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -44,7 +45,7 @@ namespace Pronunciation.Trainer
 
         private void exerciseDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            Exercise activeRecord = exerciseDataGrid.SelectedItem as Exercise;
+            ExerciseListItem activeRecord = exerciseDataGrid.SelectedItem as ExerciseListItem;
             if (activeRecord == null)
                 return;
 
@@ -66,11 +67,15 @@ namespace Pronunciation.Trainer
                 return;
 
             var result = MessageBox.Show(
-                "Are you sure that you want to delete the selected records?",
+                "Are you sure that you want to delete the selected records? All the assosiated audios will be deleted as well.",
                 "Confirm deletion", MessageBoxButton.YesNo);
             if (result == MessageBoxResult.Yes)
             {
-                PronunciationDbContext.Instance.RemoveExercises(exerciseDataGrid.SelectedItems.Cast<Exercise>().ToArray());
+                var exercises = exerciseDataGrid.SelectedItems.Cast<ExerciseListItem>().ToArray();
+                var exerciseAudios = PronunciationDbContext.Instance.GetExerciseAudios(exercises.Select(x => x.ExerciseId).ToArray());
+                PronunciationDbContext.Instance.RemoveExercises(exercises);
+                AppSettings.Instance.Recorders.Exercise.DeleteTargetAudios(
+                    exerciseAudios.Select(x => new ExerciseTargetKey(x.ExerciseId, x.AudioName)));
             }
         }
     }

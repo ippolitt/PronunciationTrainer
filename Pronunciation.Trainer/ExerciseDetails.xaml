@@ -9,7 +9,7 @@
         Initialized="Window_Initialized" Loaded="Window_Loaded" Closing="Window_Closing" Height="576" Width="782">
     <DockPanel Name="rootPanel" Margin="10">
         <local:AudioPanel DockPanel.Dock="Top" Height="32" x:Name="audioPanel" />
-        
+
         <Grid DockPanel.Dock="Top" Name="exerciseHeader" 
          DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=ActiveRecord}">
             <Grid.ColumnDefinitions>
@@ -22,7 +22,7 @@
                 <RowDefinition Height="Auto"></RowDefinition>
                 <RowDefinition Height="Auto"></RowDefinition>
                 <RowDefinition Height="Auto"></RowDefinition>
-                <RowDefinition Height="60"></RowDefinition>
+                <RowDefinition Height="45"></RowDefinition>
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Book:"/>
@@ -48,7 +48,7 @@
                 <TextBox HorizontalContentAlignment="Right" Name="sourcePageTextBox" Width="35" Margin="5,0,0,0" TabIndex="50"
                      Text="{Binding Path=SourcePage, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" />
             </StackPanel>
-            
+
             <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Topic:" />
             <ComboBox Grid.Row="1" Grid.Column="1" Name="topicIdComboBox" Margin="0,3" Width="320" HorizontalAlignment="Left" TabIndex="20"
                     SelectedValue="{Binding Path=TopicId, Mode=TwoWay}" 
@@ -84,40 +84,51 @@
                 TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="False" 
                 Text="{Binding Path=ExecutionNotes, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}"  AllowDrop="False" />
         </Grid>
-        
+
         <StackPanel Name="footer" Height="35" DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="OK" Height="23" Margin="5,0,0,0" Name="btnOK" IsDefault="true" Width="75" Click="btnOK_Click" TabIndex="110" />
-            <Button Content="Apply" Height="23" Margin="5,0,0,0" Name="btnApply" TabIndex="115" Width="75" Click="btnApply_Click" />            
-            <Button Content="Cancel" Height="23" Margin="5,0,0,0" Name="btnCancel" IsCancel="True" Width="75" Click="btnCancel_Click" TabIndex="120" />
+            <Button Content="OK" Height="23" Margin="5,0,0,0" Name="btnOK" IsDefault="true" Width="75" Click="btnOK_Click" TabIndex="120" />
+            <Button Content="Apply" Height="23" Margin="5,0,0,0" Name="btnApply" Width="75" Click="btnApply_Click" TabIndex="125" />
+            <Button Content="Cancel" Height="23" Margin="5,0,0,0" Name="btnCancel" IsCancel="True" Width="75" Click="btnCancel_Click" TabIndex="130" />
         </StackPanel>
-        
-        <Grid Name="exerciseBody" Margin="0,5,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"></ColumnDefinition>
-                <ColumnDefinition Width="70"></ColumnDefinition>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"></RowDefinition>
-                <RowDefinition Height="*"></RowDefinition>
-            </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Top" Text="Exercise data:" />
-            <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Top" Text="Audio:" />
+        <Border Margin="0,0,0,0" BorderBrush="Black" BorderThickness="2">
+            <Grid Name="exerciseBody" Margin="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="70"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
 
-            <Border Grid.Row="1" Grid.Column="0" Margin="0,5,10,0" BorderBrush="Black" BorderThickness="2" Padding="10" CornerRadius="10">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
-                    HorizontalContentAlignment="Left" VerticalContentAlignment="Top" BorderBrush="Black" OpacityMask="{x:Null}">
-                    <Image Name="imgContent" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" />
-                    <!-- SnapsToDevicePixels="True" 
+                <StackPanel Grid.Row="1" Grid.Column="0" Grid.RowSpan="2" Margin="0,5,0,0" Name="actions" Orientation="Vertical" VerticalAlignment="Top">
+                    <Button Content="Import content" Height="23" Margin="0,0,5,0" Name="btnImportContent"  Click="btnImportContent_Click"  TabIndex="110" />
+                    <Button Content="Import audio" Height="23" Margin="0,5,5,0" Name="btnImportAudio" Click="btnImportAudio_Click" TabIndex="112" />
+                    <Button Content="Delete audio" Height="23" Margin="0,5,5,0" Name="btnDeleteAudio" Click="btnDeleteAudio_Click"  TabIndex="114" />
+                </StackPanel>
+
+                <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Top" Text="Content:" />
+                <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Top" Text="Audio:" />
+
+                <Border Name="borderImage" Grid.Row="1" Grid.Column="1" Margin="0,5,5,0" Padding="5">
+                    <ScrollViewer 
+                    HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                    HorizontalContentAlignment="Left" VerticalContentAlignment="Top" OpacityMask="{x:Null}">
+                        <Image Name="imgContent" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                        <!-- SnapsToDevicePixels="True" 
                     RenderOptions.BitmapScalingMode="NearestNeighbor" - works bad for jpeg  
                     RenderOptions.EdgeMode="Aliased"
                     UseLayoutRounding="True" (in Window)
                     -->
-                </ScrollViewer>
-            </Border>
-            <local:AudioList Grid.Row="1" Grid.Column="1" Margin="0,5,1,0" x:Name="lstRecords" TabIndex="100" 
-                SelectionChanged="lstRecords_SelectionChanged" MouseDoubleClick="lstRecords_MouseDoubleClick" />
-            <!--<Rectangle Height="302" Name="rectangle1" Stroke="Black" Width="742" RadiusX="10" RadiusY="10" />-->
-        </Grid>
+                    </ScrollViewer>
+                </Border>
+
+                <local:AudioList Grid.Row="1" Grid.Column="2" Margin="0,5,0,0" x:Name="lstAudios" TabIndex="100" 
+                    SelectionChanged="lstAudios_SelectionChanged" MouseDoubleClick="lstAudios_MouseDoubleClick" SelectionMode="Extended" />
+                <!--<Rectangle Height="302" Name="rectangle1" Stroke="Black" Width="742" RadiusX="10" RadiusY="10" />-->
+            </Grid>
+        </Border>
     </DockPanel>
 </Window>

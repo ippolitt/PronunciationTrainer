@@ -1,0 +1,30 @@
+﻿<UserControl x:Class="Pronunciation.Trainer.TrainingList"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300"
+             Loaded="UserControl_Loaded" Initialized="UserControl_Initialized">
+    <DockPanel Name="rootPanel">
+        <Canvas Name="header" Height="34" DockPanel.Dock="Top">
+            <Button Canvas.Left="0" Canvas.Top="6" Content="Add" Height="23" Name="btnAdd" Width="68" Click="btnAdd_Click" />
+            <Button Canvas.Left="74" Canvas.Top="6" Content="Delete" Height="23" Name="btnDelete" Width="68" Click="btnDelete_Click" />
+        </Canvas>
+        <Canvas Name="footer" Height="35" DockPanel.Dock="Bottom"></Canvas>
+        <DataGrid DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}, 
+            Path=DataContext.Trainings}"
+            AutoGenerateColumns="False" EnableRowVirtualization="True"
+                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ItemsSource="{Binding}"  Name="trainingsDataGrid" 
+                  RowDetailsVisibilityMode="VisibleWhenSelected"
+                  CanUserReorderColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" 
+                  CanUserResizeRows="False" IsReadOnly="True" 
+                  MouseDoubleClick="trainingsDataGrid_MouseDoubleClick">
+            <DataGrid.Columns>
+                <DataGridTextColumn x:Name="titleColumn" Binding="{Binding Path=Title}" Header="Title" Width="*" />
+                <DataGridTextColumn x:Name="categoryColumn" Binding="{Binding Path=Category}" Header="Category" Width="200" />
+                <DataGridTextColumn x:Name="createdColumn" Binding="{Binding Path=Created}" Header="Created" Width="160" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

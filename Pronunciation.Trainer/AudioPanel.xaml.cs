@@ -21,6 +21,7 @@ using Pronunciation.Core.Audio;
 using Pronunciation.Trainer.AudioActions;
 using Pronunciation.Core.Contexts;
 using Pronunciation.Trainer.Commands;
+using System.IO;
 
 namespace Pronunciation.Trainer
 {
@@ -29,7 +30,7 @@ namespace Pronunciation.Trainer
     /// </summary>
     public partial class AudioPanel : UserControlExt
     {
-        public delegate void RecordingCompletedHandler(string recordedFilePath);
+        public delegate void RecordingCompletedHandler(string recordedFilePath, bool isTemporaryFile);
 
         private class DelayedActionArgs
         {
@@ -55,7 +56,7 @@ namespace Pronunciation.Trainer
         private ExecuteActionCommand _stopCommand;
         private ExecuteActionCommand _showWaveformCommand;
 
-        private const string _recordProgressTemplate = "Recording, {0} seconds left..";
+        private const string RecordProgressTemplate = "Recording, {0} seconds left..";
         private const int DelayedPlayIntervalMs = 500;
         private const int MoveSliderIntervalMs = 200;
 
@@ -81,8 +82,8 @@ namespace Pronunciation.Trainer
             _showWaveformCommand = new ExecuteActionCommand(ShowWaveformsDialog, false);
 
             btnShowWaveforms.Command = _showWaveformCommand;
-            btnPlayReference.Target = new PlayAudioAction(PrepareReferencePlaybackArgs, (x, y) => ProcessPlaybackResult(x, y, true));
-            btnPlayRecorded.Target = new PlayAudioAction(PrepareRecordedPlaybackArgs, (x, y) => ProcessPlaybackResult(x, y, false));
+            btnPlayReference.Target = new PlayAudioAction(PrepareReferencePlaybackArgs, (x, y, z) => ProcessPlaybackResult(x, y, z, true));
+            btnPlayRecorded.Target = new PlayAudioAction(PrepareRecordedPlaybackArgs, (x, y, z) => ProcessPlaybackResult(x, y, z, false));
             btnRecord.Target = new RecordAudioAction(PrepareRecordingArgs, ProcessRecordingResult);
 
             _actionButtons = new[] { btnPlayReference, btnPlayRecorded, btnRecord };
@@ -360,7 +361,7 @@ namespace Pronunciation.Trainer
 
         private ActionArgs<PlaybackArgs> PrepareReferencePlaybackArgs(ActionContext context)
         {
-            PlaybackSettings args = _audioContext.GetReferenceAudio();
+            PlaybackData args = _audioContext.GetReferenceAudio();
             if (args == null)
                 return null;
 
@@ -377,7 +378,7 @@ namespace Pronunciation.Trainer
 
         private ActionArgs<PlaybackArgs> PrepareRecordedPlaybackArgs(ActionContext context)
         {
-            PlaybackSettings args = _audioContext.GetRecordedAudio();
+            PlaybackData args = _audioContext.GetRecordedAudio();
             if (args == null)
                 return null;
 
@@ -394,7 +395,7 @@ namespace Pronunciation.Trainer
 
         private ActionArgs<RecordingArgs> PrepareRecordingArgs(ActionContext context)
         {
-            var args = _audioContext.GetRecordingSettings();
+            RecordingSettings args = _audioContext.GetRecordingSettings();
             if (args == null)
                 return null;
 
@@ -418,11 +419,12 @@ namespace Pronunciation.Trainer
 
             return new ActionArgs<RecordingArgs>(new RecordingArgs
             {
-                FilePath = args.OutputFilePath
+                FilePath = args.OutputFilePath,
+                IsTemporaryFile = args.IsTemporaryFile
             });
         }
 
-        private void ProcessPlaybackResult(ActionContext context, ActionResult<PlaybackResult> result, bool isReferenceAudio)
+        private void ProcessPlaybackResult(ActionContext context, PlaybackArgs args, ActionResult<PlaybackResult> result, bool isReferenceAudio)
         {
             if (result.Error != null)
                 throw new Exception(string.Format("There was an error during audio playback: {0}", result.Error.Message));
@@ -437,14 +439,24 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void ProcessRecordingResult(ActionContext context, ActionResult<string> result)
+        private void ProcessRecordingResult(ActionContext context, RecordingArgs args, ActionResult result)
         {
             if (result.Error != null)
-                throw new Exception(string.Format("There was an error during audio recording: {0}", result.Error.Message));
+            {
+                throw new Exception(string.Format(
+                    "There was an error during audio recording: {0} (file path is '{1}')",
+                    result.Error.Message, args.FilePath));
+            }
 
             if (RecordingCompleted != null)
             {
-                RecordingCompleted(result.ReturnValue);
+                RecordingCompleted(args.FilePath, args.IsTemporaryFile);
+            }
+
+            // Delete temporary files only if everything went OK otherwise leave them on disk for troubleshooting
+            if (args.IsTemporaryFile)
+            {
+                SafeDeleteFile(args.FilePath);
             }
         }
 
@@ -492,6 +504,19 @@ namespace Pronunciation.Trainer
                 sliderPlay.Visibility = Visibility.Visible;
                 InitSliderPolling();
             }
+        }
+
+        private void SafeDeleteFile(string filePath)
+        {
+            if (!File.Exists(filePath))
+                return;
+
+            try
+            {
+                File.Delete(filePath);
+            }
+            catch 
+            { }
         }
     }
 }

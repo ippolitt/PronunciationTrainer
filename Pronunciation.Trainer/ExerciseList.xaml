@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Pronunciation.Trainer"
              mc:Ignorable="d" 
              d:DesignHeight="258" d:DesignWidth="614" 
              xmlns:my="clr-namespace:Pronunciation.Core.Database;assembly=Pronunciation.Core" Loaded="UserControl_Loaded"
@@ -22,18 +23,30 @@
                   CanUserResizeRows="False" IsReadOnly="True" 
                   MouseDoubleClick="exerciseDataGrid_MouseDoubleClick">
             <DataGrid.Columns>
-                <DataGridTextColumn x:Name="bookIdColumn" Binding="{Binding Path=Book.Author}" Header="Book" Width="80" />
-                <DataGridTextColumn x:Name="topicIdColumn" Binding="{Binding Path=Topic.TopicNameExt}" Header="Topic" Width="220" />
-                <DataGridTextColumn x:Name="titleColumn" Binding="{Binding Path=Title}" Header="Title" Width="*" />
-                <DataGridTextColumn x:Name="sourcePageColumn" Binding="{Binding Path=SourcePage}" Header="Page" Width="40">
+                <DataGridComboBoxColumn x:Name="bookIdColumn" Header="Book" MinWidth="90" Width="90"
+                    SelectedValueBinding="{Binding Path=BookId}"
+                    ItemsSource="{Binding Source={x:Static local:PronunciationDbContext.Instance}, Path=Books}"
+                    DisplayMemberPath="Author" SelectedValuePath="BookId" />
+                <DataGridTextColumn x:Name="trackColumn" Binding="{Binding Path=TrackDisplayName}" Header="Track" MinWidth="40" Width="40">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="{x:Type TextBlock}">
                             <Setter Property="TextAlignment" Value="Right" />
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn x:Name="exerciseTypeIdIdColumn" Binding="{Binding Path=ExerciseType.ExerciseTypeName}" Header="Exercise type" Width="140" />
-                <DataGridTextColumn x:Name="targetSoundColumn" Binding="{Binding Path=TargetSound}" Header="Target sound" Width="100" />
+                <DataGridComboBoxColumn x:Name="topicIdColumn" Header="Topic" MinWidth="210" Width="*"
+                    SelectedValueBinding="{Binding Path=TopicId}"
+                    ItemsSource="{Binding Source={x:Static local:PronunciationDbContext.Instance}, Path=Topics}"
+                    DisplayMemberPath="TopicNameExt" SelectedValuePath="TopicId" />
+                <DataGridTextColumn x:Name="titleColumn" Binding="{Binding Path=Title}" Header="Title" MinWidth="250" Width="*" />
+                <DataGridTextColumn x:Name="sourcePageColumn" Binding="{Binding Path=SourcePage}" Header="Page" MinWidth="40" Width="40">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Setter Property="TextAlignment" Value="Right" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn x:Name="targetSoundColumn" Binding="{Binding Path=TargetSound}" Header="Target sound" MinWidth="100" Width="100" />
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>

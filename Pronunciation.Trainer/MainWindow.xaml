@@ -8,14 +8,14 @@
         <local:TabItemExt Header="Dictionary" x:Name="tabDictionary">
             <local:DictionaryContainer x:Name="dictionary" Margin="10" />
         </local:TabItemExt>
-        <local:TabItemExt Header="Exercises" x:Name="tabTraining">
+        <local:TabItemExt Header="Exercises" x:Name="tabExercises">
             <local:ExerciseList x:Name="exersises" Margin="10" />
         </local:TabItemExt>
-        <local:TabItemExt Header="Recordings" x:Name="tabRecordings">
-            <local:RecordingList x:Name="recordings" Margin="10" />
+        <local:TabItemExt Header="Training" x:Name="tabTraining">
+            <local:TrainingList x:Name="training" Margin="10" />
         </local:TabItemExt>
         <local:TabItemExt Header="Quick Recorder" x:Name="tabRecorder">
-            <local:Recorder x:Name="recorder" Margin="10"  />
+            <local:QuickRecorder x:Name="recorder" Margin="10"  />
         </local:TabItemExt>       
         <local:TabItemExt Header="Settings" x:Name="tabSettings" >
             <local:SettingsPanel x:Name="settings" Margin="10,15,10,10" />

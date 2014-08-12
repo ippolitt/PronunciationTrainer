@@ -8,7 +8,7 @@ namespace Pronunciation.Core.Actions
 {
     public abstract class BackgroundAction
     {
-        private class ExecutionInfo
+        public class ExecutionInfo
         {
             public ActionContext Context;
             public object Args;
@@ -38,7 +38,7 @@ namespace Pronunciation.Core.Actions
 
         protected abstract ActionArgs<object> PrepareArgs(ActionContext context);
         protected abstract object DoWork(ActionContext context, object args);
-        protected abstract void ProcessCompleted(ActionContext context, bool isSuccess, Exception error, object result);
+        protected abstract void ProcessCompleted(bool isSuccess, ExecutionInfo info);
 
         public BackgroundAction()
         {
@@ -194,7 +194,7 @@ namespace Pronunciation.Core.Actions
             bool isSuccess = (info.Error == null && _abortRequest != AbortRequest.HardAbort);
             try
             {
-                ProcessCompleted(info.Context, isSuccess, info.Error, info.Result);
+                ProcessCompleted(isSuccess, info);
             }
             finally
             {
@@ -246,9 +246,9 @@ namespace Pronunciation.Core.Actions
             return null;
         }
 
-        protected override void ProcessCompleted(ActionContext context, bool isSuccess, Exception error, object result)
+        protected override void ProcessCompleted(bool isSuccess, ExecutionInfo info)
         {
-            ResultProcessor(context, new ActionResult(isSuccess, error));
+            ResultProcessor(info.Context, new ActionResult(isSuccess, info.Error));
         }
     }
 
@@ -284,9 +284,9 @@ namespace Pronunciation.Core.Actions
             return Worker(context);
         }
 
-        protected override void ProcessCompleted(ActionContext context, bool isSuccess, Exception error, object result)
+        protected override void ProcessCompleted(bool isSuccess, ExecutionInfo info)
         {
-            ResultProcessor(context, new ActionResult<TResult>(isSuccess, error, (TResult)result));
+            ResultProcessor(info.Context, new ActionResult<TResult>(isSuccess, info.Error, (TResult)info.Result));
         }
     }
 
@@ -294,10 +294,11 @@ namespace Pronunciation.Core.Actions
     {
         public Func<ActionContext, ActionArgs<TArgs>> ArgsBuilder { get; protected set; }
         public Action<ActionContext, TArgs> Worker { get; protected set; }
-        public Action<ActionContext, ActionResult> ResultProcessor { get; protected set; }
+        public Action<ActionContext, TArgs, ActionResult> ResultProcessor { get; protected set; }
 
         public BackgroundActionWithArgs(Func<ActionContext, ActionArgs<TArgs>> argsBuilder,
-            Action<ActionContext, TArgs> worker, Action<ActionContext, ActionResult> resultProcessor)
+            Action<ActionContext, TArgs> worker,
+            Action<ActionContext, TArgs, ActionResult> resultProcessor)
         {
             ArgsBuilder = argsBuilder;
             Worker = worker;
@@ -317,9 +318,9 @@ namespace Pronunciation.Core.Actions
             return null;
         }
 
-        protected override void ProcessCompleted(ActionContext context, bool isSuccess, Exception error, object result)
+        protected override void ProcessCompleted(bool isSuccess, ExecutionInfo info)
         {
-            ResultProcessor(context, new ActionResult(isSuccess, error));
+            ResultProcessor(info.Context, (TArgs)info.Args, new ActionResult(isSuccess, info.Error));
         }
     }
 
@@ -327,10 +328,11 @@ namespace Pronunciation.Core.Actions
     {
         public Func<ActionContext, ActionArgs<TArgs>> ArgsBuilder { get; protected set; }
         public Func<ActionContext, TArgs, TResult> Worker { get; protected set; }
-        public Action<ActionContext, ActionResult<TResult>> ResultProcessor { get; protected set; }
+        public Action<ActionContext, TArgs, ActionResult<TResult>> ResultProcessor { get; protected set; }
 
         public BackgroundActionWithArgs(Func<ActionContext, ActionArgs<TArgs>> argsBuilder,
-            Func<ActionContext, TArgs, TResult> worker, Action<ActionContext, ActionResult<TResult>> resultProcessor)
+            Func<ActionContext, TArgs, TResult> worker,
+            Action<ActionContext, TArgs, ActionResult<TResult>> resultProcessor)
         {
             ArgsBuilder = argsBuilder;
             Worker = worker;
@@ -349,9 +351,9 @@ namespace Pronunciation.Core.Actions
             return Worker(context, (TArgs)args);
         }
 
-        protected override void ProcessCompleted(ActionContext context, bool isSuccess, Exception error, object result)
+        protected override void ProcessCompleted(bool isSuccess, ExecutionInfo info)
         {
-            ResultProcessor(context, new ActionResult<TResult>(isSuccess, error, (TResult)result)); 
+            ResultProcessor(info.Context, (TArgs)info.Args, new ActionResult<TResult>(isSuccess, info.Error, (TResult)info.Result)); 
         }
     }
 }

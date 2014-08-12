@@ -1,7 +1,19 @@
 Top:
-- Migrate all existing exercises to use images from DB?
-- Add handling for "EntityValidationErrors" (too long text etc)
+- Add column "CD+Track"
+- Optimize IsAudioExists calls (AudioPanel currently makes it twice)
+- Test InMemory recorder - how much memory does it eats for long recordings? Should we flush to disk?
+- Specify recording duration somewhere (both reference and recorded)
+- Bug: sometimes it's possible to start two players (rec and ref) simultineously
 - Bug when sequence is scheduled and I start another action
+- Add reference audio for Recordings
+- Add a possibility to record several audios for a single reference audio in Exercises
+- Migrate all existing exercises to use images from DB?
+- Add a setting "Decrease recorded audio volume"
+- Don't load all tabs on app start
+- Display number of symbols in Training text
+- Add recording length column to Training (probably, get from the latest audio)
+- Add handling for "EntityValidationErrors" (too long text etc)
+- Add ability to mark certain words as problematic and practice them later
 - Allow to make several recordings per source and select the best one
 - Store history of the recordings. Save best recordings with the date so that I was able to compare them over time to check my progress
 - Allow to make several recordings and compare them
@@ -17,13 +29,13 @@ Top:
 - Bug: When I change language and click "Play" it still plays the old audio
 - Add a switch to hide/display exercise desription
 - Add recording duration to the recordings list
-- Add column "CD+Track" instead of page and sort by it
 - Create base MessageBox with predefined captions
 - Allow recording when the application is not active
 - Don't load all tabs on startup
 - Open detailed dialogs as tabs of the Exercise list (as in MVVM article)
 - Add special signs explanation (LPD or Amazon)
 - generate html for pronunciation notes (from dictionary CD)
+- Add a "Sound search" functionality
 
 Waveforms:
 - Implement logic of silence finder and automatically stop recording if there's a long pause
@@ -37,6 +49,19 @@ Migration to DB:
 	Move RegisterPage method to LoadCompleted event
 	Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
 	Cache last N files and played audio (preload only one audio? based on the playback settings)
+
+Audio migration to DB:
+- Test:
+	- Test lowcase and uppercase audio name in Exercise
+	- Upload 20, 21, 23 manually
+	- Shrink database after migration (both LPD and Trainer)
+	- Check exercises that have no recordings (see log)
+- Requirements: 
+	- Add reference audio to Training
+	- Add ability to export reference/recorded audio (for all types of entities)
+	- Add a functionality for working with audio history (think through)
+	- Add a setting: preserve old audio if it's at least one week old
+- Backup all exercises (png+mp3)
 
 Generation of the pages:
 - check errors in "don't" - AmE is not separated 

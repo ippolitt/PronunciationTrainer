@@ -18,9 +18,9 @@ namespace Pronunciation.Trainer
             _loadPageInvoker = loadPageInvoker;
         }
 
-        public void PlayAudioExt(string audioKey, string audioData)
+        public void PlayAudioExt(string soundKey, string audioData)
         {
-            _playAudioInvoker(audioKey, audioData);
+            _playAudioInvoker(soundKey, audioData);
         }
 
         public void LoadPageExt(string wordName)

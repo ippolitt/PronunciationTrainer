@@ -3,93 +3,86 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Pronunciation.Core.Contexts;
-using Pronunciation.Core.Providers;
 using System.IO;
+using Pronunciation.Core.Providers.Recording;
+using Pronunciation.Core.Providers.Training;
 
 namespace Pronunciation.Trainer.AudioContexts
 {
     public class TrainingAudioContext : IAudioContext
     {
-        private readonly TrainingProvider _provider;
-        private ExerciseKey _exerciseContext;
-        private string _recordingName;
-
         public event AudioContextChangedHandler ContextChanged;
 
-        public TrainingAudioContext(TrainingProvider provider, ExerciseKey exerciseContext)
+        private readonly IRecordingProvider<TrainingTargetKey> _recordingProvider;
+        private readonly TrainingTargetKey _trainingKey;
+        private readonly IRecordingHistoryPolicy _recordingPolicy;
+        private string _audioKey;
+
+        public TrainingAudioContext(IRecordingProvider<TrainingTargetKey> recordingProvider, 
+            TrainingTargetKey trainingKey, IRecordingHistoryPolicy recordingPolicy)
         {
-            _provider = provider;
-            _exerciseContext = exerciseContext;
+            _recordingProvider = recordingProvider;
+            _recordingPolicy = recordingPolicy;
+            _trainingKey = trainingKey;
         }
 
-        public void ResetExerciseContext(ExerciseKey exerciseContext)
+        public void RefreshContext(string audioKey, bool playImmediately)
         {
-            _exerciseContext = exerciseContext;
-            _recordingName = null;
+            if (_audioKey == audioKey && !playImmediately)
+                return;
 
+            _audioKey = audioKey;
+            if (ContextChanged != null)
+            {
+                ContextChanged(playImmediately ? PlayAudioMode.PlayRecorded : PlayAudioMode.None);
+            }
+        }
+
+        public void ResetContext()
+        {
+            _audioKey = null;
             if (ContextChanged != null)
             {
                 ContextChanged(PlayAudioMode.None);
             }
         }
 
-        public void RefreshContext(string recordingName, bool playImmediately)
-        {
-            _recordingName = recordingName;
-
-            if (ContextChanged != null)
-            {
-                ContextChanged(playImmediately ? PlayAudioMode.PlayReference : PlayAudioMode.None);
-            }
-        }
-
         public bool IsReferenceAudioExists
         {
-            get { return !string.IsNullOrEmpty(_recordingName); }
+            get { return false; }
         }
 
         public bool IsRecordedAudioExists
         {
-            get 
-            {
-                if (_exerciseContext == null || string.IsNullOrEmpty(_recordingName))
-                    return false;
-
-                return File.Exists(_provider.BuildRecordedAudioPath(_exerciseContext, _recordingName)); 
-            }
+            get { return !string.IsNullOrEmpty(_audioKey); }
         }
 
         public bool IsRecordingAllowed
         {
-            get { return IsReferenceAudioExists; }
+            get { return true; }
         }
 
-        public PlaybackSettings GetReferenceAudio()
+        public PlaybackData GetReferenceAudio()
         {
-            if (_exerciseContext == null || string.IsNullOrEmpty(_recordingName))
-                return null;
-
-            return new PlaybackSettings(_provider.BuildReferenceAudioPath(_exerciseContext, _recordingName));
+            return null;
         }
 
-        public PlaybackSettings GetRecordedAudio()
+        public PlaybackData GetRecordedAudio()
         {
-            if (_exerciseContext == null || string.IsNullOrEmpty(_recordingName))
+            if (string.IsNullOrEmpty(_audioKey))
                 return null;
 
-            string audioPath = _provider.BuildRecordedAudioPath(_exerciseContext, _recordingName);
-            if (!File.Exists(audioPath))
-                return null;
-
-            return new PlaybackSettings(audioPath);
+            return _recordingProvider.GetAudio(_trainingKey, _audioKey);
         }
 
         public RecordingSettings GetRecordingSettings()
         {
-            if (_exerciseContext == null || string.IsNullOrEmpty(_recordingName))
-                return null;
+            return _recordingProvider.GetRecordingSettings(_trainingKey);
+        }
 
-            return new RecordingSettings(_provider.BuildRecordedAudioPath(_exerciseContext, _recordingName));
+        public string RegisterRecordedAudio(string recordedFilePath, DateTime recordingDate)
+        {
+            return _recordingProvider.RegisterNewAudio(_trainingKey, recordingDate, recordedFilePath, _recordingPolicy);
         }
     }
 }

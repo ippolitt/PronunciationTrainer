@@ -12,7 +12,7 @@ namespace Pronunciation.Trainer.AudioActions
         private volatile Mp3Player _activePlayer;
 
         public PlayAudioAction(Func<ActionContext, ActionArgs<PlaybackArgs>> argsBuilder,
-            Action<ActionContext, ActionResult<PlaybackResult>> resultProcessor) 
+            Action<ActionContext, PlaybackArgs, ActionResult<PlaybackResult>> resultProcessor) 
             : base(argsBuilder, null, resultProcessor)
         {
             base.Worker = PlayAudio;

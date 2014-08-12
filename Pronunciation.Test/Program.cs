@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Drawing;
+using System.IO;
 
 namespace Pronunciation.Test
 {
@@ -12,8 +13,8 @@ namespace Pronunciation.Test
         {
             try
             {
-                //Console.WriteLine("{0:0.#}", 15.0);
 
+                Console.WriteLine("{0:00}-{1:00}", 3, 4);
                 int number;
                 bool res = int.TryParse(null, out number);
 

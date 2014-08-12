@@ -47,6 +47,7 @@
     <Compile Include="ContentCollector.cs" />
     <Compile Include="DatabaseUploader.cs" />
     <Compile Include="DicElements.cs" />
+    <Compile Include="RecordingsMigration.cs" />
     <Compile Include="WordDescription.cs" />
     <Compile Include="DicWord.cs" />
     <Compile Include="FileLoader.cs" />
