@@ -25,6 +25,7 @@
             <ColumnDefinition Width="29" />
             <ColumnDefinition Width="29" />
             <ColumnDefinition Width="29" />
+            <ColumnDefinition Width="29" />
             <ColumnDefinition Width="293*" />
         </Grid.ColumnDefinitions>
         <!-- For some reason action button, when clicked, locks keyboard focus -->
@@ -67,7 +68,7 @@
                     </Style>
                 </Image.Style>
             </Image>
-        </local:ActionButton>
+        </local:ActionButton>      
         <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnRecord" Grid.Column="2"                  
             Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
             ToolTip="{Binding Path=DynamicTooltip}" 
@@ -86,15 +87,20 @@
             </Image>
         </local:ActionButton>
         <Button Focusable="False" Grid.Column="3"  HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" 
+            x:Name="btnShowHistory" Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+            ToolTip="Show recordings history [{0}]">
+            <Image Source="Resources/AudioHistory.png" Style="{StaticResource AudioImage}" />
+        </Button>
+        <Button Focusable="False" Grid.Column="4"  HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" 
             x:Name="btnShowWaveforms" Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
             ToolTip="Show waveforms [{0}]">
             <Image Source="Resources/AudioWaveform.png" Style="{StaticResource AudioImage}" />
         </Button>
-        <Button Focusable="False" Grid.Column="4"  HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnShowSlider"
+        <Button Focusable="False" Grid.Column="5"  HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnShowSlider"
             Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
             ToolTip="Show/hide slider" Click="btnShowSlider_Click">
             <Image Source="Resources/AudioSlider.png" Style="{StaticResource AudioImage}" />
         </Button>
-        <Slider Grid.Column="5" Margin="10,5,10,0" Name="sliderPlay" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ValueChanged="sliderPlay_ValueChanged" IsMoveToPointEnabled="True" />
+        <Slider Grid.Column="6" Margin="10,5,10,0" Name="sliderPlay" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ValueChanged="sliderPlay_ValueChanged" IsMoveToPointEnabled="True" />
     </Grid>
 </local:UserControlExt>

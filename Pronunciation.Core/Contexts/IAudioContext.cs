@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Pronunciation.Core.Providers.Recording;
 
 namespace Pronunciation.Core.Contexts
 {
@@ -22,6 +23,10 @@ namespace Pronunciation.Core.Contexts
         PlaybackData GetReferenceAudio();
         PlaybackData GetRecordedAudio();
         RecordingSettings GetRecordingSettings();
+
+        bool CanShowRecordingsHistory { get; }
+        RecordingProviderWithTargetKey GetRecordingHistoryProvider();
+
         event AudioContextChangedHandler ContextChanged;
     }
 }

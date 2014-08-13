@@ -1,5 +1,9 @@
 Top:
+- Display number of symbols in Training text
+- Display the current target key in History dialog?
+ -Add a setting to config file - whether to skip first 200ms in the recording
 - Add ability to delete audio by "DEL" (at least in Training)
+- Show waveforms (and length) even without palying the audio. Select several recordings and display waveforms for all of them
 - Optimize IsAudioExists calls (AudioPanel currently makes it twice)
 - Test InMemory recorder - how much memory does it eats for long recordings? Should we flush to disk?
 - Specify recording duration somewhere (both reference and recorded)
@@ -10,7 +14,6 @@ Top:
 - Migrate all existing exercises to use images from DB?
 - Add a setting "Decrease recorded audio volume"
 - Don't load all tabs on app start
-- Display number of symbols in Training text
 - Add recording length column to Training (probably, get from the latest audio)
 - Add handling for "EntityValidationErrors" (too long text etc)
 - Add ability to mark certain words as problematic and practice them later
@@ -45,22 +48,18 @@ Waveforms:
 - Add word name to the last played audio
 - Play sound along with moving a slider on waveform
 
-Migration to DB:
-	Move RegisterPage method to LoadCompleted event
-	Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
-	Cache last N files and played audio (preload only one audio? based on the playback settings)
-
 Audio migration to DB:
 - Test:
 	- Upload 20, 21, 23 manually
 	- Shrink database after migration (both LPD and Trainer)
 	- Check exercises that have no recordings (see log)
+	- Backup all exercises (png+mp3)
 - Requirements: 
-	- Add reference audio to Training
-	- Add ability to export reference/recorded audio (for all types of entities)
-	- Add a functionality for working with audio history (think through)
-	- Add a setting: preserve old audio if it's at least one week old
-- Backup all exercises (png+mp3)
+	- Add ability to export reference/recorded audio (for all types of entities), including recording history dialog
+Migration to DB:
+	Move RegisterPage method to LoadCompleted event
+	Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
+	Cache last N files and played audio (preload only one audio? based on the playback settings)
 
 Generation of the pages:
 - check errors in "don't" - AmE is not separated 

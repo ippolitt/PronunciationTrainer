@@ -28,6 +28,13 @@ namespace Pronunciation.Trainer
         ReferenceThenRecorded = 3
     }
 
+    public enum RecordingHistoryMode
+    {
+        AlwaysOverrideLatest = 1,
+        OverrideLatestAfterNDays = 2,
+        AlwaysAdd = 3
+    }
+
     public class AppSettings
     {
         public string BaseFolder { get; private set; }
@@ -36,6 +43,8 @@ namespace Pronunciation.Trainer
 
         public StartupPlayMode StartupMode { get; set; }
         public RecordedPlayMode RecordedMode { get; set; }
+        public RecordingHistoryMode HistoryMode { get; set; }
+        public int HistoryDays { get; set; }
         public float ReferenceDataVolume { get; set; }
 
         public AppFolders Folders { get; private set; }
@@ -57,6 +66,8 @@ namespace Pronunciation.Trainer
             RecordedMode = (RecordedPlayMode)Settings.Default.RecordedMode;
             ReferenceDataVolume = Settings.Default.ReferenceDataVolume;
             SkipRecordedAudioMs = Settings.Default.SkipRecordedAudioMs;
+            HistoryMode = (RecordingHistoryMode)Settings.Default.HistoryMode;
+            HistoryDays = Settings.Default.HistoryDays;
 
             Folders = new AppFolders(Settings.Default.BaseFolder);
             Connections = new ConnectionStrings();
@@ -68,6 +79,8 @@ namespace Pronunciation.Trainer
             Settings.Default.StartupMode = (int)StartupMode;
             Settings.Default.RecordedMode = (int)RecordedMode;
             Settings.Default.ReferenceDataVolume = ReferenceDataVolume;
+            Settings.Default.HistoryMode = (int)HistoryMode;
+            Settings.Default.HistoryDays = HistoryDays;
             Settings.Default.Save();
         }
 

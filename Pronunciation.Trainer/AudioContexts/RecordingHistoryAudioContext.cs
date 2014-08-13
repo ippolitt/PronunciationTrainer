@@ -3,21 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Pronunciation.Core.Contexts;
-using Pronunciation.Core.Providers.Training;
+using System.IO;
 using Pronunciation.Core.Providers.Recording;
+using Pronunciation.Core.Providers.Training;
 
 namespace Pronunciation.Trainer.AudioContexts
 {
-    public class QuickRecorderAudioContext : IAudioContext
+    public class RecordingHistoryAudioContext : IAudioContext
     {
         public event AudioContextChangedHandler ContextChanged;
 
         private readonly RecordingProviderWithTargetKey _recordingProvider;
+        private readonly PlaybackData _referenceAudio;
         private string _audioKey;
 
-        public QuickRecorderAudioContext(RecordingProviderWithTargetKey recordingProvider)
+        public RecordingHistoryAudioContext(RecordingProviderWithTargetKey recordingProvider, PlaybackData referenceAudio)
         {
             _recordingProvider = recordingProvider;
+            _referenceAudio = referenceAudio;
         }
 
         public void RefreshContext(string audioKey, bool playImmediately)
@@ -53,7 +56,7 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public bool IsReferenceAudioExists
         {
-            get { return false; }
+            get { return _referenceAudio != null; }
         }
 
         public bool IsRecordedAudioExists
@@ -68,7 +71,7 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public PlaybackData GetReferenceAudio()
         {
-            return null;
+            return _referenceAudio;
         }
 
         public PlaybackData GetRecordedAudio()

@@ -33,8 +33,7 @@ namespace Pronunciation.Trainer
 
         private Entities _dbRecordContext;
         private TrainingAudioContext _audioContext;
-        private IRecordingProvider<TrainingTargetKey> _recordingProvider;
-        private TrainingTargetKey _trainingKey;
+        private RecordingProviderWithTargetKey<TrainingTargetKey> _recordingProvider;
         private Training _activeRecord;
         private readonly CollectionChangeTracker<string> _audioKeysTracker;
 
@@ -61,10 +60,8 @@ namespace Pronunciation.Trainer
         private void Window_Initialized(object sender, EventArgs e)
         {
             _dbRecordContext = new Entities();
-            _recordingProvider = AppSettings.Instance.Recorders.Training;
 
             audioPanel.RecordingCompleted += AudioPanel_RecordingCompleted;
-            lstAudios.Items.SortDescriptions.Add(new SortDescription("Text", ListSortDirection.Descending));
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -73,27 +70,31 @@ namespace Pronunciation.Trainer
             {
                 _activeRecord = InitActiveRecord();   
             }
-            _trainingKey = new TrainingTargetKey(_activeRecord.TrainingId);
 
-            _audioContext = new TrainingAudioContext(_recordingProvider, _trainingKey, new AlwaysAddRecordingPolicy());
+            _recordingProvider = new RecordingProviderWithTargetKey<TrainingTargetKey>(
+                AppSettings.Instance.Recorders.Training,
+                new TrainingTargetKey(_activeRecord.TrainingId),
+                new AlwaysAddRecordingPolicy());
+            _audioContext = new TrainingAudioContext(_recordingProvider);
             audioPanel.AttachContext(_audioContext);
 
             LoadContent(_activeRecord);
 
-            lstAudios.AttachPanel(audioPanel);
-            lstAudios.ItemsSource = _recordingProvider.GetAudioList(_trainingKey);
-            if (lstAudios.Items.Count > 0)
+            lstRecordings.AttachPanel(audioPanel);
+            lstRecordings.AttachItemsSource(_recordingProvider.GetAudioList());
+            if (lstRecordings.Items.Count > 0)
             {
-                lstAudios.SelectedIndex = 0;
-                lstAudios.Focus();
+                lstRecordings.SelectedIndex = 0;
+                lstRecordings.Focus();
             }
             else
             {
                 _audioContext.RefreshContext(_activeRecord.ReferenceAudioData, null, false);
-                SetAudioButtonsState(false);
+                SetListButtonsState(false);
                 txtTitle.Focus();
             }
 
+            btnDeleteReference.IsEnabled = _activeRecord.ReferenceAudioData != null;
             btnApply.IsEnabled = !NeedsDialogResult;
         }
 
@@ -115,45 +116,44 @@ namespace Pronunciation.Trainer
             return activeRecord;
         }
 
-        private void lstAudios_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void lstRecordings_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             RefreshAudioContext(false);
-            SetAudioButtonsState(true);
+            SetListButtonsState(true);
         }
 
-        private void lstAudios_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void lstRecordings_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             RefreshAudioContext(true);
         }
 
         private void RefreshAudioContext(bool playAudio)
         {
-            var selectedItem = lstAudios.SelectedItem as RecordedAudioListItem;
-            _audioContext.RefreshContext(_activeRecord.ReferenceAudioData, 
-                selectedItem == null ? null : selectedItem.AudioKey, 
+            _audioContext.RefreshContext(_activeRecord.ReferenceAudioData,
+                lstRecordings.SelectedRecording == null ? null : lstRecordings.SelectedRecording.AudioKey, 
                 playAudio);
         }
 
-        private void SetAudioButtonsState(bool isEnabled)
+        private void SetListButtonsState(bool isEnabled)
         {
             btnDeleteRecorded.IsEnabled = isEnabled;
         }
 
         private void AudioPanel_RecordingCompleted(string recordedFilePath, bool isTemporaryFile)
         {
-            string audioKey = _audioContext.RegisterRecordedAudio(recordedFilePath, DateTime.Now);
+            string audioKey = _recordingProvider.RegisterNewAudio(DateTime.Now, recordedFilePath);
             _audioKeysTracker.RegisterAddedItem(audioKey);
             // In case if audio with the same key has been previously deleted we unregister it
             _audioKeysTracker.UnregisterDeletedItem(audioKey);
 
-            lstAudios.ItemsSource = GetRecordedAudiosExceptDeleted();
-            lstAudios.SelectedItem = lstAudios.Items.Cast<RecordedAudioListItem>().Single(x => x.AudioKey == audioKey);
-            lstAudios.Focus();
+            lstRecordings.AttachItemsSource(GetRecordedAudiosExceptDeleted());
+            lstRecordings.SelectedRecording = lstRecordings.Recordings.Single(x => x.AudioKey == audioKey);
+            lstRecordings.Focus();
         }
 
         private RecordedAudioListItem[] GetRecordedAudiosExceptDeleted()
         {
-            RecordedAudioListItem[] allAudios = _recordingProvider.GetAudioList(_trainingKey);
+            RecordedAudioListItem[] allAudios = _recordingProvider.GetAudioList();
             if (_audioKeysTracker.HasDeletedItems)
             {
                 string[] deletedAudios = _audioKeysTracker.GetDeletedItems();
@@ -167,23 +167,20 @@ namespace Pronunciation.Trainer
 
         private void btnDeleteRecorded_Click(object sender, RoutedEventArgs e)
         {
-            if (lstAudios.SelectedItems.Count <= 0)
+            if (lstRecordings.SelectedRecordingsCount <= 0)
                 return;
 
-            RecordedAudioListItem[] audiosToDelete = lstAudios.SelectedItems.Cast<RecordedAudioListItem>().ToArray();
-            _audioKeysTracker.RegisterDeletedItems(audiosToDelete.Select(x => x.AudioKey));
-
-            lstAudios.ItemsSource = ((RecordedAudioListItem[])lstAudios.ItemsSource)
-                .Where(x => audiosToDelete.All(y => x.AudioKey != y.AudioKey)).ToArray();
-            if (lstAudios.Items.Count > 0)
+            _audioKeysTracker.RegisterDeletedItems(lstRecordings.SelectedRecordings.Select(x => x.AudioKey));
+            lstRecordings.RemoveSelected();
+            if (lstRecordings.Items.Count > 0)
             {
-                lstAudios.SelectedIndex = 0;
-                lstAudios.Focus();
+                lstRecordings.SelectedIndex = 0;
+                lstRecordings.Focus();
             }
             else
             {
                 _audioContext.RefreshContext(_activeRecord.ReferenceAudioData, null, false);
-                SetAudioButtonsState(false);
+                SetListButtonsState(false);
             }
         }
 
@@ -200,6 +197,7 @@ namespace Pronunciation.Trainer
                 txtReferenceAudio.Text = _activeRecord.ReferenceAudioName;
 
                 RefreshAudioContext(false);
+                btnDeleteReference.IsEnabled = true;
             }
         }
 
@@ -210,6 +208,7 @@ namespace Pronunciation.Trainer
             txtReferenceAudio.Text = null;
 
             RefreshAudioContext(false);
+            btnDeleteReference.IsEnabled = false;
         }
 
         private void btnOK_Click(object sender, RoutedEventArgs e)
@@ -254,7 +253,7 @@ namespace Pronunciation.Trainer
             // (added audios are already in the database so just remove them from the tracker with 'Reset' method)
             if (_audioKeysTracker.HasDeletedItems)
             {
-                _recordingProvider.DeleteAudios(_trainingKey, _audioKeysTracker.GetDeletedItems());
+                _recordingProvider.DeleteAudios(_audioKeysTracker.GetDeletedItems());
             }
             _audioKeysTracker.Reset();
         }
@@ -282,7 +281,7 @@ namespace Pronunciation.Trainer
                 // (deleted audios are not yet deleted in the database so just remove them from the tracker with 'Reset' method)
                 if (_audioKeysTracker.HasAddedItems)
                 {
-                    _recordingProvider.DeleteAudios(_trainingKey, _audioKeysTracker.GetAddedItems());
+                    _recordingProvider.DeleteAudios(_audioKeysTracker.GetAddedItems());
                 }
                 _audioKeysTracker.Reset();
             }

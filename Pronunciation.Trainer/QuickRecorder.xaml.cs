@@ -26,8 +26,7 @@ namespace Pronunciation.Trainer
     /// </summary>
     public partial class QuickRecorder : UserControlExt, ISupportsKeyboardFocus
     {
-        private IRecordingProvider<QuickRecorderTargetKey> _recordingProvider;
-        private QuickRecorderTargetKey _recorderKey;
+        private RecordingProviderWithTargetKey<QuickRecorderTargetKey> _recordingProvider;
         private QuickRecorderAudioContext _audioContext;
 
         public QuickRecorder()
@@ -37,90 +36,94 @@ namespace Pronunciation.Trainer
 
         private void UserControl_Initialized(object sender, EventArgs e)
         {
-            _recordingProvider = AppSettings.Instance.Recorders.QuickRecorder;
-            _recorderKey = new QuickRecorderTargetKey();
-            _audioContext = new QuickRecorderAudioContext(_recordingProvider, _recorderKey, new AlwaysAddRecordingPolicy());
+            _recordingProvider = new RecordingProviderWithTargetKey<QuickRecorderTargetKey>(
+                AppSettings.Instance.Recorders.QuickRecorder, 
+                new QuickRecorderTargetKey(),
+                new AlwaysAddRecordingPolicy());
+            _audioContext = new QuickRecorderAudioContext(_recordingProvider);
 
             audioPanel.RecordingCompleted += AudioPanel_RecordingCompleted;
-            lstAudios.Items.SortDescriptions.Add(new SortDescription("Text", ListSortDirection.Descending));
-
             audioPanel.AttachContext(_audioContext);
-            lstAudios.AttachPanel(audioPanel);
 
-            lstAudios.ItemsSource = _recordingProvider.GetAudioList(_recorderKey);
-            if (lstAudios.Items.Count > 0)
+            lstRecordings.AttachPanel(audioPanel);
+            lstRecordings.AttachItemsSource(_recordingProvider.GetAudioList());
+            if (lstRecordings.Items.Count > 0)
             {
-                lstAudios.SelectedIndex = 0;
+                lstRecordings.SelectedIndex = 0;
             }
             else
             {
-                SetAudioButtonsState(false);
+                SetListButtonsState(false);
             }
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
             // We must put focus somewhere inside the control otherwise hot keys don't work
-            lstAudios.Focus();
+            lstRecordings.Focus();
         }
 
         public void CaptureKeyboardFocus()
         {
-            lstAudios.Focus();
+            lstRecordings.Focus();
         }
 
         private void AudioPanel_RecordingCompleted(string recordedFilePath, bool isTemporaryFile)
         {
-            string audioKey = _audioContext.RegisterRecordedAudio(recordedFilePath, DateTime.Now);
+            string audioKey = _recordingProvider.RegisterNewAudio(DateTime.Now, recordedFilePath);
 
-            lstAudios.ItemsSource = _recordingProvider.GetAudioList(_recorderKey);
-            lstAudios.SelectedItem = lstAudios.Items.Cast<RecordedAudioListItem>().Single(x => x.AudioKey == audioKey);
-            lstAudios.Focus();
+            lstRecordings.AttachItemsSource(_recordingProvider.GetAudioList());
+            lstRecordings.SelectedRecording = lstRecordings.Recordings.Single(x => x.AudioKey == audioKey);
+            lstRecordings.Focus();
         }
 
-        private void lstAudios_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void lstRecordings_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             RefreshAudioContext(false);
-            SetAudioButtonsState(true);
+            SetListButtonsState(true);
         }
 
-        private void lstAudios_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void lstRecordings_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             RefreshAudioContext(true);
         }
 
         private void RefreshAudioContext(bool playAudio)
         {
-            var selectedItem = lstAudios.SelectedItem as RecordedAudioListItem;
-            if (selectedItem == null)
-                return;
-
-            _audioContext.RefreshContext(selectedItem.AudioKey, playAudio);
+            if (lstRecordings.SelectedRecording != null)
+            {
+                _audioContext.RefreshContext(lstRecordings.SelectedRecording.AudioKey, playAudio);
+            }
         }
 
         private void btnDeleteSelected_Click(object sender, RoutedEventArgs e)
         {
-            if (lstAudios.SelectedItems.Count <= 0)
+            if (lstRecordings.SelectedRecordingsCount <= 0)
                 return;
 
             var result = MessageBox.Show(
-                "Are you sure that you want to delete the selected audios?",
+                "Are you sure that you want to delete the selected recordings? This action cannot be undone.",
                 "Confirm deletion", MessageBoxButton.YesNo);
             if (result == MessageBoxResult.Yes)
             {
-                bool isSuccess = _recordingProvider.DeleteAudios(_recorderKey,
-                    lstAudios.SelectedItems.Cast<RecordedAudioListItem>().Select(x => x.AudioKey));
-                RefreshList();
-                if (!isSuccess)
+                bool isSuccess = _recordingProvider.DeleteAudios(lstRecordings.SelectedRecordings.Select(x => x.AudioKey));
+                if (isSuccess)
                 {
-                    MessageBox.Show("Some of the selected audios haven't been deleted!", "Warning");
+                    lstRecordings.RemoveSelected();
                 }
+                else
+                {
+                    lstRecordings.AttachItemsSource(_recordingProvider.GetAudioList());
+                    MessageBox.Show("Some of the selected recordings haven't been deleted!", "Warning");
+                }
+
+                ResetSelectedRecording();
             }
         }
 
         private void btnCopyToNew_Click(object sender, RoutedEventArgs e)
         {
-            if (lstAudios.SelectedItems.Count <= 0)
+            if (lstRecordings.SelectedRecordingsCount <= 0)
                 return;
 
             var dialog = new TrainingDetails();
@@ -128,56 +131,57 @@ namespace Pronunciation.Trainer
             dialog.CreateNew = true;
             if (dialog.ShowDialog() == true && dialog.ActiveRecord != null)
             {
-                MoveSelectedAudiosToTraining(dialog.ActiveRecord.TrainingId, dialog.ActiveRecord.Title);
+                MoveSelectedRecordingsToTraining(dialog.ActiveRecord.TrainingId, dialog.ActiveRecord.Title);
             }
         }
 
         private void btnCopyToExisting_Click(object sender, RoutedEventArgs e)
         {
-            if (lstAudios.SelectedItems.Count <= 0)
+            if (lstRecordings.SelectedRecordingsCount <= 0)
                 return;
 
             var dialog = new TrainingSelectionDialog();
             if (dialog.ShowDialog() == true && dialog.SelectedTraining != null)
             {
-                MoveSelectedAudiosToTraining(dialog.SelectedTraining.TrainingId, dialog.SelectedTraining.Title);
+                MoveSelectedRecordingsToTraining(dialog.SelectedTraining.TrainingId, dialog.SelectedTraining.Title);
             }
         }
 
-        private void MoveSelectedAudiosToTraining(Guid trainingId, string trainingTitle)
+        private void MoveSelectedRecordingsToTraining(Guid trainingId, string trainingTitle)
         {
-            bool isSuccess = _recordingProvider.MoveAudios(
-                _recorderKey, new TrainingTargetKey(trainingId),
-                lstAudios.SelectedItems.Cast<RecordedAudioListItem>().Select(x => x.AudioKey));
-            RefreshList();
+            bool isSuccess = _recordingProvider.MoveAudios(new TrainingTargetKey(trainingId), 
+                lstRecordings.SelectedRecordings.Select(x => x.AudioKey));
             if (isSuccess)
             {
+                lstRecordings.RemoveSelected();
                 MessageBox.Show(string.Format(
-                    "Succesfully moved the selected audios to the training '{0}'.", trainingTitle), "Success");
+                    "Succesfully moved the selected recordings to the training '{0}'.", trainingTitle), "Success");
             }
             else
             {
+                lstRecordings.AttachItemsSource(_recordingProvider.GetAudioList());
                 MessageBox.Show(string.Format(
-                    "Some of the selected audios haven't been moved to the training '{0}'.", trainingTitle), "Warning");
+                    "Some of the selected recordings haven't been moved to the training '{0}'.", trainingTitle), "Warning");    
             }
+
+            ResetSelectedRecording();
         }
 
-        private void RefreshList()
+        private void ResetSelectedRecording()
         {
-            lstAudios.ItemsSource = _recordingProvider.GetAudioList(_recorderKey);
-            if (lstAudios.Items.Count > 0)
+            if (lstRecordings.Items.Count > 0)
             {
-                lstAudios.SelectedIndex = 0;
-                lstAudios.Focus();
+                lstRecordings.SelectedIndex = 0;
+                lstRecordings.Focus();
             }
             else
             {
                 _audioContext.ResetContext();  
-                SetAudioButtonsState(false);
+                SetListButtonsState(false);
             }
         }
 
-        private void SetAudioButtonsState(bool isEnabled)
+        private void SetListButtonsState(bool isEnabled)
         {
             btnDeleteSelected.IsEnabled = isEnabled;
             btnCopyToExisting.IsEnabled = isEnabled;

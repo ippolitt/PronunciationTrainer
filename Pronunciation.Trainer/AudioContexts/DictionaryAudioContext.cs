@@ -7,6 +7,7 @@ using Pronunciation.Core.Providers.Dictionary;
 using System.IO;
 using System.Windows.Controls;
 using Pronunciation.Core.Providers.Recording;
+using Pronunciation.Core.Providers.Recording.HistoryPolicies;
 
 namespace Pronunciation.Trainer.AudioContexts
 {
@@ -59,6 +60,20 @@ namespace Pronunciation.Trainer.AudioContexts
             {
                 ContextChanged(PlayAudioMode.PlayReference);
             }
+        }
+
+        public bool CanShowRecordingsHistory
+        {
+            get { return _targetKey != null; }
+        }
+
+        public RecordingProviderWithTargetKey GetRecordingHistoryProvider()
+        {
+            if (_targetKey == null)
+                throw new InvalidOperationException();
+
+            return new RecordingProviderWithTargetKey<LPDTargetKey>(
+                _recordingProvider, _targetKey, new AlwaysAddRecordingPolicy()); 
         }
 
         public bool IsReferenceAudioExists

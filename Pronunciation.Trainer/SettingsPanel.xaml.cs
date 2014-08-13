@@ -23,6 +23,19 @@ namespace Pronunciation.Trainer
         public SettingsPanel()
         {
             InitializeComponent();
+            DataContext = new AppSettingsWrapper();
+        }
+
+        private void UserControl_Initialized(object sender, EventArgs e)
+        {
+            pnlDays.Visibility = Visibility.Hidden;
+        }
+
+        private void cboRecordingHistoryMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selectedItem = cboRecordingHistoryMode.SelectedItem as KeyTextPair<RecordingHistoryMode>;
+            pnlDays.Visibility = (selectedItem != null && selectedItem.Key == RecordingHistoryMode.OverrideLatestAfterNDays)
+                ? Visibility.Visible : Visibility.Hidden;
         }
     }
 
@@ -32,6 +45,7 @@ namespace Pronunciation.Trainer
         
         public KeyTextPair<StartupPlayMode>[] StartupEntries { get; private set; }
         public KeyTextPair<RecordedPlayMode>[] RecordingEntries { get; private set; }
+        public KeyTextPair<RecordingHistoryMode>[] HistoryEntries { get; private set; }
  
         public AppSettingsWrapper()
         {
@@ -49,6 +63,13 @@ namespace Pronunciation.Trainer
                     new KeyTextPair<RecordedPlayMode>(RecordedPlayMode.RecordedOnly, "Play recorded audio"),
                     new KeyTextPair<RecordedPlayMode>(RecordedPlayMode.RecordedThenReference, "Play recorded, then reference audio"),
                     new KeyTextPair<RecordedPlayMode>(RecordedPlayMode.ReferenceThenRecorded, "Play reference, then recorded audio")
+                };
+
+            HistoryEntries = new KeyTextPair<RecordingHistoryMode>[] 
+                {
+                    new KeyTextPair<RecordingHistoryMode>(RecordingHistoryMode.AlwaysOverrideLatest, "Always override latest recording"),
+                    new KeyTextPair<RecordingHistoryMode>(RecordingHistoryMode.OverrideLatestAfterNDays, "Override latest recording if it's newer than N days"),
+                    new KeyTextPair<RecordingHistoryMode>(RecordingHistoryMode.AlwaysAdd, "Always add a new recording")
                 };
         }
     }

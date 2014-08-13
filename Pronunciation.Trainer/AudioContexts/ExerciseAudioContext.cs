@@ -6,6 +6,7 @@ using Pronunciation.Core.Contexts;
 using Pronunciation.Core.Providers.Exercise;
 using System.IO;
 using Pronunciation.Core.Providers.Recording;
+using Pronunciation.Core.Providers.Recording.HistoryPolicies;
 
 namespace Pronunciation.Trainer.AudioContexts
 {
@@ -48,6 +49,20 @@ namespace Pronunciation.Trainer.AudioContexts
             }
         }
 
+        public bool CanShowRecordingsHistory
+        {
+            get { return _targetKey != null; }
+        }
+
+        public RecordingProviderWithTargetKey GetRecordingHistoryProvider()
+        {
+            if (_targetKey == null)
+                throw new InvalidOperationException();
+
+            return new RecordingProviderWithTargetKey<ExerciseTargetKey>(
+                _recordingProvider, _targetKey, new AlwaysAddRecordingPolicy()); 
+        }
+
         public bool IsReferenceAudioExists
         {
             get { return _referenceAudio != null; }
@@ -63,7 +78,7 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public bool IsRecordingAllowed
         {
-            get { return IsReferenceAudioExists; }
+            get { return _targetKey != null; }
         }
 
         public PlaybackData GetReferenceAudio()

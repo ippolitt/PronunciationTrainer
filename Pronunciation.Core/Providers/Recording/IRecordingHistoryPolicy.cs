@@ -7,6 +7,6 @@ namespace Pronunciation.Core.Providers.Recording
 {
     public interface IRecordingHistoryPolicy
     {
-        bool OverrideLatestAudio(DateTime latestAudioDate);
+        bool OverrideLatestAudio(DateTime recordingFate, DateTime latestAudioDate);
     }
 }

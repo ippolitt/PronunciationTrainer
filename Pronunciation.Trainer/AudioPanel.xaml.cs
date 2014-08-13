@@ -55,6 +55,7 @@ namespace Pronunciation.Trainer
         private ExecuteActionCommand _startRecordingCommand;
         private ExecuteActionCommand _stopCommand;
         private ExecuteActionCommand _showWaveformCommand;
+        private ExecuteActionCommand _showHistoryCommand;
 
         private const string RecordProgressTemplate = "Recording, {0} seconds left..";
         private const int DelayedPlayIntervalMs = 500;
@@ -80,8 +81,10 @@ namespace Pronunciation.Trainer
             _startRecordingCommand = new ExecuteActionCommand(StartRecording, false);
             _stopCommand = new ExecuteActionCommand(() => StopAction(true), false);
             _showWaveformCommand = new ExecuteActionCommand(ShowWaveformsDialog, false);
+            _showHistoryCommand = new ExecuteActionCommand(ShowHistoryDialog, false);
 
             btnShowWaveforms.Command = _showWaveformCommand;
+            btnShowHistory.Command = _showHistoryCommand;
             btnPlayReference.Target = new PlayAudioAction(PrepareReferencePlaybackArgs, (x, y, z) => ProcessPlaybackResult(x, y, z, true));
             btnPlayRecorded.Target = new PlayAudioAction(PrepareRecordedPlaybackArgs, (x, y, z) => ProcessPlaybackResult(x, y, z, false));
             btnRecord.Target = new RecordAudioAction(PrepareRecordingArgs, ProcessRecordingResult);
@@ -108,6 +111,7 @@ namespace Pronunciation.Trainer
                 container.InputBindings.Add(new KeyBinding(_startRecordingCommand, KeyGestures.StartRecording));
                 container.InputBindings.Add(new KeyBinding(_stopCommand, KeyGestures.StopAudio));
                 container.InputBindings.Add(new KeyBinding(_showWaveformCommand, KeyGestures.ShowWaveform));
+                container.InputBindings.Add(new KeyBinding(_showHistoryCommand, KeyGestures.ShowHistory));
 
                 container.PreviewKeyDown += container_PreviewKeyDown;
 
@@ -126,6 +130,7 @@ namespace Pronunciation.Trainer
                 btnRecord.RefreshDefaultTooltip();
 
                 btnShowWaveforms.ToolTip = string.Format(btnShowWaveforms.ToolTip.ToString(), KeyGestures.ShowWaveform.DisplayString);
+                btnShowHistory.ToolTip = string.Format(btnShowHistory.ToolTip.ToString(), KeyGestures.ShowHistory.DisplayString);
             }
         }
 
@@ -169,8 +174,7 @@ namespace Pronunciation.Trainer
             _audioContext.ContextChanged -= AudioContext_ContextChanged;
             _audioContext.ContextChanged += AudioContext_ContextChanged;
 
-            ResetSamples();
-            RefreshControls();
+            RefreshContext();
         }
 
         public bool HasKeyboardFocus
@@ -212,9 +216,7 @@ namespace Pronunciation.Trainer
 
         private void AudioContext_ContextChanged(PlayAudioMode playMode)
         {
-            _delayedActionContext = null;
-            ResetSamples();
-            RefreshControls();
+            RefreshContext();
 
             BackgroundAction target = null;
             if (playMode == PlayAudioMode.PlayReference && _audioContext.IsReferenceAudioExists)
@@ -228,6 +230,13 @@ namespace Pronunciation.Trainer
             StartAction(target, true);
         }
 
+        private void RefreshContext()
+        {
+            _delayedActionContext = null;
+            ResetSamples();
+            RefreshControls();
+        }
+
         private void ActionButton_ActionStarted(BackgroundAction action)
         {
             _activeAction = action;
@@ -235,6 +244,7 @@ namespace Pronunciation.Trainer
 
             _stopCommand.UpdateState(true);
             _showWaveformCommand.UpdateState(false);
+            _showHistoryCommand.UpdateState(false);
 
             foreach (var actionButton in _actionButtons)
             {
@@ -322,6 +332,8 @@ namespace Pronunciation.Trainer
             _playRecordedCommand.UpdateState(btnPlayRecorded.IsEnabled);
             _startRecordingCommand.UpdateState(btnRecord.IsEnabled);
             _showWaveformCommand.UpdateState(_lastReferenceResult != null || _lastRecordedResult != null);
+            // Allow recordings history dialog if at least one recording exists
+            _showHistoryCommand.UpdateState(_audioContext.CanShowRecordingsHistory && btnPlayRecorded.IsEnabled);
         }
 
         private void ResetSlider()
@@ -490,6 +502,16 @@ namespace Pronunciation.Trainer
             window.ReferenceResult = _lastReferenceResult;
             window.RecordedResult = _lastRecordedResult;
             window.Show();
+        }
+
+        private void ShowHistoryDialog()
+        {
+            RecordingHistory window = new RecordingHistory();
+            window.InitContext(_audioContext.GetRecordingHistoryProvider(), _audioContext.GetReferenceAudio());
+            window.ShowDialog();
+
+            // Refresh context as the current recording may have been deleted or a new recording may have been added
+            RefreshContext();
         }
 
         private void btnShowSlider_Click(object sender, RoutedEventArgs e)

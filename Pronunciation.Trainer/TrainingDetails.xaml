@@ -67,8 +67,8 @@
                 </RichTextBox.Resources>
             </RichTextBox>
 
-            <local:AudioList Grid.Row="1" Grid.Column="1" Margin="0,3,5,0" x:Name="lstAudios" TabIndex="50" SelectionMode="Extended"
-                    SelectionChanged="lstAudios_SelectionChanged" MouseDoubleClick="lstAudios_MouseDoubleClick" />
+            <local:RecordingsList Grid.Row="1" Grid.Column="1" Margin="0,3,5,0" x:Name="lstRecordings" TabIndex="50" SelectionMode="Extended"
+                    SelectionChanged="lstRecordings_SelectionChanged" MouseDoubleClick="lstRecordings_MouseDoubleClick" />
 
             <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,3,0,0" Orientation="Vertical" VerticalAlignment="Top" >
                 <TextBox Name="txtReferenceAudio" TabIndex="60" IsReadOnly="True"

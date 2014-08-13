@@ -46,7 +46,7 @@ namespace Pronunciation.Core.Providers.Recording.Providers
             {
                 AudioKey = BuildAudioKey(x),
                 RecordingDate = GetCreationDate(x)
-            }).OrderByDescending(x => x.RecordingDate).ToArray();
+            }).ToArray();
         }
 
         public PlaybackData GetLatestAudio(T targetKey)
@@ -113,7 +113,7 @@ namespace Pronunciation.Core.Providers.Recording.Providers
                         .OrderByDescending(x => GetCreationDate(x))
                         .FirstOrDefault();
                     if (!string.IsNullOrEmpty(latestAudioFilePath)
-                        && recordingPolicy.OverrideLatestAudio(GetCreationDate(latestAudioFilePath)))
+                        && recordingPolicy.OverrideLatestAudio(recordingDate, GetCreationDate(latestAudioFilePath)))
                     {
                         File.Delete(latestAudioFilePath);
                     }

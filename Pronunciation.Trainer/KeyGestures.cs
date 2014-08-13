@@ -42,5 +42,10 @@ namespace Pronunciation.Trainer
         {
             get { return new KeyGesture(Key.W, ModifierKeys.Alt, "Alt+W"); }
         }
+
+        public static KeyGesture ShowHistory
+        {
+            get { return new KeyGesture(Key.H, ModifierKeys.Alt, "Alt+H"); }
+        }
     }
 }

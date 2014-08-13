@@ -10,7 +10,7 @@
         <local:AudioPanel DockPanel.Dock="Top" Height="32" x:Name="audioPanel" />
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"></ColumnDefinition>
+                <ColumnDefinition Width="140"></ColumnDefinition>
                 <ColumnDefinition Width="180"></ColumnDefinition>
                 <ColumnDefinition Width="502*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
@@ -19,8 +19,8 @@
                 <RowDefinition MinHeight="80" Height="*"></RowDefinition>
             </Grid.RowDefinitions>
             <TextBlock Grid.Column="0" Grid.Row="0" Margin="0,5,0,5" Name="textBlock1" Text="Recordings:" />
-            <local:AudioList Grid.Column="0" Grid.Row="1" Margin="0" x:Name="lstAudios" 
-                     MouseDoubleClick="lstAudios_MouseDoubleClick" SelectionChanged="lstAudios_SelectionChanged" SelectionMode="Extended" />
+            <local:RecordingsList Grid.Column="0" Grid.Row="1" Margin="0" x:Name="lstRecordings" 
+                     MouseDoubleClick="lstRecordings_MouseDoubleClick" SelectionChanged="lstRecordings_SelectionChanged" SelectionMode="Extended" />
             <StackPanel Grid.Column="1" Grid.Row="1" Margin="10,0,0,0" Orientation="Vertical" VerticalAlignment="Top" >
                 <Button Margin="0,0,0,5" Content="Delete" Name="btnDeleteSelected" Click="btnDeleteSelected_Click" />
                 <Button Margin="0,0,0,5" Content="Move to a new training" Name="btnCopyToNew" Click="btnCopyToNew_Click" />

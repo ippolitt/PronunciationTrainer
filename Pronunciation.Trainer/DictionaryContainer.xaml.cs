@@ -63,8 +63,8 @@ namespace Pronunciation.Trainer
             //_dictionaryProvider = new LPDFileSystemProvider(AppSettings.Instance.Folders.DictionaryFile, CallScriptMethod);
             _dictionaryProvider = new LPDDatabaseProvider(AppSettings.Instance.Folders.DictionaryDB, AppSettings.Instance.Connections.LPD);
 
-            _audioContext = new DictionaryAudioContext(_dictionaryProvider, AppSettings.Instance.Recorders.LPD,
-                new AlwaysOverrideRecordingPolicy());
+            _audioContext = new DictionaryAudioContext(_dictionaryProvider, 
+                AppSettings.Instance.Recorders.LPD, new AppSettingsBasedRecordingPolicy());
             audioPanel.AttachContext(_audioContext);
             audioPanel.RecordingCompleted += AudioPanel_RecordingCompleted;
 

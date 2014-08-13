@@ -68,10 +68,10 @@ namespace Pronunciation.Trainer
                 "Confirm deletion", MessageBoxButton.YesNo);
             if (result == MessageBoxResult.Yes)
             {
-                var trainings = trainingsDataGrid.SelectedItems.Cast<TrainingListItem>().ToArray();
-                PronunciationDbContext.Instance.RemoveTrainings(trainings);
+                var trainingsToDelete = trainingsDataGrid.SelectedItems.Cast<TrainingListItem>().ToArray();
+                PronunciationDbContext.Instance.RemoveTrainings(trainingsToDelete);
                 AppSettings.Instance.Recorders.Training.DeleteTargetAudios(
-                    trainings.Select(x => new TrainingTargetKey(x.TrainingId)));
+                    trainingsToDelete.Select(x => new TrainingTargetKey(x.TrainingId)));
             }
         }
     }

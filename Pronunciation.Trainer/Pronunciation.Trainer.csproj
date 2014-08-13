@@ -70,15 +70,19 @@
     <Compile Include="AudioActions\PlaybackArgs.cs" />
     <Compile Include="AudioActions\RecordAudioAction.cs" />
     <Compile Include="AudioActions\RecordingArgs.cs" />
+    <Compile Include="AudioContexts\RecordingHistoryAudioContext.cs" />
     <Compile Include="AudioContexts\TrainingAudioContext.cs" />
     <Compile Include="AudioContexts\QuickRecorderAudioContext.cs" />
     <Compile Include="AudioContexts\ExerciseAudioContext.cs" />
-    <Compile Include="AudioList.cs" />
+    <Compile Include="RecordingHistory.xaml.cs">
+      <DependentUpon>RecordingHistory.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="AppSettingsBasedRecordingPolicy.cs" />
+    <Compile Include="RecordingsList.cs" />
     <Compile Include="BindingErrorTraceListener.cs" />
     <Compile Include="Commands\ExecuteActionCommand.cs" />
     <Compile Include="ControlsHelper.cs" />
     <Compile Include="DictionaryContainerScriptingProxy.cs" />
-    <Compile Include="RecordedAudioHistoryTracker.cs" />
     <Compile Include="Views\ExerciseAudioListItem.cs" />
     <Compile Include="Views\ExerciseListItem.cs" />
     <Compile Include="Views\TrainingListItem.cs" />
@@ -165,6 +169,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="RecordingHistory.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="TrainingDetails.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -235,6 +243,7 @@
       <Link>lame.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Resource Include="Resources\AudioHistory.png" />
     <Resource Include="Resources\AudioPlay.png" />
     <Resource Include="Resources\BuildingIndex.png" />
     <Resource Include="Resources\AudioWaveform.png" />

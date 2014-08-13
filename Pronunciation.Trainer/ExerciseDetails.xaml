@@ -118,7 +118,7 @@
                 </ScrollViewer>
             </Border>
 
-            <local:AudioList Grid.Row="1" Grid.Column="1" Margin="0,3,5,0" x:Name="lstAudios" TabIndex="100" 
+            <ListBox Grid.Row="1" Grid.Column="1" Margin="0,3,5,0" x:Name="lstAudios" TabIndex="100" 
                 SelectionChanged="lstAudios_SelectionChanged" MouseDoubleClick="lstAudios_MouseDoubleClick" SelectionMode="Extended" />
 
             <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,3,0,0" Name="actions" Orientation="Vertical" VerticalAlignment="Top">

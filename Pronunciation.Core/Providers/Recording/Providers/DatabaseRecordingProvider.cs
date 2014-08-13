@@ -71,7 +71,7 @@ WHERE TargetKey = @key AND TargetTypeId = {0}", targetKey.TargetTypeId), conn);
                 }
             }
 
-            return results.OrderByDescending(x => x.RecordingDate).ToArray();
+            return results.ToArray();
         }
 
         public PlaybackData GetLatestAudio(T targetKey)
@@ -157,7 +157,7 @@ WHERE AudioId = @id", conn);
             else
             {
                 RecordedAudio latestAudio = GetLatestAudio(targetKey, true);
-                if (latestAudio != null && recordingPolicy.OverrideLatestAudio(latestAudio.Recorded))
+                if (latestAudio != null && recordingPolicy.OverrideLatestAudio(recordingDate, latestAudio.Recorded))
                 {
                     audioId = latestAudio.AudioId;
                     UpdateAudio(audioId, recordingDate, audioData);

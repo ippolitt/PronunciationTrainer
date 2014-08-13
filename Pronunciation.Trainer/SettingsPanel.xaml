@@ -5,17 +5,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Pronunciation.Trainer"
              mc:Ignorable="d" 
-             d:DesignHeight="137" d:DesignWidth="505">
-    <UserControl.Resources>
-        <local:AppSettingsWrapper x:Key="settingsSource"/>
-    </UserControl.Resources>
-    <UserControl.DataContext>
-        <Binding Source="{StaticResource settingsSource}"/>
-    </UserControl.DataContext>
+             d:DesignHeight="137" d:DesignWidth="805" Initialized="UserControl_Initialized">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="210"></ColumnDefinition>
-            <ColumnDefinition Width="260"></ColumnDefinition>
+            <ColumnDefinition Width="300"></ColumnDefinition>
             <ColumnDefinition Width="*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
@@ -33,12 +27,22 @@
         <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,3,0,3" Name="cboPostRecordingAction"
                   ItemsSource="{Binding Path=RecordingEntries}" DisplayMemberPath="Text" SelectedValuePath="Key" SelectedValue="{Binding Path=Settings.RecordedMode}" />
 
-        <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Decrease reference audio volume by:" />
+        <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Decrease reference audio volume by:"
+                   ToolTip="Use this setting if a recorded audio sounds too quiet as compare to the reference one" />
         <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
             <TextBox Name="txtVolume" Width="46" Margin="0,3,5,3" HorizontalAlignment="Left" HorizontalContentAlignment="Right"
                          Text="{Binding Path=Settings.ReferenceDataVolume}"/>
             <TextBlock Name="label6" VerticalAlignment="Center" TextWrapping="WrapWithOverflow" Text="db" />
         </StackPanel>
-        <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,0,0,0" Name="label7" VerticalAlignment="Center" TextWrapping="WrapWithOverflow" Text="(it can be useful if a recorded audio sounds too quiet as compare to the reference one)" />
+
+        <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Recording history mode:" />
+        <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,3,0,3" Name="cboRecordingHistoryMode" SelectionChanged="cboRecordingHistoryMode_SelectionChanged"
+                  ItemsSource="{Binding Path=HistoryEntries}" DisplayMemberPath="Text" SelectedValuePath="Key" SelectedValue="{Binding Path=Settings.HistoryMode}" />
+
+        <StackPanel Name="pnlDays" Grid.Row="3" Grid.Column="2" Orientation="Horizontal" Visibility="Hidden">
+            <TextBlock Name="label7" Margin="10,0,5,0" VerticalAlignment="Center" TextWrapping="WrapWithOverflow" Text="number of days:" />
+            <TextBox Name="txtHistoryDays" Width="46" Margin="0,3,5,3" HorizontalAlignment="Left" HorizontalContentAlignment="Right"
+                         Text="{Binding Path=Settings.HistoryDays}"/>
+        </StackPanel>
     </Grid>
 </UserControl>

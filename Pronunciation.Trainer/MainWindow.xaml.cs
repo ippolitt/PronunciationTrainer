@@ -31,6 +31,12 @@ namespace Pronunciation.Trainer
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
+            var activeTab = tabsRoot.SelectedItem as TabItem;
+            if (activeTab != null)
+            {
+                // Get focus out of the current control (e.g. from textbox) to force its value to be flushed to the databinding
+                activeTab.Focus();
+            }
             AppSettings.Instance.Save();
         }
 

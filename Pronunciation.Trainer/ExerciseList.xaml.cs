@@ -71,9 +71,10 @@ namespace Pronunciation.Trainer
                 "Confirm deletion", MessageBoxButton.YesNo);
             if (result == MessageBoxResult.Yes)
             {
-                var exercises = exerciseDataGrid.SelectedItems.Cast<ExerciseListItem>().ToArray();
-                var exerciseAudios = PronunciationDbContext.Instance.GetExerciseAudios(exercises.Select(x => x.ExerciseId).ToArray());
-                PronunciationDbContext.Instance.RemoveExercises(exercises);
+                var exercisesToDelete = exerciseDataGrid.SelectedItems.Cast<ExerciseListItem>().ToArray();
+                var exerciseAudios = PronunciationDbContext.Instance.GetExerciseAudios(exercisesToDelete.Select(x => x.ExerciseId).ToArray());
+                
+                PronunciationDbContext.Instance.RemoveExercises(exercisesToDelete);
                 AppSettings.Instance.Recorders.Exercise.DeleteTargetAudios(
                     exerciseAudios.Select(x => new ExerciseTargetKey(x.ExerciseId, x.AudioName)));
             }

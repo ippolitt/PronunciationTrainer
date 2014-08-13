@@ -83,6 +83,8 @@ namespace Pronunciation.Trainer
 
             borderImage.BorderThickness = lstAudios.BorderThickness;
             borderImage.BorderBrush = lstAudios.BorderBrush;
+
+            lstAudios.PreviewKeyDown += AudiosList_PreviewKeyDown;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -92,14 +94,13 @@ namespace Pronunciation.Trainer
                 _activeRecord = InitActiveRecord();
             }
 
-            _audioContext = new ExerciseAudioContext(AppSettings.Instance.Recorders.Exercise, _activeRecord.ExerciseId,
-                new AlwaysOverrideRecordingPolicy());
+            _audioContext = new ExerciseAudioContext(AppSettings.Instance.Recorders.Exercise,
+                _activeRecord.ExerciseId, new AppSettingsBasedRecordingPolicy());
             audioPanel.AttachContext(_audioContext);
             audioPanel.RecordingCompleted += AudioPanel_RecordingCompleted;
 
             LoadContent();
 
-            lstAudios.AttachPanel(audioPanel);
             lstAudios.ItemsSource = LoadReferenceAudios();
             if (lstAudios.Items.Count > 0)
             {
@@ -108,7 +109,7 @@ namespace Pronunciation.Trainer
             }
             else
             {
-                SetAudioButtonsState(false);
+                SetListButtonsState(false);
                 bookIdComboBox.Focus();
             }
         }
@@ -116,6 +117,19 @@ namespace Pronunciation.Trainer
         private void AudioPanel_RecordingCompleted(string recordedFilePath, bool isTemporaryFile)
         {
             _audioContext.RegisterRecordedAudio(recordedFilePath, DateTime.Now);
+        }
+
+        private void AudiosList_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Left:
+                    audioPanel.PlayReferenceAudio();
+                    break;
+                case Key.Right:
+                    audioPanel.PlayRecordedAudio();
+                    break;
+            }
         }
 
         private Exercise InitActiveRecord()
@@ -186,7 +200,7 @@ namespace Pronunciation.Trainer
         private void lstAudios_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             RefreshAudioContext(false);
-            SetAudioButtonsState(true);
+            SetListButtonsState(true);
         }
 
         private void lstAudios_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -203,7 +217,7 @@ namespace Pronunciation.Trainer
             _audioContext.RefreshContext(selectedItem.AudioName, selectedItem.RawData, playAudio);
         }
 
-        private void SetAudioButtonsState(bool isEnabled)
+        private void SetListButtonsState(bool isEnabled)
         {
             btnDeleteAudio.IsEnabled = isEnabled;
         }
@@ -306,7 +320,7 @@ namespace Pronunciation.Trainer
                 else
                 {
                     _audioContext.ResetContext();
-                    SetAudioButtonsState(false);
+                    SetListButtonsState(false);
                 }
             }
         }

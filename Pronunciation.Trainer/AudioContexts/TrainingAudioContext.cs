@@ -13,18 +13,13 @@ namespace Pronunciation.Trainer.AudioContexts
     {
         public event AudioContextChangedHandler ContextChanged;
 
-        private readonly IRecordingProvider<TrainingTargetKey> _recordingProvider;
-        private readonly TrainingTargetKey _trainingKey;
-        private readonly IRecordingHistoryPolicy _recordingPolicy;
+        private readonly RecordingProviderWithTargetKey _recordingProvider;
         private string _audioKey;
         private byte[] _referenceAudio;
 
-        public TrainingAudioContext(IRecordingProvider<TrainingTargetKey> recordingProvider, 
-            TrainingTargetKey trainingKey, IRecordingHistoryPolicy recordingPolicy)
+        public TrainingAudioContext(RecordingProviderWithTargetKey recordingProvider)
         {
             _recordingProvider = recordingProvider;
-            _recordingPolicy = recordingPolicy;
-            _trainingKey = trainingKey;
         }
 
         public void RefreshContext(byte[] referenceAudio, string audioKey, bool playImmediately)
@@ -35,6 +30,16 @@ namespace Pronunciation.Trainer.AudioContexts
             {
                 ContextChanged(playImmediately ? PlayAudioMode.PlayRecorded : PlayAudioMode.None);
             }
+        }
+
+        public bool CanShowRecordingsHistory
+        {
+            get { return false; }
+        }
+
+        public RecordingProviderWithTargetKey GetRecordingHistoryProvider()
+        {
+            throw new NotSupportedException();
         }
 
         public bool IsReferenceAudioExists
@@ -62,17 +67,12 @@ namespace Pronunciation.Trainer.AudioContexts
             if (string.IsNullOrEmpty(_audioKey))
                 return null;
 
-            return _recordingProvider.GetAudio(_trainingKey, _audioKey);
+            return _recordingProvider.GetAudio(_audioKey);
         }
 
         public RecordingSettings GetRecordingSettings()
         {
-            return _recordingProvider.GetRecordingSettings(_trainingKey);
-        }
-
-        public string RegisterRecordedAudio(string recordedFilePath, DateTime recordingDate)
-        {
-            return _recordingProvider.RegisterNewAudio(_trainingKey, recordingDate, recordedFilePath, _recordingPolicy);
+            return _recordingProvider.GetRecordingSettings();
         }
     }
 }
