@@ -43,6 +43,9 @@
     <Reference Include="EntityFramework">
       <HintPath>..\packages\EntityFramework.5.0.0\lib\net40\EntityFramework.dll</HintPath>
     </Reference>
+    <Reference Include="Ookii.Dialogs.Wpf">
+      <HintPath>..\Lib\Ookii.Dialogs.Wpf.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
@@ -74,6 +77,10 @@
     <Compile Include="AudioContexts\TrainingAudioContext.cs" />
     <Compile Include="AudioContexts\QuickRecorderAudioContext.cs" />
     <Compile Include="AudioContexts\ExerciseAudioContext.cs" />
+    <Compile Include="Export\AudioExporter.cs" />
+    <Compile Include="FileOverrideDialog.xaml.cs">
+      <DependentUpon>FileOverrideDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="RecordingHistory.xaml.cs">
       <DependentUpon>RecordingHistory.xaml</DependentUpon>
     </Compile>
@@ -83,6 +90,7 @@
     <Compile Include="Commands\ExecuteActionCommand.cs" />
     <Compile Include="ControlsHelper.cs" />
     <Compile Include="DictionaryContainerScriptingProxy.cs" />
+    <Compile Include="Views\ExerciseAudioListItemWithData.cs" />
     <Compile Include="Views\ExerciseAudioListItem.cs" />
     <Compile Include="Views\ExerciseListItem.cs" />
     <Compile Include="Views\TrainingListItem.cs" />
@@ -144,6 +152,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ExerciseDetails.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="FileOverrideDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

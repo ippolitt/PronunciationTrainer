@@ -73,9 +73,10 @@
             <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,3,0,0" Orientation="Vertical" VerticalAlignment="Top" >
                 <TextBox Name="txtReferenceAudio" TabIndex="60" IsReadOnly="True"
                     Text="{Binding Path=ReferenceAudioName, Mode=OneWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" />
-                <Button Margin="0,20,0,0" TabIndex="70" Content="Import reference" Name="btnImportReference" Click="btnImportReference_Click" />
-                <Button Margin="0,5,0,0" TabIndex="75" Content="Delete reference" Name="btnDeleteReference" Click="btnDeleteReference_Click" />
-                <Button Margin="0,5,0,0" TabIndex="80" Content="Delete recorded" Name="btnDeleteRecorded" Click="btnDeleteRecorded_Click" />
+                <Button Margin="0,20,0,0" TabIndex="70" Content="Import reference" Name="btnImportReference" Click="btnImportReference_Click" ToolTip="Import a reference audio for the training" />
+                <Button Margin="0,5,0,0" TabIndex="72" Content="Export recorded" Name="btnExportRecorded" Click="btnExportRecorded_Click" ToolTip="Export the selected recordings as mp3 files" />
+                <Button Margin="0,5,0,0" TabIndex="75" Content="Delete reference" Name="btnDeleteReference" Click="btnDeleteReference_Click" ToolTip="Delete the training reference audio" />
+                <Button Margin="0,5,0,0" TabIndex="80" Content="Delete recorded" Name="btnDeleteRecorded" Click="btnDeleteRecorded_Click" ToolTip="Delete the selected recordings" />
             </StackPanel>
         </Grid>
     </DockPanel>

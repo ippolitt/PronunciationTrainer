@@ -21,6 +21,7 @@ using Pronunciation.Trainer.Views;
 using Pronunciation.Core.Contexts;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
 using Microsoft.Win32;
+using Pronunciation.Trainer.Export;
 
 namespace Pronunciation.Trainer
 {
@@ -29,23 +30,6 @@ namespace Pronunciation.Trainer
     /// </summary>
     public partial class ExerciseDetails : Window
     {
-        private class ExerciseAudioDetails
-        {
-            public Guid AudioId { get; set; }
-            public string AudioName { get; set; }
-            public byte[] RawData { get; set; }
-
-            public string Text
-            {
-                get { return AudioName; }
-            }
-
-            public override string ToString()
-            {
-                return Text;
-            }
-        }
-
         public bool CreateNew { get; set; }
         public bool NeedsDialogResult { get; set; }
         public Guid? ExerciseId { get; set; }
@@ -210,7 +194,7 @@ namespace Pronunciation.Trainer
 
         private void RefreshAudioContext(bool playAudio)
         {
-            var selectedItem = lstAudios.SelectedItem as ExerciseAudioDetails;
+            var selectedItem = lstAudios.SelectedItem as ExerciseAudioListItemWithData;
             if (selectedItem == null)
                 return;
 
@@ -220,6 +204,7 @@ namespace Pronunciation.Trainer
         private void SetListButtonsState(bool isEnabled)
         {
             btnDeleteAudio.IsEnabled = isEnabled;
+            btnExportAudio.IsEnabled = isEnabled;
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -261,6 +246,7 @@ namespace Pronunciation.Trainer
         {
             var dlg = new OpenFileDialog();
             dlg.Filter = "Image files (*.png;*.jpg)|*.png;*.jpg;*.jpeg|All files (*.*)|*.*";
+            dlg.Title = "Select image file to import";
 
             bool? result = dlg.ShowDialog();
             if (result == true)
@@ -275,14 +261,15 @@ namespace Pronunciation.Trainer
             var dlg = new OpenFileDialog();
             dlg.Multiselect = true;
             dlg.Filter = "Audio files (*.mp3)|*.mp3|All files (*.*)|*.*";
+            dlg.Title = "Select audio files to import";
 
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
                 if (ImportReferenceAudios(dlg.FileNames))
                 {
-                    var currentItem = lstAudios.SelectedItem as ExerciseAudioDetails;
-                    ExerciseAudioDetails[] audios = LoadReferenceAudios();
+                    var currentItem = lstAudios.SelectedItem as ExerciseAudioListItemWithData;
+                    ExerciseAudioListItemWithData[] audios = LoadReferenceAudios();
                     lstAudios.ItemsSource = audios;
                     if (currentItem == null)
                     {
@@ -297,6 +284,17 @@ namespace Pronunciation.Trainer
             }
         }
 
+        private void btnExportAudio_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstAudios.SelectedItems.Count <= 0)
+                return;
+
+            var exporter = new AudioExporter(ControlsHelper.GetWindow(this));
+            exporter.ExportExerciseAudios(
+                AppSettings.Instance.Recorders.Exercise, 
+                lstAudios.SelectedItems.Cast<ExerciseAudioListItemWithData>().OrderBy(x => new MultipartName(x.AudioName)));
+        }
+
         private void btnDeleteAudio_Click(object sender, RoutedEventArgs e)
         {
             if (lstAudios.SelectedItems.Count <= 0)
@@ -307,7 +305,7 @@ namespace Pronunciation.Trainer
                 "Confirm deletion", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
             if (result == MessageBoxResult.Yes)
             {
-                ExerciseAudioDetails[] audiosToDelete = lstAudios.SelectedItems.Cast<ExerciseAudioDetails>().ToArray();
+                ExerciseAudioListItemWithData[] audiosToDelete = lstAudios.SelectedItems.Cast<ExerciseAudioListItemWithData>().ToArray();
                 DeleteReferenceAudios(audiosToDelete);
                 _audioNamesTracker.RegisterDeletedItems(audiosToDelete.Select(x => x.AudioName));
 
@@ -347,16 +345,17 @@ namespace Pronunciation.Trainer
             imgContent.Source = image;
         }
 
-        private ExerciseAudioDetails[] LoadReferenceAudios()
+        private ExerciseAudioListItemWithData[] LoadReferenceAudios()
         {
             ICollection<ExerciseAudio> audios = _activeRecord.ExerciseAudios;
             if (audios == null || audios.Count == 0)
                 return null;
 
-            return audios.Select(x => new ExerciseAudioDetails
+            return audios.Select(x => new ExerciseAudioListItemWithData
                 {
                     AudioId = x.AudioId,
                     AudioName = x.AudioName,
+                    ExerciseId = x.ExerciseId,
                     RawData = x.RawData
                 })
                 .OrderBy(x => new MultipartName(x.AudioName)).ToArray();
@@ -399,7 +398,7 @@ namespace Pronunciation.Trainer
             return hasChanges;
         }
 
-        private void DeleteReferenceAudios(IEnumerable<ExerciseAudioDetails> audiosToDelete)
+        private void DeleteReferenceAudios(IEnumerable<ExerciseAudioListItemWithData> audiosToDelete)
         {
             ICollection<ExerciseAudio> currentAudios = _activeRecord.ExerciseAudios;
             foreach (var audioToDelete in audiosToDelete)

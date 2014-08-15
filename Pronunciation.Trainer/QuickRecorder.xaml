@@ -22,9 +22,10 @@
             <local:RecordingsList Grid.Column="0" Grid.Row="1" Margin="0" x:Name="lstRecordings" 
                      MouseDoubleClick="lstRecordings_MouseDoubleClick" SelectionChanged="lstRecordings_SelectionChanged" SelectionMode="Extended" />
             <StackPanel Grid.Column="1" Grid.Row="1" Margin="10,0,0,0" Orientation="Vertical" VerticalAlignment="Top" >
-                <Button Margin="0,0,0,5" Content="Delete" Name="btnDeleteSelected" Click="btnDeleteSelected_Click" />
-                <Button Margin="0,0,0,5" Content="Move to a new training" Name="btnCopyToNew" Click="btnCopyToNew_Click" />
-                <Button Margin="0,0,0,5" Content="Move to an existing training" Name="btnCopyToExisting" Click="btnCopyToExisting_Click" />
+                <Button Margin="0,0,0,5" Content="Export" Name="btnExport" Click="btnExport_Click" ToolTip="Export the selected recordings as mp3 files" />
+                <Button Margin="0,0,0,5" Content="Move to a new training" Name="btnCopyToNew" Click="btnCopyToNew_Click" ToolTip="Create a new training and move the selected recordings into it" />
+                <Button Margin="0,0,0,5" Content="Move to an existing training" Name="btnCopyToExisting" Click="btnCopyToExisting_Click" ToolTip="Move the selected recordings to an existing training" />
+                <Button Margin="0,0,0,5" Content="Delete" Name="btnDelete" Click="btnDelete_Click" ToolTip="Delete the selected recordings" />                
             </StackPanel>
         </Grid>
     </DockPanel>

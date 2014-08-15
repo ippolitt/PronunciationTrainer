@@ -507,6 +507,7 @@ namespace Pronunciation.Trainer
         private void ShowHistoryDialog()
         {
             RecordingHistory window = new RecordingHistory();
+            window.Owner = ControlsHelper.GetWindow(this);
             window.InitContext(_audioContext.GetRecordingHistoryProvider(), _audioContext.GetReferenceAudio());
             window.ShowDialog();
 

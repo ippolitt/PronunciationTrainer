@@ -38,6 +38,11 @@ namespace Pronunciation.Trainer
             return GetContainer(parent);
         }
 
+        public static Window GetWindow(DependencyObject control)
+        {
+            return Window.GetWindow(control);
+        }
+
         public static bool IsInVisualTree(DependencyObject element)
         {
             return GetContainer(element, AllowedContainerType.Window) != null;

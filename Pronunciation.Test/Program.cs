@@ -13,7 +13,12 @@ namespace Pronunciation.Test
         {
             try
             {
+                bool? rr = false;
 
+                if (rr == false)
+                {
+                    Console.WriteLine("OK");
+                }
                 Console.WriteLine("{0:00}-{1:00}", 3, 4);
                 int number;
                 bool res = int.TryParse(null, out number);

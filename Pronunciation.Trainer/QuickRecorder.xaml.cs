@@ -18,6 +18,7 @@ using System.ComponentModel;
 using Pronunciation.Core;
 using System.IO;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
+using Pronunciation.Trainer.Export;
 
 namespace Pronunciation.Trainer
 {
@@ -96,7 +97,7 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void btnDeleteSelected_Click(object sender, RoutedEventArgs e)
+        private void btnDelete_Click(object sender, RoutedEventArgs e)
         {
             if (lstRecordings.SelectedRecordingsCount <= 0)
                 return;
@@ -121,6 +122,15 @@ namespace Pronunciation.Trainer
             }
         }
 
+        private void btnExport_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstRecordings.SelectedRecordingsCount <= 0)
+                return;
+
+            var exporter = new AudioExporter(ControlsHelper.GetWindow(this));
+            exporter.ExportRecordings(_recordingProvider, lstRecordings.SelectedRecordings.OrderByDescending(x => x.RecordingDate));
+        }
+
         private void btnCopyToNew_Click(object sender, RoutedEventArgs e)
         {
             if (lstRecordings.SelectedRecordingsCount <= 0)
@@ -141,6 +151,7 @@ namespace Pronunciation.Trainer
                 return;
 
             var dialog = new TrainingSelectionDialog();
+            dialog.Owner = ControlsHelper.GetWindow(this);
             if (dialog.ShowDialog() == true && dialog.SelectedTraining != null)
             {
                 MoveSelectedRecordingsToTraining(dialog.SelectedTraining.TrainingId, dialog.SelectedTraining.Title);
@@ -183,7 +194,8 @@ namespace Pronunciation.Trainer
 
         private void SetListButtonsState(bool isEnabled)
         {
-            btnDeleteSelected.IsEnabled = isEnabled;
+            btnDelete.IsEnabled = isEnabled;
+            btnExport.IsEnabled = isEnabled;
             btnCopyToExisting.IsEnabled = isEnabled;
             btnCopyToNew.IsEnabled = isEnabled;
         }

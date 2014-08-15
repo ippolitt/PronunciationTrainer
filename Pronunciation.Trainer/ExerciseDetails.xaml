@@ -122,9 +122,10 @@
                 SelectionChanged="lstAudios_SelectionChanged" MouseDoubleClick="lstAudios_MouseDoubleClick" SelectionMode="Extended" />
 
             <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,3,0,0" Name="actions" Orientation="Vertical" VerticalAlignment="Top">
-                <Button Content="Import content" Height="23" Margin="0,0,0,0" Name="btnImportContent"  Click="btnImportContent_Click"  TabIndex="110" />
-                <Button Content="Import audio" Height="23" Margin="0,5,0,0" Name="btnImportAudio" Click="btnImportAudio_Click" TabIndex="112" />
-                <Button Content="Delete audio" Height="23" Margin="0,5,0,0" Name="btnDeleteAudio" Click="btnDeleteAudio_Click"  TabIndex="114" />
+                <Button Content="Import content" Height="23" Margin="0,0,0,0" Name="btnImportContent"  Click="btnImportContent_Click"  TabIndex="110" ToolTip="Import an image file with the exercise content" />
+                <Button Content="Import audio" Height="23" Margin="0,5,0,0" Name="btnImportAudio" Click="btnImportAudio_Click" TabIndex="112" ToolTip="Import the exercise audio files" />
+                <Button Content="Export audio" Height="23" Margin="0,5,0,0" Name="btnExportAudio" Click="btnExportAudio_Click"  TabIndex="113" ToolTip="Export the selected audios along with the latest recordings as mp3 files" />
+                <Button Content="Delete audio" Height="23" Margin="0,5,0,0" Name="btnDeleteAudio" Click="btnDeleteAudio_Click"  TabIndex="114" ToolTip="Delete the selected audios along with the assosiated recordings" />
             </StackPanel>
             <!--<Rectangle Height="302" Name="rectangle1" Stroke="Black" Width="742" RadiusX="10" RadiusY="10" />-->
         </Grid>

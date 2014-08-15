@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.IO;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
 using Microsoft.Win32;
+using Pronunciation.Trainer.Export;
 
 namespace Pronunciation.Trainer
 {
@@ -137,6 +138,7 @@ namespace Pronunciation.Trainer
         private void SetListButtonsState(bool isEnabled)
         {
             btnDeleteRecorded.IsEnabled = isEnabled;
+            btnExportRecorded.IsEnabled = isEnabled;
         }
 
         private void AudioPanel_RecordingCompleted(string recordedFilePath, bool isTemporaryFile)
@@ -188,6 +190,7 @@ namespace Pronunciation.Trainer
         {
             var dlg = new OpenFileDialog();
             dlg.Filter = "Audio files (*.mp3)|*.mp3|All files (*.*)|*.*";
+            dlg.Title = "Select audio file to import";
 
             bool? result = dlg.ShowDialog();
             if (result == true)
@@ -209,6 +212,15 @@ namespace Pronunciation.Trainer
 
             RefreshAudioContext(false);
             btnDeleteReference.IsEnabled = false;
+        }
+
+        private void btnExportRecorded_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstRecordings.SelectedRecordingsCount <= 0)
+                return;
+
+            var exporter = new AudioExporter(ControlsHelper.GetWindow(this));
+            exporter.ExportRecordings(_recordingProvider, lstRecordings.SelectedRecordings.OrderByDescending(x => x.RecordingDate));
         }
 
         private void btnOK_Click(object sender, RoutedEventArgs e)

@@ -1,4 +1,6 @@
 Top:
+- Profile memory: when Exercise tab is first loaded etc.
+- When multiple recordings/audios are selected disable Audio panel
 - Display number of symbols in Training text
 - Display the current target key in History dialog?
  -Add a setting to config file - whether to skip first 200ms in the recording
@@ -49,13 +51,11 @@ Waveforms:
 - Play sound along with moving a slider on waveform
 
 Audio migration to DB:
-- Test:
-	- Upload 20, 21, 23 manually
-	- Shrink database after migration (both LPD and Trainer)
-	- Check exercises that have no recordings (see log)
-	- Backup all exercises (png+mp3)
-- Requirements: 
-	- Add ability to export reference/recorded audio (for all types of entities), including recording history dialog
+- Attach reference audios to Trainings. Clean garbadge
+- Shrink database after migration (both LPD and Trainer) and upload them
+- Backup all exercises (png+mp3) and upload them
+- Check exercises that have no recordings (see log). Upload 20, 21, 23 manually
+
 Migration to DB:
 	Move RegisterPage method to LoadCompleted event
 	Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)

@@ -14,6 +14,7 @@ using Pronunciation.Trainer.AudioContexts;
 using Pronunciation.Core.Providers.Recording;
 using Pronunciation.Core.Contexts;
 using System.ComponentModel;
+using Pronunciation.Trainer.Export;
 
 namespace Pronunciation.Trainer
 {
@@ -99,7 +100,7 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void btnDeleteSelected_Click(object sender, RoutedEventArgs e)
+        private void btnDelete_Click(object sender, RoutedEventArgs e)
         {
             if (lstRecordings.SelectedRecordingsCount <= 0)
                 return;
@@ -133,9 +134,19 @@ namespace Pronunciation.Trainer
             }
         }
 
+        private void btnExport_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstRecordings.SelectedRecordingsCount <= 0)
+                return;
+
+            var exporter = new AudioExporter(ControlsHelper.GetWindow(this));
+            exporter.ExportRecordings(_recordingProvider, lstRecordings.SelectedRecordings.OrderByDescending(x => x.RecordingDate));
+        }
+
         private void SetListButtonsState(bool isEnabled)
         {
-            btnDeleteSelected.IsEnabled = isEnabled;
+            btnDelete.IsEnabled = isEnabled;
+            btnExport.IsEnabled = isEnabled;
         }
     }
 }

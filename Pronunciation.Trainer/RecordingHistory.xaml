@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Pronunciation.Trainer"
         Title="Recordings history" Height="300" Width="268" 
-        Initialized="Window_Initialized" Loaded="Window_Loaded" Closing="Window_Closing" >
+        Initialized="Window_Initialized" Loaded="Window_Loaded" Closing="Window_Closing" WindowStartupLocation="CenterOwner" >
     <Window.CommandBindings>
         <CommandBinding Command="Close" Executed="OnCloseCmdExecuted" />
     </Window.CommandBindings>
@@ -25,7 +25,8 @@
             <local:RecordingsList Grid.Column="0" Grid.Row="1" Margin="0" x:Name="lstRecordings" 
                      MouseDoubleClick="lstRecordings_MouseDoubleClick" SelectionChanged="lstRecordings_SelectionChanged" SelectionMode="Extended" />
             <StackPanel Grid.Column="1" Grid.Row="1" Margin="10,0,0,0" Orientation="Vertical" VerticalAlignment="Top" >
-                <Button Margin="0,0,0,5" Content="Delete" Name="btnDeleteSelected" Click="btnDeleteSelected_Click" />
+                <Button Margin="0,0,0,5" Content="Delete" Name="btnDelete" Click="btnDelete_Click" />
+                <Button Margin="0,0,0,5" Content="Export" Name="btnExport" Click="btnExport_Click" />
             </StackPanel>
         </Grid>
     </DockPanel>
