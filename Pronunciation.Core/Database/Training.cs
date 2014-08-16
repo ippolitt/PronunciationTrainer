@@ -14,5 +14,6 @@
         public string Category { get; set; }
         public byte[] ReferenceAudioData { get; set; }
         public string ReferenceAudioName { get; set; }
+        public Nullable<System.Int32> CharacterCount { get; set; }
     }
 }

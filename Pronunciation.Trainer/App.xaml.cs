@@ -5,6 +5,8 @@ using System.Data;
 using System.Linq;
 using System.Windows;
 using System.Windows.Threading;
+using System.Windows.Markup;
+using System.Globalization;
 
 namespace Pronunciation.Trainer
 {
@@ -31,6 +33,11 @@ namespace Pronunciation.Trainer
 
             // Set "|DataDirectory|" parameter used in the connection string in App.config
             AppDomain.CurrentDomain.SetData("DataDirectory", AppSettings.Instance.Folders.Database);
+
+            // Set current culture for all controls (to display dates correctly)
+            FrameworkElement.LanguageProperty.OverrideMetadata(
+                typeof(FrameworkElement), 
+                new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
 
             BindingErrorTraceListener.SetTrace();
         }

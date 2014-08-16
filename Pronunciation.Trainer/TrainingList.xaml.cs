@@ -40,6 +40,11 @@ namespace Pronunciation.Trainer
         {
         }
 
+        private void UserControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+
+        }
+
         private void trainingsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             TrainingListItem activeRecord = trainingsDataGrid.SelectedItem as TrainingListItem;

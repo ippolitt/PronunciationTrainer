@@ -194,11 +194,15 @@ namespace Pronunciation.Trainer
 
         private void RefreshAudioContext(bool playAudio)
         {
-            var selectedItem = lstAudios.SelectedItem as ExerciseAudioListItemWithData;
-            if (selectedItem == null)
-                return;
-
-            _audioContext.RefreshContext(selectedItem.AudioName, selectedItem.RawData, playAudio);
+            var selectedAudio = lstAudios.SelectedItems.Count > 1 ? null : (ExerciseAudioListItemWithData)lstAudios.SelectedItem;
+            if (selectedAudio == null)
+            {
+                _audioContext.ResetContext();
+            }
+            else
+            {
+                _audioContext.RefreshContext(selectedAudio.AudioName, selectedAudio.RawData, playAudio);
+            }
         }
 
         private void SetListButtonsState(bool isEnabled)

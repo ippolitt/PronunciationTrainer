@@ -4,24 +4,18 @@
         xmlns:local="clr-namespace:Pronunciation.Trainer"
         Title="Pronunciation Trainer" Height="571" Width="827" Loaded="Window_Loaded"
         Closing="Window_Closing" Activated="Window_Activated">
-    <TabControl Name="tabsRoot" TabStripPlacement="Top" Focusable="False">
-        <local:TabItemExt Header="Dictionary" x:Name="tabDictionary">
-            <local:DictionaryContainer x:Name="dictionary" Margin="10" />
-        </local:TabItemExt>
-        <local:TabItemExt Header="Exercises" x:Name="tabExercises">
-            <local:ExerciseList x:Name="exersises" Margin="10" />
-        </local:TabItemExt>
-        <local:TabItemExt Header="Training" x:Name="tabTraining">
-            <local:TrainingList x:Name="training" Margin="10" />
-        </local:TabItemExt>
-        <local:TabItemExt Header="Quick Recorder" x:Name="tabRecorder">
-            <local:QuickRecorder x:Name="recorder" Margin="10"  />
-        </local:TabItemExt>       
-        <local:TabItemExt Header="Settings" x:Name="tabSettings" >
-            <local:SettingsPanel x:Name="settings" Margin="10,15,10,10" />
-        </local:TabItemExt>
-        <!--<local:TabItemExt Header="Data import" x:Name="tabImport">
-            <local:DataImporter x:Name="dataImporter" Margin="10" />
-        </local:TabItemExt>-->
+    <TabControl Name="tabsRoot" TabStripPlacement="Top" Focusable="False" SelectionChanged="tabsRoot_SelectionChanged">
+        <local:TabItemExt Header="Dictionary" x:Name="tabDictionary" 
+                          DynamicContentType="local:DictionaryContainer" DynamicContentMargin="10" />
+        <local:TabItemExt Header="Exercises" x:Name="tabExercises"
+                          DynamicContentType="local:ExerciseList" DynamicContentMargin="10" />
+        <local:TabItemExt Header="Training" x:Name="tabTraining"
+                          DynamicContentType="local:TrainingList" DynamicContentMargin="10" />
+        <local:TabItemExt Header="Quick Recorder" x:Name="tabRecorder"
+                          DynamicContentType="local:QuickRecorder" DynamicContentMargin="10" />     
+        <local:TabItemExt Header="Settings" x:Name="tabSettings"
+                          DynamicContentType="local:SettingsPanel" DynamicContentMargin="10,15,10,10" />
+        <!--<local:TabItemExt Header="Data import" x:Name="tabImport"
+                          DynamicContentType="local:DataImporter" DynamicContentMargin="10" />-->
     </TabControl>
 </Window>

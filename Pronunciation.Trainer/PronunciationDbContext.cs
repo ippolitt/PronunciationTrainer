@@ -175,7 +175,8 @@ namespace Pronunciation.Trainer
                     TrainingId = x.TrainingId,
                     Title = x.Title,
                     Category = x.Category,
-                    Created = x.Created
+                    Created = x.Created,
+                    CharacterCount = x.CharacterCount
                 };
             }
         }

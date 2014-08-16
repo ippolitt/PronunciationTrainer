@@ -56,5 +56,16 @@ namespace Pronunciation.Trainer
                 activeTab.CaptureKeyboardFocus();
             }
         }
+
+        private void tabsRoot_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var activeTab = tabsRoot.SelectedItem as TabItemExt;
+            if (activeTab != null && activeTab.DynamicContentType != null && activeTab.Content == null)
+            {
+                FrameworkElement content = (FrameworkElement)Activator.CreateInstance(activeTab.DynamicContentType);
+                content.Margin = activeTab.DynamicContentMargin;
+                activeTab.Content = content;
+            }
+        }
     }
 }

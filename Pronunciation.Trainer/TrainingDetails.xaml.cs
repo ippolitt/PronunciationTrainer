@@ -37,8 +37,12 @@ namespace Pronunciation.Trainer
         private RecordingProviderWithTargetKey<TrainingTargetKey> _recordingProvider;
         private Training _activeRecord;
         private readonly CollectionChangeTracker<string> _audioKeysTracker;
+        private bool _isLoadingContent;
+        private bool _isContentChanged;
 
         private static readonly string ContentFormat = DataFormats.Rtf;
+        private static readonly string NewLineSymbol = Environment.NewLine;
+        private static readonly int NewLineLength = NewLineSymbol.Length;
 
         public TrainingDetails()
         {
@@ -79,8 +83,11 @@ namespace Pronunciation.Trainer
             _audioContext = new TrainingAudioContext(_recordingProvider);
             audioPanel.AttachContext(_audioContext);
 
+            _isLoadingContent = true;
             LoadContent(_activeRecord);
+            _isLoadingContent = false;
 
+            lstRecordings.RecordingsDeleteRequested += lstRecordings_RecordingsDeleteRequested;
             lstRecordings.AttachPanel(audioPanel);
             lstRecordings.AttachItemsSource(_recordingProvider.GetAudioList());
             if (lstRecordings.Items.Count > 0)
@@ -97,6 +104,8 @@ namespace Pronunciation.Trainer
 
             btnDeleteReference.IsEnabled = _activeRecord.ReferenceAudioData != null;
             btnApply.IsEnabled = !NeedsDialogResult;
+
+            int kk = GetContentLength();
         }
 
         private Training InitActiveRecord()
@@ -128,10 +137,16 @@ namespace Pronunciation.Trainer
             RefreshAudioContext(true);
         }
 
+        private void lstRecordings_RecordingsDeleteRequested(object sender, EventArgs e)
+        {
+            DeleteRecordings();
+        }
+
         private void RefreshAudioContext(bool playAudio)
         {
-            _audioContext.RefreshContext(_activeRecord.ReferenceAudioData,
-                lstRecordings.SelectedRecording == null ? null : lstRecordings.SelectedRecording.AudioKey, 
+            var selectedRecording = lstRecordings.SelectedRecordingsCount > 1 ? null : lstRecordings.SelectedRecording;
+            _audioContext.RefreshContext(_activeRecord.ReferenceAudioData, 
+                selectedRecording == null ? null : selectedRecording.AudioKey, 
                 playAudio);
         }
 
@@ -168,6 +183,11 @@ namespace Pronunciation.Trainer
         }
 
         private void btnDeleteRecorded_Click(object sender, RoutedEventArgs e)
+        {
+            DeleteRecordings();
+        }
+
+        private void DeleteRecordings()
         {
             if (lstRecordings.SelectedRecordingsCount <= 0)
                 return;
@@ -223,6 +243,16 @@ namespace Pronunciation.Trainer
             exporter.ExportRecordings(_recordingProvider, lstRecordings.SelectedRecordings.OrderByDescending(x => x.RecordingDate));
         }
 
+        private void rtxtContent_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_isLoadingContent)
+                return;
+
+            _isContentChanged = true;
+            _activeRecord.CharacterCount = GetContentLength();
+            txtCharacters.Text = string.Format("{0}", _activeRecord.CharacterCount);
+        }
+
         private void btnOK_Click(object sender, RoutedEventArgs e)
         {
             // In case user pressed "Enter" and current focus is in a textbox
@@ -250,6 +280,8 @@ namespace Pronunciation.Trainer
         private void SaveChanges()
         {
             SetContent(_activeRecord);
+            _activeRecord.CharacterCount = GetContentLength();
+
             if (_dbRecordContext.HasChanges())
             {
                 if (CreateNew)
@@ -260,6 +292,8 @@ namespace Pronunciation.Trainer
                 PronunciationDbContext.Instance.NotifyTrainingChanged(_activeRecord.TrainingId, CreateNew);
                 CreateNew = false;
             }
+            // Reset it even if the data context thinks there are no changes (data context logic is smarter than ours)
+            _isContentChanged = false;
 
             // Commit deleted audios
             // (added audios are already in the database so just remove them from the tracker with 'Reset' method)
@@ -277,7 +311,8 @@ namespace Pronunciation.Trainer
             // This will commit latest changes in case if focus is in a textbox
             btnCancel.Focus();
 
-            if (_audioKeysTracker.HasDeletedItems || _audioKeysTracker.HasAddedItems || _dbRecordContext.HasChanges())
+            if (_isContentChanged ||_audioKeysTracker.HasDeletedItems || _audioKeysTracker.HasAddedItems 
+                || _dbRecordContext.HasChanges())
             {
                 var result = MessageBox.Show(
                     "You have some pending changes. Are you sure you want to discard them?",
@@ -345,6 +380,18 @@ namespace Pronunciation.Trainer
                 range.Save(buffer, DataFormats.Text);
                 record.TrainingText = Encoding.UTF8.GetString(buffer.ToArray());
             }
+        }
+
+        private int GetContentLength()
+        {
+            FlowDocument doc = rtxtContent.Document;
+            var range = new TextRange(doc.ContentStart, doc.ContentEnd);
+            string text = (range == null ? null : range.Text);
+            if (string.IsNullOrEmpty(text))
+                return 0;
+
+            int length = (text.EndsWith(NewLineSymbol) ? text.Length - NewLineLength : text.Length);
+            return length < 0 ? 0 : length;
         }
 
         private bool IsRichTextboxEmpty(RichTextBox rtb)

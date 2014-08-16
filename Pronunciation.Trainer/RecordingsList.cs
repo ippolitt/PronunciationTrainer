@@ -15,6 +15,8 @@ namespace Pronunciation.Trainer
     {
         private AudioPanel _audioPanel;
 
+        public event EventHandler RecordingsDeleteRequested;
+
         public RecordingsList()
         {
             base.PreviewKeyDown += RecordingsList_PreviewKeyDown;
@@ -41,8 +43,17 @@ namespace Pronunciation.Trainer
                 case Key.Left:
                     _audioPanel.PlayReferenceAudio();
                     break;
+
                 case Key.Right:
                     _audioPanel.PlayRecordedAudio();
+                    break;
+
+                case Key.Delete:
+                case Key.Back:
+                    if (this.SelectedItems.Count > 0 && RecordingsDeleteRequested != null)
+                    {
+                        RecordingsDeleteRequested(this, null);
+                    }
                     break;
             }
         }

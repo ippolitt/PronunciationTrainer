@@ -1,48 +1,38 @@
 Top:
-- Profile memory: when Exercise tab is first loaded etc.
-- When multiple recordings/audios are selected disable Audio panel
-- Display number of symbols in Training text
-- Display the current target key in History dialog?
- -Add a setting to config file - whether to skip first 200ms in the recording
-- Add ability to delete audio by "DEL" (at least in Training)
-- Show waveforms (and length) even without palying the audio. Select several recordings and display waveforms for all of them
-- Optimize IsAudioExists calls (AudioPanel currently makes it twice)
-- Test InMemory recorder - how much memory does it eats for long recordings? Should we flush to disk?
-- Specify recording duration somewhere (both reference and recorded)
-- Bug: sometimes it's possible to start two players (rec and ref) simultineously
-- Bug when sequence is scheduled and I start another action
-- Add reference audio for Recordings
-- Add a possibility to record several audios for a single reference audio in Exercises
-- Migrate all existing exercises to use images from DB?
-- Add a setting "Decrease recorded audio volume"
-- Don't load all tabs on app start
+- Show audio length even without palying the audio.
+- Specify recording duration somewhere (both reference and recorded). Add recording duration to the recordings list
 - Add recording length column to Training (probably, get from the latest audio)
-- Add handling for "EntityValidationErrors" (too long text etc)
-- Add ability to mark certain words as problematic and practice them later
-- Allow to make several recordings per source and select the best one
-- Store history of the recordings. Save best recordings with the date so that I was able to compare them over time to check my progress
-- Allow to make several recordings and compare them
-- Allow comparison of my own pronunciations at the wave forms dialog (or several recorded ones)
-- Compare different reference pronunciation or different recorded ones
-- Add parent topic to the topics list(align  right)
-- Reduce startup time
-- Why it eats so much memory? Elaborate (try working without DB)
-- Add a button to remember/highlight a record in the Recorder
-- Add a shortcut for playing ref and rec sounds simultaneosuly
-- Create a text version of each sentence/phrase to be able to perform full text search
-- Play any word in the dictionary when I double click on it.
-- Bug: When I change language and click "Play" it still plays the old audio
-- Add a switch to hide/display exercise desription
-- Add recording duration to the recordings list
+- Display the current target key in History dialog?
 - Create base MessageBox with predefined captions
-- Allow recording when the application is not active
-- Don't load all tabs on startup
-- Open detailed dialogs as tabs of the Exercise list (as in MVVM article)
-- Add special signs explanation (LPD or Amazon)
-- generate html for pronunciation notes (from dictionary CD)
-- Add a "Sound search" functionality
+- Bugs
+	- Add handling for "EntityValidationErrors" (too long text etc)
+	- Bug: sometimes it's possible to start two players (rec and ref) simultineously
+	- Bug when sequence is scheduled and I start another action
+	- Bug: When I change language and click "Play" it still plays the old audio
+- Performance:
+	- Profile memory: when Exercise tab is first loaded etc.
+	- Why it eats so much memory? Elaborate (try working without DB)
+	- Test InMemory recorder - how much memory does it eats for long recordings? Should we flush to disk?
+	- Reduce startup time
+	- Optimize IsAudioExists calls (AudioPanel currently makes it twice)
+	- Cache latest audio files in providers (especially, LPD)
+	- Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
+- New functionality:
+	- Add a setting "Decrease recorded audio volume"
+	- Add ability to mark certain words as problematic and practice them later
+	- Compare different reference pronunciation or different recorded ones
+	- Add special signs explanation (LPD or Amazon)
+	- Generate html for pronunciation notes (from dictionary CD)
+	- Add a "Sound search" functionality
+	- Create a text version of each sentence/phrase to be able to perform full text search
+	- Play any word in the dictionary when I double click on it
+- Usability improvements
+	- Topics sorting in Exercise list is done by ID, not by text
+	- Add parent topic to the topics list (align  right)
+	- Add a switch to hide/display exercise description
 
 Waveforms:
+- Show waveforms even without palying the audio. Select several recordings and display waveforms for all of them
 - Implement logic of silence finder and automatically stop recording if there's a long pause
 - Clip pauses at the end and at the beginning in the Waveform
 - Add ability to move and stretch waveforms with a slider
@@ -56,10 +46,8 @@ Audio migration to DB:
 - Backup all exercises (png+mp3) and upload them
 - Check exercises that have no recordings (see log). Upload 20, 21, 23 manually
 
-Migration to DB:
-	Move RegisterPage method to LoadCompleted event
-	Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
-	Cache last N files and played audio (preload only one audio? based on the playback settings)
+Possible problems:
+- Deleting many exercises may cause an exception because IN statement would be too long (when deleting recorded audios)
 
 Generation of the pages:
 - check errors in "don't" - AmE is not separated 

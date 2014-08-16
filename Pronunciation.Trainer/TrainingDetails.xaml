@@ -11,9 +11,11 @@
         <Grid DockPanel.Dock="Top" Name="trainingHeader">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="60"></ColumnDefinition>
-                <ColumnDefinition Width="*"></ColumnDefinition>
-                <ColumnDefinition Width="70"></ColumnDefinition>
-                <ColumnDefinition Width="200"></ColumnDefinition>                
+                <ColumnDefinition Width="250*"></ColumnDefinition>
+                <ColumnDefinition Width="69"></ColumnDefinition>
+                <ColumnDefinition Width="150"></ColumnDefinition>
+                <ColumnDefinition Width="130"></ColumnDefinition>
+                <ColumnDefinition Width="50"></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"></RowDefinition>
@@ -24,14 +26,18 @@
             <TextBox Grid.Row="0" Grid.Column="1" Name="txtTitle" Margin="0,3,0,2" TabIndex="10"
                 Text="{Binding Path=Title, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" />
 
-            <TextBlock Grid.Row="0" Grid.Column="2" Margin="10,0,0,0" VerticalAlignment="Center" Text="Category:"/>
+            <TextBlock Grid.Row="0" Grid.Column="2" Margin="0,0,5,0" VerticalAlignment="Center" HorizontalAlignment="Right" Text="Category:"/>
             <TextBox Grid.Row="0" Grid.Column="3" Name="txtCategory" Margin="0,3,0,2" TabIndex="20"
-                Text="{Binding Path=Category, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" />
+                Text="{Binding Path=Category, Mode=OneWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" />
+
+            <TextBlock Grid.Row="0" Grid.Column="4" Margin="0,0,5,0" VerticalAlignment="Center" HorizontalAlignment="Right" Text="Number of characters:"/>
+            <TextBox Grid.Row="0" Grid.Column="5" Name="txtCharacters" Margin="0,3,0,2" IsTabStop="False" IsEnabled="False" HorizontalContentAlignment="Right" 
+                Text="{Binding Path=CharacterCount, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" />
             
             <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,5,0,0" VerticalAlignment="Top" Text="Notes:" />
-            <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,3" Name="txtNotes" TabIndex="30"
+            <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="5" Margin="0,3" Name="txtNotes" TabIndex="30"
                 TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="False" 
-                Text="{Binding Path=Notes, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}"  AllowDrop="False" />
+                Text="{Binding Path=Notes, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}"  AllowDrop="False" />         
         </Grid>
         
         <StackPanel Name="footer" Height="35" DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
@@ -58,7 +64,7 @@
             <!--<TextBox Grid.Row="1" Grid.Column="0" Margin="0,3,10,3" Name="txtText" TabIndex="40"
                 TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="False" VerticalScrollBarVisibility="Auto" 
                 Text="{Binding Path=TrainingText, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}"  AllowDrop="False" />-->
-            <RichTextBox Grid.Row="1" Grid.Column="0" Margin="0,3,10,0" Name="rtxtContent" TabIndex="40" 
+            <RichTextBox Grid.Row="1" Grid.Column="0" Margin="0,3,10,0" Name="rtxtContent" TabIndex="40" TextChanged="rtxtContent_TextChanged"
                          VerticalScrollBarVisibility="Auto">
                 <RichTextBox.Resources>
                     <Style TargetType="{x:Type Paragraph}">

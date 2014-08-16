@@ -49,6 +49,7 @@ namespace Pronunciation.Trainer
 
             audioPanel.AttachContext(_audioContext);
 
+            lstRecordings.RecordingsDeleteRequested += lstRecordings_RecordingsDeleteRequested;
             lstRecordings.AttachPanel(audioPanel);
             lstRecordings.AttachItemsSource(_recordingProvider.GetAudioList());
             if (lstRecordings.Items.Count > 0)
@@ -92,15 +93,30 @@ namespace Pronunciation.Trainer
             RefreshAudioContext(true);
         }
 
+        private void lstRecordings_RecordingsDeleteRequested(object sender, EventArgs e)
+        {
+            DeleteRecordings();
+        }
+
         private void RefreshAudioContext(bool playAudio)
         {
-            if (lstRecordings.SelectedRecording != null)
+            var selectedRecording = lstRecordings.SelectedRecordingsCount > 1 ? null : lstRecordings.SelectedRecording;
+            if (selectedRecording == null)
             {
-                _audioContext.RefreshContext(lstRecordings.SelectedRecording.AudioKey, playAudio);
+                _audioContext.ResetContext();
+            }
+            else
+            {
+                _audioContext.RefreshContext(selectedRecording.AudioKey, playAudio);
             }
         }
 
         private void btnDelete_Click(object sender, RoutedEventArgs e)
+        {
+            DeleteRecordings();
+        }
+
+        private void DeleteRecordings()
         {
             if (lstRecordings.SelectedRecordingsCount <= 0)
                 return;
