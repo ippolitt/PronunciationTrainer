@@ -20,11 +20,14 @@
     <Setting Name="BaseFolder" Type="System.String" Scope="Application">
       <Value Profile="(Default)">D:\Learn\English\Pronunciation\Trainer</Value>
     </Setting>
-    <Setting Name="HistoryMode" Type="System.Int32" Scope="User">
+    <Setting Name="RecordingHistoryMode" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">2</Value>
     </Setting>
-    <Setting Name="HistoryDays" Type="System.Int32" Scope="User">
+    <Setting Name="RecordingHistoryDays" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="MaxAudioSamplesInWaveform" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">100000</Value>
     </Setting>
   </Settings>
 </SettingsFile>

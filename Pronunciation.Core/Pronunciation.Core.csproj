@@ -74,11 +74,14 @@
     <Compile Include="Actions\BackgroundAction.cs" />
     <Compile Include="Actions\BackgroundActionSequence.cs" />
     <Compile Include="Actions\BackgroundActionState.cs" />
+    <Compile Include="Audio\AudioHelper.cs" />
+    <Compile Include="Audio\AudioInfo.cs" />
+    <Compile Include="Audio\AudioSamples.cs" />
+    <Compile Include="Audio\AudioSamplesProcessingArgs.cs" />
     <Compile Include="Audio\Mp3Recorder.cs" />
     <Compile Include="Audio\PlaybackResult.cs" />
     <Compile Include="Audio\Mp3Player.cs" />
     <Compile Include="Audio\InMemoryRecorder.cs" />
-    <Compile Include="Audio\SamplesCollector.cs" />
     <Compile Include="CollectionChangeTracker.cs" />
     <Compile Include="Database\AudioTargetType.cs" />
     <Compile Include="Database\Book.cs" />
@@ -135,6 +138,9 @@
     <Compile Include="Providers\Exercise\MultipartName.cs" />
     <Compile Include="Providers\Dictionary\PageInfo.cs" />
     <Compile Include="Providers\Training\TrainingTargetKey.cs" />
+    <Compile Include="Threading\CancellationTokenExt.cs" />
+    <Compile Include="Threading\CancellationTokenSourceExt.cs" />
+    <Compile Include="Threading\CancellationTokenState.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">
@@ -172,7 +178,6 @@
       <Generator>EntityModelCodeGenerator</Generator>
       <LastGenOutput>PronunciationModel.Designer.cs</LastGenOutput>
     </EntityDeploy>
-    <None Include="App.Config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

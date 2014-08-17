@@ -11,15 +11,15 @@ namespace Pronunciation.Trainer.AudioActions
 {
     public class RecordAudioAction : BackgroundActionWithArgs<RecordingArgs>
     {
-        public RecordAudioAction(Func<ActionContext, ActionArgs<RecordingArgs>> argsBuilder,
-            Action<ActionContext, RecordingArgs, ActionResult> resultProcessor)
-            : base(argsBuilder, null, resultProcessor)
+        public RecordAudioAction(Func<ActionContext, RecordingArgs> argsBuilder, Action<RecordingArgs, ActionResult> resultProcessor)
+            : base(null, null, resultProcessor)
         {
-            base.Worker = RecordAudio;
+            base.ArgsBuilder = (context) => new ActionArgs<RecordingArgs>(argsBuilder(context));
+            base.Worker = (context, args) => RecordAudio(args);
             IsAbortable = true;
         }
 
-        private void RecordAudio(ActionContext context, RecordingArgs args)
+        private void RecordAudio(RecordingArgs args)
         {
             using (var recorder = new Mp3Recorder(AppSettings.Instance.SampleRate))
             {

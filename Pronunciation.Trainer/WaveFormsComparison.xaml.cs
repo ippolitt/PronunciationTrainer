@@ -11,6 +11,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Pronunciation.Core.Audio;
+using Pronunciation.Core.Contexts;
+using Pronunciation.Core.Actions;
+using System.Threading;
+using Pronunciation.Core.Threading;
 
 namespace Pronunciation.Trainer
 {
@@ -19,8 +23,15 @@ namespace Pronunciation.Trainer
     /// </summary>
     public partial class WaveFormsComparison : Window
     {
-        public PlaybackResult ReferenceResult { get; set; }
-        public PlaybackResult RecordedResult { get; set; }
+        public PlaybackData ReferenceAudio { get; set; }
+        public PlaybackData RecordedAudio { get; set; }
+
+        private AudioInfo _referenceInfo;
+        private AudioInfo _recordedInfo;
+        private CancellationTokenSourceExt _referenceAbort;
+        private CancellationTokenSourceExt _recordedAbort;
+
+        private const string StatusLoading = "loading...";
 
         public WaveFormsComparison()
         {
@@ -29,32 +40,84 @@ namespace Pronunciation.Trainer
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            if (ReferenceResult != null)
+            _referenceInfo = GetAudioInfo(ReferenceAudio);
+            _recordedInfo = GetAudioInfo(RecordedAudio);
+            if (_referenceInfo != null && _recordedInfo != null)
             {
-                lblFooterReference.Text = BuildDurationText(ReferenceResult.SamplesDuration, ReferenceResult.TotalDuration);
-                waveReference.AudioSamples = ReferenceResult.Samples;              
-            }
-
-            if (RecordedResult != null)
-            {
-                lblFooterRecorded.Text = BuildDurationText(RecordedResult.SamplesDuration, RecordedResult.TotalDuration);
-                waveRecorded.AudioSamples = RecordedResult.Samples;  
-            }
-
-            if (RecordedResult != null && ReferenceResult != null)
-            {
-                if (ReferenceResult.SamplesDuration > RecordedResult.SamplesDuration)
+                if (_referenceInfo.Duration > _recordedInfo.Duration)
                 {
-                    waveRecorded.WidthFactor = CalculateWidthFactor(ReferenceResult.SamplesDuration, RecordedResult.SamplesDuration);
+                    waveRecorded.WidthFactor = CalculateWidthFactor(_referenceInfo.Duration, _recordedInfo.Duration);
                 }
                 else
                 {
-                    waveReference.WidthFactor = CalculateWidthFactor(RecordedResult.SamplesDuration, ReferenceResult.SamplesDuration);
+                    waveReference.WidthFactor = CalculateWidthFactor(_recordedInfo.Duration, _referenceInfo.Duration);
                 }
             }
 
-            waveReference.DrawWaveForm();
-            waveRecorded.DrawWaveForm();
+            int maxSamplesCount = AppSettings.Instance.MaxSamplesInWaveform;
+            if (_referenceInfo != null)
+            {
+                lblStatusReference.Text = StatusLoading;
+                lblFooterReference.Text = BuildDurationText(_referenceInfo.Duration);
+
+                _referenceAbort = new CancellationTokenSourceExt();
+                var loadArgs = new LoadSamplesArgs(ReferenceAudio, new AudioSamplesProcessingArgs(
+                    true, 
+                    CalculateSamplesStep(_referenceInfo.SamplesCount, maxSamplesCount),
+                    TimeSpan.Zero,
+                    _referenceAbort.Token));
+                var samplesLoader = new LoadSamplesAction(() => loadArgs, (x, y) => ProcessSamplesResult(x, y, true));
+                samplesLoader.StartAction();
+
+                ReferenceAudio = null;
+            }
+
+            if (_recordedInfo != null)
+            {
+                lblStatusRecorded.Text = StatusLoading;
+                lblFooterRecorded.Text = BuildDurationText(_recordedInfo.Duration);
+
+                int skipMs =  AppSettings.Instance.SkipRecordedAudioMs;
+                _recordedAbort = new CancellationTokenSourceExt();
+                var loadArgs = new LoadSamplesArgs(RecordedAudio, new AudioSamplesProcessingArgs(
+                    true, 
+                    CalculateSamplesStep(_recordedInfo.SamplesCount, maxSamplesCount), 
+                    skipMs <= 0 ? TimeSpan.Zero : TimeSpan.FromMilliseconds(skipMs), 
+                    _recordedAbort.Token));
+                var samplesLoader = new LoadSamplesAction(() => loadArgs, (x, y) => ProcessSamplesResult(x, y, false));
+                samplesLoader.StartAction();
+
+                RecordedAudio = null;
+            }
+        }
+
+        private void ProcessSamplesResult(LoadSamplesArgs args, ActionResult<AudioSamples> result, bool isReference)
+        {
+            if (isReference)
+            {
+                _referenceAbort = null;
+            }
+            else
+            {
+                _recordedAbort = null;
+            }
+
+            if (result.Error != null)
+            {
+                if (result.Error is OperationCanceledException)
+                    return;
+
+                throw new Exception(string.Format("There was an error during samples loading for the {0} audio: {1}",
+                    isReference ? "reference" : "recorded",
+                    result.Error.Message));
+            }
+
+            WaveForm wave = isReference ? waveReference : waveRecorded;
+            wave.AudioSamples = result.ReturnValue == null ? null : result.ReturnValue.LeftChannel;
+            wave.DrawWaveForm();
+
+            TextBlock lblStatus = isReference ? lblStatusReference : lblStatusRecorded;
+            lblStatus.Text = string.Empty;
         }
 
         private void btnClose_Click(object sender, RoutedEventArgs e)
@@ -62,20 +125,21 @@ namespace Pronunciation.Trainer
             this.Close();
         }
 
-        private string BuildDurationText(TimeSpan samplesDuration, TimeSpan totalDuration)
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            string text = string.Format("Duration: {0}s", BuildDurationValue(samplesDuration));
-            if (samplesDuration != totalDuration)
+            if (_referenceAbort != null)
             {
-                text += string.Format(" (total duration: {0}s)", BuildDurationValue(totalDuration));
+               _referenceAbort.Cancel(true);
             }
-
-            return text;
+            if (_recordedAbort != null)
+            {
+                _recordedAbort.Cancel(true);
+            }
         }
 
-        private string BuildDurationValue(TimeSpan duration)
+        private string BuildDurationText(TimeSpan duration)
         {
-            return string.Format("{0:0.#}", duration.TotalSeconds);
+            return string.Format("Duration: {0}s", string.Format("{0:0.#}", duration.TotalSeconds));
         }
 
         private static double CalculateWidthFactor(TimeSpan baseDuration, TimeSpan duration)
@@ -84,6 +148,61 @@ namespace Pronunciation.Trainer
                 return 1;
 
             return duration.TotalMilliseconds/baseDuration.TotalMilliseconds;
+        }
+
+        private static int CalculateSamplesStep(int totalSamplesCount, int maxSamplesCount)
+        {
+            if (maxSamplesCount == 0 || totalSamplesCount <= maxSamplesCount)
+                return 1;
+
+            // So if a result is "1.1" we return "2" which means "collect every second sample"
+            return (int)Math.Ceiling((double)totalSamplesCount / (double)maxSamplesCount);
+        }
+
+        private static AudioInfo GetAudioInfo(PlaybackData audioData)
+        {
+            if (audioData == null)
+                return null;
+
+            return audioData.IsFilePath
+                ? AudioHelper.GetAudioInfo(audioData.FilePath) : AudioHelper.GetAudioInfo(audioData.RawData);
+        }
+
+        private class LoadSamplesArgs
+        {
+            public PlaybackData AudioData;
+            public AudioSamplesProcessingArgs ProcessingArgs;
+
+            public LoadSamplesArgs(PlaybackData audioData, AudioSamplesProcessingArgs processingArgs)
+            {
+                AudioData = audioData;
+                ProcessingArgs = processingArgs;
+            }
+        }
+
+        private class LoadSamplesAction : BackgroundActionWithArgs<LoadSamplesArgs, AudioSamples>
+        {
+            public LoadSamplesAction(Func<LoadSamplesArgs> argsBuilder,
+                Action<LoadSamplesArgs, ActionResult<AudioSamples>> resultProcessor)
+                : base(argsBuilder, null, resultProcessor)
+            {
+                base.Worker = (context, args) => LoadSamples(args);
+            }
+
+            private AudioSamples LoadSamples(LoadSamplesArgs args)
+            {
+                AudioSamples samples;
+                if (args.AudioData.IsFilePath)
+                {
+                    samples = AudioHelper.CollectSamples(args.AudioData.FilePath, args.ProcessingArgs);
+                }
+                else
+                {
+                    samples = AudioHelper.CollectSamples(args.AudioData.RawData, args.ProcessingArgs);
+                }
+
+                return samples;
+            }
         }
     }
 }

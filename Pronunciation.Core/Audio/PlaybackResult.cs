@@ -2,43 +2,23 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NAudio.Wave;
 
 namespace Pronunciation.Core.Audio
 {
     public class PlaybackResult
     {
-        private List<float> _samplesList;
-        private float[] _samplesArray;
-
         public TimeSpan TotalDuration { get; private set; }
-        public TimeSpan SamplesDuration { get; private set; }
+        public TimeSpan PlayedDuration { get; private set; }
 
-        internal PlaybackResult(TimeSpan totalDuration)
+        public PlaybackResult(TimeSpan totalDuration)
+            : this(totalDuration, totalDuration)
         {
-            TotalDuration = totalDuration;
-            SamplesDuration = totalDuration;
         }
 
-        internal PlaybackResult(TimeSpan totalDuration, TimeSpan samplesDuration, List<float> samples)
+        public PlaybackResult(TimeSpan totalDuration, TimeSpan playedDuration)
         {
             TotalDuration = totalDuration;
-            SamplesDuration = samplesDuration;
-            _samplesList = samples;
-        }
-
-        public float[] Samples
-        {
-            get
-            {
-                if (_samplesArray == null)
-                {
-                    _samplesArray = _samplesList.ToArray();
-                    _samplesList = null;
-                }
-
-                return _samplesArray;
-            }
+            PlayedDuration = playedDuration;
         }
     }
 }

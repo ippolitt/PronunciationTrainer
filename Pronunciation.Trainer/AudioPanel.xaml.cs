@@ -43,9 +43,6 @@ namespace Pronunciation.Trainer
         private bool _ignoreSliderValueChange;
         private bool _rewindPlayer;
 
-        private PlaybackResult _lastReferenceResult;
-        private PlaybackResult _lastRecordedResult;
-
         private IAudioContext _audioContext;
         private BackgroundAction _activeAction;
         private ActionButton[] _actionButtons;
@@ -85,8 +82,8 @@ namespace Pronunciation.Trainer
 
             btnShowWaveforms.Command = _showWaveformCommand;
             btnShowHistory.Command = _showHistoryCommand;
-            btnPlayReference.Target = new PlayAudioAction(PrepareReferencePlaybackArgs, (x, y, z) => ProcessPlaybackResult(x, y, z, true));
-            btnPlayRecorded.Target = new PlayAudioAction(PrepareRecordedPlaybackArgs, (x, y, z) => ProcessPlaybackResult(x, y, z, false));
+            btnPlayReference.Target = new PlayAudioAction(PrepareReferencePlaybackArgs, (x, y) => ProcessPlaybackResult(x, y, true));
+            btnPlayRecorded.Target = new PlayAudioAction(PrepareRecordedPlaybackArgs, (x, y) => ProcessPlaybackResult(x, y, false));
             btnRecord.Target = new RecordAudioAction(PrepareRecordingArgs, ProcessRecordingResult);
 
             _actionButtons = new[] { btnPlayReference, btnPlayRecorded, btnRecord };
@@ -174,7 +171,7 @@ namespace Pronunciation.Trainer
             _audioContext.ContextChanged -= AudioContext_ContextChanged;
             _audioContext.ContextChanged += AudioContext_ContextChanged;
 
-            RefreshContext();
+            RefreshControls();
         }
 
         public bool HasKeyboardFocus
@@ -216,7 +213,8 @@ namespace Pronunciation.Trainer
 
         private void AudioContext_ContextChanged(PlayAudioMode playMode)
         {
-            RefreshContext();
+            _delayedActionContext = null;
+            RefreshControls();
 
             BackgroundAction target = null;
             if (playMode == PlayAudioMode.PlayReference && _audioContext.IsReferenceAudioExists)
@@ -228,13 +226,6 @@ namespace Pronunciation.Trainer
                 target = btnPlayRecorded.Target;
             }
             StartAction(target, true);
-        }
-
-        private void RefreshContext()
-        {
-            _delayedActionContext = null;
-            ResetSamples();
-            RefreshControls();
         }
 
         private void ActionButton_ActionStarted(BackgroundAction action)
@@ -331,7 +322,8 @@ namespace Pronunciation.Trainer
             _playReferenceCommand.UpdateState(btnPlayReference.IsEnabled);
             _playRecordedCommand.UpdateState(btnPlayRecorded.IsEnabled);
             _startRecordingCommand.UpdateState(btnRecord.IsEnabled);
-            _showWaveformCommand.UpdateState(_lastReferenceResult != null || _lastRecordedResult != null);
+            // At least one audio must exist (either reference or recording one)
+            _showWaveformCommand.UpdateState(btnPlayReference.IsEnabled || btnPlayRecorded.IsEnabled);
             // Allow recordings history dialog if at least one recording exists
             _showHistoryCommand.UpdateState(_audioContext.CanShowRecordingsHistory && btnPlayRecorded.IsEnabled);
         }
@@ -365,47 +357,39 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void ResetSamples()
-        {
-            _lastReferenceResult = null;
-            _lastRecordedResult = null;
-        }
-
-        private ActionArgs<PlaybackArgs> PrepareReferencePlaybackArgs(ActionContext context)
+        private PlaybackArgs PrepareReferencePlaybackArgs()
         {
             PlaybackData args = _audioContext.GetReferenceAudio();
             if (args == null)
                 return null;
 
-            _lastReferenceResult = null;
-            return new ActionArgs<PlaybackArgs>(new PlaybackArgs
+            return new PlaybackArgs
             {
                 IsReferenceAudio = true,
                 IsFilePath = args.IsFilePath,
                 FilePath = args.FilePath,
                 RawData = args.RawData,
                 PlaybackVolumeDb = AppSettings.Instance.ReferenceDataVolume
-            });
+            };
         }
 
-        private ActionArgs<PlaybackArgs> PrepareRecordedPlaybackArgs(ActionContext context)
+        private PlaybackArgs PrepareRecordedPlaybackArgs()
         {
             PlaybackData args = _audioContext.GetRecordedAudio();
             if (args == null)
                 return null;
 
-            _lastRecordedResult = null;
-            return new ActionArgs<PlaybackArgs>(new PlaybackArgs
+            return new PlaybackArgs
             {
                 IsReferenceAudio = false,
                 IsFilePath = args.IsFilePath,
                 FilePath = args.FilePath,
                 RawData = args.RawData,
                 SkipMs = AppSettings.Instance.SkipRecordedAudioMs
-            });
+            };
         }
 
-        private ActionArgs<RecordingArgs> PrepareRecordingArgs(ActionContext context)
+        private RecordingArgs PrepareRecordingArgs(ActionContext context)
         {
             RecordingSettings args = _audioContext.GetRecordingSettings();
             if (args == null)
@@ -429,36 +413,27 @@ namespace Pronunciation.Trainer
             }
             context.ActiveSequence = new BackgroundActionSequence(postActions);
 
-            return new ActionArgs<RecordingArgs>(new RecordingArgs
+            return new RecordingArgs
             {
                 FilePath = args.OutputFilePath,
                 IsTemporaryFile = args.IsTemporaryFile
-            });
+            };
         }
 
-        private void ProcessPlaybackResult(ActionContext context, PlaybackArgs args, ActionResult<PlaybackResult> result, bool isReferenceAudio)
+        private void ProcessPlaybackResult(PlaybackArgs args, ActionResult<PlaybackResult> result, bool isReferenceAudio)
         {
             if (result.Error != null)
                 throw new Exception(string.Format("There was an error during audio playback: {0}", result.Error.Message));
-
-            if (isReferenceAudio)
-            {
-                _lastReferenceResult = result.ReturnValue;
-            }
-            else
-            {
-                _lastRecordedResult = result.ReturnValue;
-            }
         }
 
-        private void ProcessRecordingResult(ActionContext context, RecordingArgs args, ActionResult result)
+        private void ProcessRecordingResult(RecordingArgs args, ActionResult result)
         {
             if (result.Error != null)
             {
                 throw new Exception(string.Format(
                     "There was an error during audio recording: {0} (file path is '{1}')",
                     result.Error.Message, args.FilePath));
-            }
+            } 
 
             if (RecordingCompleted != null)
             {
@@ -499,8 +474,8 @@ namespace Pronunciation.Trainer
         private void ShowWaveformsDialog()
         {
             WaveFormsComparison window = new WaveFormsComparison();
-            window.ReferenceResult = _lastReferenceResult;
-            window.RecordedResult = _lastRecordedResult;
+            window.ReferenceAudio = _audioContext.GetReferenceAudio();
+            window.RecordedAudio = _audioContext.GetRecordedAudio();
             window.Show();
         }
 
@@ -511,8 +486,8 @@ namespace Pronunciation.Trainer
             window.InitContext(_audioContext.GetRecordingHistoryProvider(), _audioContext.GetReferenceAudio());
             window.ShowDialog();
 
-            // Refresh context as the current recording may have been deleted or a new recording may have been added
-            RefreshContext();
+            // Refresh controls as the current recording may have been deleted or a new recording may have been added
+            RefreshControls();
         }
 
         private void btnShowSlider_Click(object sender, RoutedEventArgs e)

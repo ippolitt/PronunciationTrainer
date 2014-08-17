@@ -2,5 +2,8 @@ Analysis
 Backup
 Data
 */bin/Debug
+*/bin/Release
 */obj/Debug
+*/obj/Release
 */obj/x86/Debug
+*/obj/x86/Release

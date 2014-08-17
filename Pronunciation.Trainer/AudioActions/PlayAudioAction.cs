@@ -11,11 +11,10 @@ namespace Pronunciation.Trainer.AudioActions
     {
         private volatile Mp3Player _activePlayer;
 
-        public PlayAudioAction(Func<ActionContext, ActionArgs<PlaybackArgs>> argsBuilder,
-            Action<ActionContext, PlaybackArgs, ActionResult<PlaybackResult>> resultProcessor) 
+        public PlayAudioAction(Func<PlaybackArgs> argsBuilder, Action<PlaybackArgs, ActionResult<PlaybackResult>> resultProcessor) 
             : base(argsBuilder, null, resultProcessor)
         {
-            base.Worker = PlayAudio;
+            base.Worker = (context, args) => PlayAudio(args);
             IsAbortable = true;
             IsSuspendable = true;
         }
@@ -25,13 +24,13 @@ namespace Pronunciation.Trainer.AudioActions
             get { return _activePlayer; }
         }
 
-        private PlaybackResult PlayAudio(ActionContext context, PlaybackArgs args)
+        private PlaybackResult PlayAudio(PlaybackArgs args)
         {
             // We can only decrease the volume so we treat positive values as negative ones
             float volumeDb = args.PlaybackVolumeDb <= 0 ? args.PlaybackVolumeDb : -args.PlaybackVolumeDb;
 
             PlaybackResult result;
-            using (var player = new Mp3Player(true))
+            using (var player = new Mp3Player())
             {
                 player.PlayingStarted += player_PlayingStarted;
                 player.PlayingCompleted += player_PlayingCompleted;

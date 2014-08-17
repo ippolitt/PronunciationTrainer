@@ -89,24 +89,36 @@ namespace Pronunciation.Trainer.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("2")]
-        public int HistoryMode {
+        public int RecordingHistoryMode {
             get {
-                return ((int)(this["HistoryMode"]));
+                return ((int)(this["RecordingHistoryMode"]));
             }
             set {
-                this["HistoryMode"] = value;
+                this["RecordingHistoryMode"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("1")]
-        public int HistoryDays {
+        public int RecordingHistoryDays {
             get {
-                return ((int)(this["HistoryDays"]));
+                return ((int)(this["RecordingHistoryDays"]));
             }
             set {
-                this["HistoryDays"] = value;
+                this["RecordingHistoryDays"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("100000")]
+        public int MaxAudioSamplesInWaveform {
+            get {
+                return ((int)(this["MaxAudioSamplesInWaveform"]));
+            }
+            set {
+                this["MaxAudioSamplesInWaveform"] = value;
             }
         }
     }

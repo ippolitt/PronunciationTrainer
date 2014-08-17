@@ -40,6 +40,7 @@ namespace Pronunciation.Trainer
         public string BaseFolder { get; private set; }
         public int SampleRate { get; private set; }
         public int SkipRecordedAudioMs { get; private set; }
+        public int MaxSamplesInWaveform { get; private set; }
 
         public StartupPlayMode StartupMode { get; set; }
         public RecordedPlayMode RecordedMode { get; set; }
@@ -66,8 +67,9 @@ namespace Pronunciation.Trainer
             RecordedMode = (RecordedPlayMode)Settings.Default.RecordedMode;
             ReferenceDataVolume = Settings.Default.ReferenceDataVolume;
             SkipRecordedAudioMs = Settings.Default.SkipRecordedAudioMs;
-            HistoryMode = (RecordingHistoryMode)Settings.Default.HistoryMode;
-            HistoryDays = Settings.Default.HistoryDays;
+            HistoryMode = (RecordingHistoryMode)Settings.Default.RecordingHistoryMode;
+            HistoryDays = Settings.Default.RecordingHistoryDays;
+            MaxSamplesInWaveform = Settings.Default.MaxAudioSamplesInWaveform;
 
             Folders = new AppFolders(Settings.Default.BaseFolder);
             Connections = new ConnectionStrings();
@@ -79,8 +81,8 @@ namespace Pronunciation.Trainer
             Settings.Default.StartupMode = (int)StartupMode;
             Settings.Default.RecordedMode = (int)RecordedMode;
             Settings.Default.ReferenceDataVolume = ReferenceDataVolume;
-            Settings.Default.HistoryMode = (int)HistoryMode;
-            Settings.Default.HistoryDays = HistoryDays;
+            Settings.Default.RecordingHistoryMode = (int)HistoryMode;
+            Settings.Default.RecordingHistoryDays = HistoryDays;
             Settings.Default.Save();
         }
 

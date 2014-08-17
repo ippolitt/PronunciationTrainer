@@ -18,7 +18,6 @@ namespace Pronunciation.Core.Audio
 
         private bool _isDisposed;
         private TimeSpan _totalLength = TimeSpan.Zero;
-        private readonly bool _collectSamples;
         private readonly object _syncLock = new object();
         private readonly object _playLock = new object();
 
@@ -27,9 +26,8 @@ namespace Pronunciation.Core.Audio
         public event PlayerStateChangedDelegate PlayingStarted;
         public event PlayerStateChangedDelegate PlayingCompleted; 
 
-        public Mp3Player(bool collectSamples)
+        public Mp3Player()
         {
-            _collectSamples = collectSamples;
             _stopWait = new AutoResetEvent(false);
         }
 
@@ -158,14 +156,7 @@ namespace Pronunciation.Core.Audio
                 // WaveChannel32 doesn't raise 'PlaybackStopped' event
                 var channel = new SampleChannel(inputStream);
                 channel.Volume = ConvetVolumeDb(volumeDb);
-
-                SamplesCollector collector = null;
-                if (_collectSamples)
-                {
-                    collector = new SamplesCollector(channel);
-                }
-
-                waveOutDevice.Init(new SampleToWaveProvider((ISampleProvider)collector ?? channel));
+                waveOutDevice.Init(new SampleToWaveProvider(channel));
                 waveOutDevice.Play();
 
                 lock (_syncLock)
@@ -194,11 +185,7 @@ namespace Pronunciation.Core.Audio
                 if (_lastError != null)
                     throw _lastError;
 
-                return collector == null
-                    ? new PlaybackResult(inputStream.TotalTime)
-                    : new PlaybackResult(inputStream.TotalTime,
-                        CalculateSamplesDuration(collector.Samples.Count, inputStream, skippedTime), 
-                        collector.Samples);
+                return new PlaybackResult(inputStream.TotalTime, inputStream.CurrentTime);
             }
         }
 
@@ -227,25 +214,6 @@ namespace Pronunciation.Core.Audio
                 _stopWait.Dispose();
                 _isDisposed = true;
             }
-        }
-
-        private TimeSpan CalculateSamplesDuration(int samplesCount, Mp3FileReader reader, TimeSpan skippedTime)
-        {
-            if (samplesCount <= 0)
-                return reader.TotalTime;
-
-            int sampleRate = reader.WaveFormat.SampleRate; // Samples per second
-            int channelsCount = reader.WaveFormat.Channels; // Number of channels: 1 - for mono, 2 - for stereo
-
-            var result = TimeSpan.FromSeconds((double)samplesCount / (sampleRate * channelsCount)).Add(skippedTime);
-
-            // If Played time is very close to the Total time then consider they are equal (calculation innacuracy)
-            if (Math.Abs(reader.TotalTime.Subtract(result).TotalMilliseconds) <= 100)
-            {
-                result = reader.TotalTime;
-            }
-
-            return result;
         }
     }
 }

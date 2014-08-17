@@ -226,6 +226,12 @@ namespace Pronunciation.Core.Actions
             ResultProcessor = resultProcessor;
         }
 
+        public BackgroundActionWithoutArgs(Action worker, Action<ActionResult> resultProcessor)
+        {
+            Worker = (context) => worker();
+            ResultProcessor = (context, result) => resultProcessor(result);
+        }
+
         public BackgroundActionWithoutArgs(Func<ActionContext, bool> validator,
             Action<ActionContext> worker, Action<ActionContext, ActionResult> resultProcessor)
         {
@@ -263,6 +269,12 @@ namespace Pronunciation.Core.Actions
         {
             Worker = worker;
             ResultProcessor = resultProcessor;
+        }
+
+        public BackgroundActionWithoutArgs(Func<TResult> worker, Action<ActionResult<TResult>> resultProcessor)
+        {
+            Worker = (context) => worker();
+            ResultProcessor = (context, result) => resultProcessor(result);
         }
 
         public BackgroundActionWithoutArgs(Func<ActionContext, bool> validator,
@@ -305,6 +317,15 @@ namespace Pronunciation.Core.Actions
             ResultProcessor = resultProcessor;
         }
 
+        public BackgroundActionWithArgs(Func<TArgs> argsBuilder,
+            Action<TArgs> worker,
+            Action<TArgs, ActionResult> resultProcessor)
+        {
+            ArgsBuilder = (context) => new ActionArgs<TArgs>(argsBuilder());
+            Worker = (context, args) => worker(args);
+            ResultProcessor = (context, args, result) => resultProcessor(args, result);
+        }
+
         protected override ActionArgs<object> PrepareArgs(ActionContext context)
         {
             ActionArgs<TArgs> actionArgs = ArgsBuilder(context);
@@ -337,6 +358,15 @@ namespace Pronunciation.Core.Actions
             ArgsBuilder = argsBuilder;
             Worker = worker;
             ResultProcessor = resultProcessor;
+        }
+
+        public BackgroundActionWithArgs(Func<TArgs> argsBuilder, 
+            Func<TArgs, TResult> worker,
+            Action<TArgs, ActionResult<TResult>> resultProcessor)
+        {
+            ArgsBuilder = (context) => new ActionArgs<TArgs>(argsBuilder());
+            Worker = (context, args) => worker(args);
+            ResultProcessor = (context, args, result) => resultProcessor(args, result);
         }
 
         protected override ActionArgs<object> PrepareArgs(ActionContext context)
