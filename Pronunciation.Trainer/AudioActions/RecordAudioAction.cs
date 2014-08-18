@@ -14,8 +14,8 @@ namespace Pronunciation.Trainer.AudioActions
         public RecordAudioAction(Func<ActionContext, RecordingArgs> argsBuilder, Action<RecordingArgs, ActionResult> resultProcessor)
             : base(null, null, resultProcessor)
         {
-            base.ArgsBuilder = (context) => new ActionArgs<RecordingArgs>(argsBuilder(context));
-            base.Worker = (context, args) => RecordAudio(args);
+            this.ArgsBuilder = (context) => argsBuilder(context);
+            this.Worker = (context, args) => RecordAudio(args);
             IsAbortable = true;
         }
 

@@ -28,6 +28,28 @@ namespace Pronunciation.Trainer
             _audioPanel = audioPanel;
         }
 
+        public void CaptureKeyboardFocus()
+        {
+            if (this.SelectedIndex >= 0)
+            {
+                // We must put focus on the selected item, not on the list itself 
+                // otherwise list navigation with arrows may break
+                var item = (ListBoxItem)this.ItemContainerGenerator.ContainerFromIndex(this.SelectedIndex);
+                if (item != null)
+                {
+                    item.Focus();
+                }
+                else
+                {
+                    this.Focus();
+                }
+            }
+            else
+            {
+                this.Focus();
+            }
+        }
+
         private void RecordingsList_Initialized(object sender, EventArgs e)
         {
             this.Items.SortDescriptions.Add(new SortDescription("RecordingDate", ListSortDirection.Descending));

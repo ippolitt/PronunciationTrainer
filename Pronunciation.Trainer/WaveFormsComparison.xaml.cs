@@ -15,6 +15,7 @@ using Pronunciation.Core.Contexts;
 using Pronunciation.Core.Actions;
 using System.Threading;
 using Pronunciation.Core.Threading;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer
 {
@@ -139,7 +140,7 @@ namespace Pronunciation.Trainer
 
         private string BuildDurationText(TimeSpan duration)
         {
-            return string.Format("Duration: {0}s", string.Format("{0:0.#}", duration.TotalSeconds));
+            return string.Format("Duration: {0}", FormatHelper.ToTimeString(duration, true));
         }
 
         private static double CalculateWidthFactor(TimeSpan baseDuration, TimeSpan duration)
@@ -186,7 +187,7 @@ namespace Pronunciation.Trainer
                 Action<LoadSamplesArgs, ActionResult<AudioSamples>> resultProcessor)
                 : base(argsBuilder, null, resultProcessor)
             {
-                base.Worker = (context, args) => LoadSamples(args);
+                this.Worker = (context, args) => LoadSamples(args);
             }
 
             private AudioSamples LoadSamples(LoadSamplesArgs args)

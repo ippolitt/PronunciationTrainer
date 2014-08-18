@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Controls;
 using System.Windows;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer
 {

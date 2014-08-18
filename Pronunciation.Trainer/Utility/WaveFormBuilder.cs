@@ -8,7 +8,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows;
 
-namespace Pronunciation.Trainer
+namespace Pronunciation.Trainer.Utility
 {
     public class WaveFormBuilder
     {

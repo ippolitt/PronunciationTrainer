@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 
-namespace Pronunciation.Trainer
+namespace Pronunciation.Trainer.Utility
 {
     public class BindingErrorTraceListener : DefaultTraceListener
     {

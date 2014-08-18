@@ -6,7 +6,7 @@ using System.Windows.Media;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace Pronunciation.Trainer
+namespace Pronunciation.Trainer.Utility
 {
     public class ControlsHelper
     {

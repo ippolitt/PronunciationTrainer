@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Pronunciation.Trainer"
+             xmlns:data="clr-namespace:Pronunciation.Trainer.Database"
              mc:Ignorable="d" 
              d:DesignHeight="258" d:DesignWidth="614" 
              xmlns:my="clr-namespace:Pronunciation.Core.Database;assembly=Pronunciation.Core" Loaded="UserControl_Loaded"
@@ -25,7 +25,7 @@
             <DataGrid.Columns>
                 <DataGridComboBoxColumn x:Name="bookIdColumn" Header="Book" MinWidth="90" Width="90"
                     SelectedValueBinding="{Binding Path=BookId}"
-                    ItemsSource="{Binding Source={x:Static local:PronunciationDbContext.Instance}, Path=Books}"
+                    ItemsSource="{Binding Source={x:Static data:PronunciationDbContext.Instance}, Path=Books}"
                     DisplayMemberPath="Author" SelectedValuePath="BookId" />
                 <DataGridTextColumn x:Name="trackColumn" Binding="{Binding Path=TrackDisplayName}" Header="Track" MinWidth="40" Width="40">
                     <DataGridTextColumn.ElementStyle>
@@ -36,7 +36,7 @@
                 </DataGridTextColumn>
                 <DataGridComboBoxColumn x:Name="topicIdColumn" Header="Topic" MinWidth="210" Width="*"
                     SelectedValueBinding="{Binding Path=TopicId}"
-                    ItemsSource="{Binding Source={x:Static local:PronunciationDbContext.Instance}, Path=Topics}"
+                    ItemsSource="{Binding Source={x:Static data:PronunciationDbContext.Instance}, Path=Topics}"
                     DisplayMemberPath="TopicNameExt" SelectedValuePath="TopicId" />
                 <DataGridTextColumn x:Name="titleColumn" Binding="{Binding Path=Title}" Header="Title" MinWidth="250" Width="*" />
                 <DataGridTextColumn x:Name="sourcePageColumn" Binding="{Binding Path=SourcePage}" Header="Page" MinWidth="40" Width="40">

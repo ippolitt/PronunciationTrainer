@@ -5,7 +5,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.Windows.Input;
 
-namespace Pronunciation.Trainer
+namespace Pronunciation.Trainer.Utility
 {
     public class KeyboardMapper
     {

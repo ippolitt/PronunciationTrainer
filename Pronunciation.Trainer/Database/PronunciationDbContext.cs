@@ -9,7 +9,7 @@ using Pronunciation.Trainer.Views;
 using System.Linq.Expressions;
 using Pronunciation.Core;
 
-namespace Pronunciation.Trainer
+namespace Pronunciation.Trainer.Database
 {
     public class PronunciationDbContext
     {
@@ -176,7 +176,8 @@ namespace Pronunciation.Trainer
                     Title = x.Title,
                     Category = x.Category,
                     Created = x.Created,
-                    CharacterCount = x.CharacterCount
+                    CharacterCount = x.CharacterCount,
+                    ReferenceAudioDuration = x.ReferenceAudioDuration
                 };
             }
         }

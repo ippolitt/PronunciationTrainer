@@ -1,20 +1,13 @@
 Top:
-- Test playing very big file (memory usage and correct completion)
-- Show audio length even without palying the audio.
-- Specify recording duration somewhere (both reference and recorded). Add recording duration to the recordings list
-- Add recording length column to Training (probably, get from the latest audio)
-- Display the current target key in History dialog?
-- Create base MessageBox with predefined captions
 - Bugs
-	- BUG: cannot save big reference audio into database
 	- Add handling for "EntityValidationErrors" (too long text etc)
 	- Bug: sometimes it's possible to start two players (rec and ref) simultineously
 	- Bug when sequence is scheduled and I start another action
-	- Bug: When I change language and click "Play" it still plays the old audio
 	- There are no tags in my exported mp3 files
 - Performance:
 	- Profile memory: when Exercise tab is first loaded etc.
 	- Why it eats so much memory? Elaborate (try working without DB)
+	- Why it eats so much memory when saving large audio files? (50 mb file and 400mb eats the application)
 	- Test InMemory recorder - how much memory does it eats for long recordings? Should we flush to disk?
 	- Reduce startup time
 	- Optimize IsAudioExists calls (AudioPanel currently makes it twice)
@@ -30,10 +23,13 @@ Top:
 	- Create a text version of each sentence/phrase to be able to perform full text search
 	- Play any word in the dictionary when I double click on it
 - Usability improvements
-	- Add a possibility to start background action passing arguments explicitly. Simplify delegates signatures (some don't need ActionContext etc.)
+	- Reference audio text box in Training is too small
 	- Topics sorting in Exercise list is done by ID, not by text
 	- Add parent topic to the topics list (align  right)
 	- Add a switch to hide/display exercise description
+- Code improvements:
+	- Add a possibility to start background action passing arguments explicitly. Simplify delegates signatures (some don't need ActionContext etc.)
+	- Create base MessageBox with predefined captions
 
 Waveforms:
 - Show waveforms even without palying the audio. Select several recordings and display waveforms for all of them

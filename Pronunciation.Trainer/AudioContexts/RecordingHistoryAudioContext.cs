@@ -6,6 +6,7 @@ using Pronunciation.Core.Contexts;
 using System.IO;
 using Pronunciation.Core.Providers.Recording;
 using Pronunciation.Core.Providers.Training;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer.AudioContexts
 {
@@ -15,7 +16,7 @@ namespace Pronunciation.Trainer.AudioContexts
 
         private readonly RecordingProviderWithTargetKey _recordingProvider;
         private readonly PlaybackData _referenceAudio;
-        private string _audioKey;
+        private RecordedAudioListItem _recording;
 
         public RecordingHistoryAudioContext(RecordingProviderWithTargetKey recordingProvider, PlaybackData referenceAudio)
         {
@@ -23,12 +24,9 @@ namespace Pronunciation.Trainer.AudioContexts
             _referenceAudio = referenceAudio;
         }
 
-        public void RefreshContext(string audioKey, bool playImmediately)
+        public void RefreshContext(RecordedAudioListItem recording, bool playImmediately)
         {
-            if (_audioKey == audioKey && !playImmediately)
-                return;
-
-            _audioKey = audioKey;
+            _recording = recording;
             if (ContextChanged != null)
             {
                 ContextChanged(playImmediately ? PlayAudioMode.PlayRecorded : PlayAudioMode.None);
@@ -37,7 +35,7 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public void ResetContext()
         {
-            _audioKey = null;
+            _recording = null;
             if (ContextChanged != null)
             {
                 ContextChanged(PlayAudioMode.None);
@@ -47,6 +45,14 @@ namespace Pronunciation.Trainer.AudioContexts
         public bool CanShowRecordingsHistory
         {
             get { return false; }
+        }
+
+        public string ContextDescription
+        {
+            get
+            {
+                return _recording == null ? null : FormatHelper.ToTimeString(_recording.Duration ?? 0, true);
+            }
         }
 
         public RecordingProviderWithTargetKey GetRecordingHistoryProvider()
@@ -61,7 +67,7 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public bool IsRecordedAudioExists
         {
-            get { return !string.IsNullOrEmpty(_audioKey); }
+            get { return _recording != null; }
         }
 
         public bool IsRecordingAllowed
@@ -76,10 +82,7 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public PlaybackData GetRecordedAudio()
         {
-            if (string.IsNullOrEmpty(_audioKey))
-                return null;
-
-            return _recordingProvider.GetAudio(_audioKey);
+            return _recording == null ? null : _recordingProvider.GetAudio(_recording.AudioKey);
         }
 
         public RecordingSettings GetRecordingSettings()

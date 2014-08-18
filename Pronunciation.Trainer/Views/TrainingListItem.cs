@@ -14,5 +14,6 @@ namespace Pronunciation.Trainer.Views
         public string Notes { get; set; }
         public string Category { get; set; }
         public int? CharacterCount { get; set; }
+        public int? ReferenceAudioDuration { get; set; }
     }
 }

@@ -25,7 +25,8 @@ namespace Pronunciation.Parser
         private const string HtmlFolderDB = @"D:\LEARN\English\Pronunciation\Trainer\LPD_DB";
         private const string HtmlFolderFiles = @"D:\LEARN\English\Pronunciation\Trainer\LPD_File";
         private const string LPDConnectionString = @"Data Source=D:\LEARN\English\Pronunciation\Trainer\Database\LPD.sdf;Max Database Size=4000;";
-        private const string TrainerConnectionString = @"Data Source=D:\LEARN\English\Pronunciation\Trainer\Database\PronunciationTrainer.sdf;Max Database Size=1000;";
+        private const string TrainerConnectionString =
+@"Data Source=D:\LEARN\English\Pronunciation\Trainer\Database\PronunciationTrainer.sdf;Max Database Size=1000;Temp File Max Size=25;";
 
         // Used for analysis
         private const string SourceFile = DataFolder + "En-En-Longman_Pronunciation.dsl";
@@ -38,7 +39,8 @@ namespace Pronunciation.Parser
         {
             try
             {
-                MigrateRecordingsToDB();
+                //MigrateRecordingsToDB();
+                StoreLargeData();
                 //UploadFiles();
                 //UploadFilesBulk();
                 //TestUpload();
@@ -376,6 +378,22 @@ namespace Pronunciation.Parser
 
                 var migration = new RecordingsMigration(conn);
                 migration.Migrate();
+            }
+        }
+
+        private static void StoreLargeData()
+        {
+            using (SqlCeConnection conn = new SqlCeConnection(TrainerConnectionString))
+            {
+                conn.Open();
+               // return;
+
+                SqlCeCommand cmd = new SqlCeCommand(
+"UPDATE Training SET ReferenceAudioData = @body WHERE TrainingId='93cd79f5-7d5b-44ac-b428-cf8cda8cf102'", conn);
+                var parmBody = cmd.Parameters.Add("@body", SqlDbType.Image);
+                parmBody.Value = File.ReadAllBytes(@"D:\Temp\Recordings\track 48.mp3");//track 01.mp3
+                //track 48
+                int res = cmd.ExecuteNonQuery();
             }
         }
     }

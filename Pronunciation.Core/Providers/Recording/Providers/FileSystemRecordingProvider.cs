@@ -5,6 +5,7 @@ using System.Text;
 using Pronunciation.Core.Contexts;
 using System.IO;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
+using Pronunciation.Core.Audio;
 
 namespace Pronunciation.Core.Providers.Recording.Providers
 {
@@ -45,7 +46,8 @@ namespace Pronunciation.Core.Providers.Recording.Providers
             return files.Select(x => new RecordedAudioListItem 
             {
                 AudioKey = BuildAudioKey(x),
-                RecordingDate = GetCreationDate(x)
+                RecordingDate = GetCreationDate(x),
+                Duration = AudioHelper.GetAudioLengthMs(x)
             }).ToArray();
         }
 

@@ -7,6 +7,8 @@ using Pronunciation.Core.Providers.Exercise;
 using System.IO;
 using Pronunciation.Core.Providers.Recording;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
+using Pronunciation.Trainer.Views;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer.AudioContexts
 {
@@ -15,8 +17,8 @@ namespace Pronunciation.Trainer.AudioContexts
         private readonly IRecordingProvider<ExerciseTargetKey> _recordingProvider;
         private readonly IRecordingHistoryPolicy _recordingPolicy;
         private readonly Guid _exerciseId;
-        private ExerciseTargetKey _targetKey;
-        private byte[] _referenceAudio;
+        private ExerciseAudioListItemWithData _exerciseAudio;
+        private ExerciseTargetKey _recordingKey;
 
         public event AudioContextChangedHandler ContextChanged;
 
@@ -28,10 +30,10 @@ namespace Pronunciation.Trainer.AudioContexts
             _recordingPolicy = recordingPolicy;
         }
 
-        public void RefreshContext(string audioName, byte[] referenceAudio, bool playImmediately)
+        public void RefreshContext(ExerciseAudioListItemWithData exerciseAudio, bool playImmediately)
         {
-            _targetKey = new ExerciseTargetKey(_exerciseId, audioName);
-            _referenceAudio = referenceAudio;
+            _exerciseAudio = exerciseAudio;
+            _recordingKey = new ExerciseTargetKey(_exerciseId, exerciseAudio.AudioName);
             if (ContextChanged != null)
             {
                 ContextChanged(playImmediately ? PlayAudioMode.PlayReference : PlayAudioMode.None);
@@ -40,9 +42,8 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public void ResetContext()
         {
-            _targetKey = null;
-            _referenceAudio = null;
-
+            _exerciseAudio = null;
+            _recordingKey = null;
             if (ContextChanged != null)
             {
                 ContextChanged(PlayAudioMode.None);
@@ -51,54 +52,69 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public bool CanShowRecordingsHistory
         {
-            get { return _targetKey != null; }
+            get { return _recordingKey != null; }
         }
 
         public RecordingProviderWithTargetKey GetRecordingHistoryProvider()
         {
-            if (_targetKey == null)
+            if (_recordingKey == null)
                 throw new InvalidOperationException();
 
             return new RecordingProviderWithTargetKey<ExerciseTargetKey>(
-                _recordingProvider, _targetKey, new AlwaysAddRecordingPolicy()); 
+                _recordingProvider, _recordingKey, new AlwaysAddRecordingPolicy()); 
         }
 
         public bool IsReferenceAudioExists
         {
-            get { return _referenceAudio != null; }
+            get 
+            { 
+                return (_exerciseAudio != null && _exerciseAudio.RawData != null); 
+            }
         }
 
         public bool IsRecordedAudioExists
         {
             get 
             {
-                return _targetKey == null ? false : _recordingProvider.ContainsAudios(_targetKey);
+                return _recordingKey == null ? false : _recordingProvider.ContainsAudios(_recordingKey);
             }
         }
 
         public bool IsRecordingAllowed
         {
-            get { return _targetKey != null; }
+            get { return _recordingKey != null; }
+        }
+
+        public string ContextDescription
+        {
+            get 
+            {
+                return _exerciseAudio == null
+                    ? null
+                    : string.Format("Active audio: \"{0}\", duration: {1}",
+                        _exerciseAudio.AudioName, FormatHelper.ToTimeString(_exerciseAudio.Duration ?? 0, true)); 
+            }
         }
 
         public PlaybackData GetReferenceAudio()
         {
-            return _referenceAudio == null ? null : new PlaybackData(_referenceAudio);
+            return (_exerciseAudio == null || _exerciseAudio.RawData == null) 
+                ? null : new PlaybackData(_exerciseAudio.RawData);
         }
 
         public PlaybackData GetRecordedAudio()
         {
-            return _targetKey == null ? null : _recordingProvider.GetLatestAudio(_targetKey);
+            return _recordingKey == null ? null : _recordingProvider.GetLatestAudio(_recordingKey);
         }
 
         public RecordingSettings GetRecordingSettings()
         {
-            return _targetKey == null ? null : _recordingProvider.GetRecordingSettings(_targetKey);
+            return _recordingKey == null ? null : _recordingProvider.GetRecordingSettings(_recordingKey);
         }
 
         public string RegisterRecordedAudio(string recordedFilePath, DateTime recordingDate)
         {
-            return _recordingProvider.RegisterNewAudio(_targetKey, recordingDate, recordedFilePath, _recordingPolicy);
+            return _recordingProvider.RegisterNewAudio(_recordingKey, recordingDate, recordedFilePath, _recordingPolicy);
         }
     }
 }

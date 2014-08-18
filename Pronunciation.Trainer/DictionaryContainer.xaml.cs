@@ -23,6 +23,7 @@ using Pronunciation.Trainer.Commands;
 using Pronunciation.Core.Actions;
 using Pronunciation.Core.Providers.Recording;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer
 {
@@ -40,12 +41,15 @@ namespace Pronunciation.Trainer
 
         private IDictionaryProvider _dictionaryProvider;
         private DictionaryAudioContext _audioContext;
-        private IndexEntry[] _wordsIndex;
-        private TokenizedIndexEntry[] _tokensIndex;
         private DictionaryContainerScriptingProxy _scriptingProxy;
         private NavigationHistory<PageInfo> _history;
         private PageInfo _loadingPage;
         private PageInfo _currentPage;
+
+        // Indexs
+        private IndexEntry[] _wordsIndex;
+        private TokenizedIndexEntry[] _tokensIndex;
+        private Dictionary<string, IndexEntry> _soundKeyIndex = new Dictionary<string, IndexEntry>(StringComparer.OrdinalIgnoreCase);
 
         private ExecuteActionCommand _commandBack;
         private ExecuteActionCommand _commandForward;
@@ -63,7 +67,7 @@ namespace Pronunciation.Trainer
             //_dictionaryProvider = new LPDFileSystemProvider(AppSettings.Instance.Folders.DictionaryFile, CallScriptMethod);
             _dictionaryProvider = new LPDDatabaseProvider(AppSettings.Instance.Folders.DictionaryDB, AppSettings.Instance.Connections.LPD);
 
-            _audioContext = new DictionaryAudioContext(_dictionaryProvider, 
+            _audioContext = new DictionaryAudioContext(_dictionaryProvider, _soundKeyIndex,
                 AppSettings.Instance.Recorders.LPD, new AppSettingsBasedRecordingPolicy());
             audioPanel.AttachContext(_audioContext);
             audioPanel.RecordingCompleted += AudioPanel_RecordingCompleted;
@@ -458,6 +462,20 @@ namespace Pronunciation.Trainer
         {
             // Build index for StartWith match
             _wordsIndex = entries.OrderBy(x => x.Text).ToArray();
+
+            // Build index for sound keys
+            _soundKeyIndex.Clear();
+            foreach (IndexEntry entry in _wordsIndex)
+            {
+                if (!string.IsNullOrEmpty(entry.SoundKeyUK))
+                {
+                    _soundKeyIndex[entry.SoundKeyUK] = entry;
+                }
+                if (!string.IsNullOrEmpty(entry.SoundKeyUS))
+                {
+                    _soundKeyIndex[entry.SoundKeyUS] = entry;
+                }
+            }
 
             // Build index for token-based match
             var tokens = new List<TokenizedIndexEntry>();

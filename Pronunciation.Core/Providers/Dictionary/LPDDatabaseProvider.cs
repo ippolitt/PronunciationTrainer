@@ -155,7 +155,8 @@ WHERE SoundKey = @soundKey", conn);
 
         private string BuildPageHtml(string title, string pageBody)
         {
-            string pageBase = new Uri(BaseFolder).AbsolutePath;
+            // Don't use AbsolutePath because it replaces spaces with "%20" symbol 
+            string pageBase = new Uri(BaseFolder).LocalPath;
             if (!pageBase.EndsWith("/"))
             {
                 pageBase += "/";

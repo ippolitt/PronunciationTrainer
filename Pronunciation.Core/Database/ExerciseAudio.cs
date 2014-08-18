@@ -18,6 +18,7 @@ namespace Pronunciation.Core.Database
         public byte[] RawData { get; set; }
         public string AudioName { get; set; }
         public Guid ExerciseId { get; set; }
+        public Nullable<Int32> Duration { get; set; }
 
         public virtual Exercise Exercise { get; set; }
     }

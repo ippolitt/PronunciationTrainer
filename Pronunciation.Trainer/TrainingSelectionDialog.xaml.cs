@@ -13,6 +13,7 @@ using System.Windows.Shapes;
 using System.ComponentModel;
 using Pronunciation.Core.Database;
 using Pronunciation.Trainer.Views;
+using Pronunciation.Trainer.Database;
 
 namespace Pronunciation.Trainer
 {

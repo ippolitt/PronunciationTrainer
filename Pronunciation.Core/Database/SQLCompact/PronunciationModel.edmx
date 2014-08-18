@@ -83,6 +83,7 @@
           <Property Name="RawData" Type="image" />
           <Property Name="ExerciseId" Type="uniqueidentifier" Nullable="false" />
           <Property Name="AudioName" Type="nvarchar" Nullable="false" MaxLength="50" />
+          <Property Name="Duration" Type="int" />
         </EntityType>
         <EntityType Name="ExerciseType">
           <Key>
@@ -101,6 +102,7 @@
           <Property Name="TargetKey" Type="nvarchar" Nullable="false" MaxLength="100" />
           <Property Name="TargetTypeId" Type="int" Nullable="false" />
           <Property Name="Recorded" Type="datetime" Nullable="false" />
+          <Property Name="Duration" Type="int" />
         </EntityType>
         <EntityType Name="Topic">
           <Key>
@@ -127,6 +129,7 @@
           <Property Name="ReferenceAudioData" Type="image" />
           <Property Name="ReferenceAudioName" Type="nvarchar" MaxLength="200" />
           <Property Name="CharacterCount" Type="int" />
+          <Property Name="ReferenceAudioDuration" Type="int" />
         </EntityType>
         <Association Name="FK_Exercise_Book">
           <End Role="Book" Type="PronunciationModel.Store.Book" Multiplicity="0..1" />
@@ -389,6 +392,7 @@
           <Property Type="Int32" Name="TargetTypeId" Nullable="false" />
           <Property Type="DateTime" Name="Recorded" Nullable="false" />
           <NavigationProperty Name="AudioTargetType" Relationship="PronunciationModel.FK_RecordedAudio_AudioTargetType" FromRole="RecordedAudio" ToRole="AudioTargetType" />
+          <Property Type="Int32" Name="Duration" />
         </EntityType>
         <Association Name="FK_RecordedAudio_AudioTargetType">
           <End Type="PronunciationModel.AudioTargetType" Role="AudioTargetType" Multiplicity="1" />
@@ -411,6 +415,7 @@
           <Property Type="Guid" Name="ExerciseId" Nullable="false" />
           <NavigationProperty Name="Exercise" Relationship="PronunciationModel.FK_ExerciseAudio_Exercise" FromRole="ExerciseAudio" ToRole="Exercise" />
           <Property Type="String" Name="AudioName" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Type="Int32" Name="Duration" />
         </EntityType>
         <Association Name="FK_ExerciseAudio_Exercise">
           <End Type="PronunciationModel.Exercise" Role="Exercise" Multiplicity="1" />
@@ -438,6 +443,7 @@
           <Property Type="Binary" Name="ReferenceAudioData" MaxLength="Max" FixedLength="false" />
           <Property Type="String" Name="ReferenceAudioName" MaxLength="200" FixedLength="false" Unicode="true" />
           <Property Type="Int32" Name="CharacterCount" />
+          <Property Type="Int32" Name="ReferenceAudioDuration" />
         </EntityType>
       </Schema>
     </edmx:ConceptualModels>
@@ -504,6 +510,7 @@
           <EntitySetMapping Name="RecordedAudios">
             <EntityTypeMapping TypeName="PronunciationModel.RecordedAudio">
               <MappingFragment StoreEntitySet="RecordedAudio">
+                <ScalarProperty Name="Duration" ColumnName="Duration" />
                 <ScalarProperty Name="Recorded" ColumnName="Recorded" />
                 <ScalarProperty Name="TargetTypeId" ColumnName="TargetTypeId" />
                 <ScalarProperty Name="TargetKey" ColumnName="TargetKey" />
@@ -515,6 +522,7 @@
           <EntitySetMapping Name="ExerciseAudios">
             <EntityTypeMapping TypeName="PronunciationModel.ExerciseAudio">
               <MappingFragment StoreEntitySet="ExerciseAudio">
+                <ScalarProperty Name="Duration" ColumnName="Duration" />
                 <ScalarProperty Name="AudioName" ColumnName="AudioName" />
                 <ScalarProperty Name="ExerciseId" ColumnName="ExerciseId" />
                 <ScalarProperty Name="RawData" ColumnName="RawData" />
@@ -525,6 +533,7 @@
           <EntitySetMapping Name="Trainings">
             <EntityTypeMapping TypeName="PronunciationModel.Training">
               <MappingFragment StoreEntitySet="Training">
+                <ScalarProperty Name="ReferenceAudioDuration" ColumnName="ReferenceAudioDuration" />
                 <ScalarProperty Name="CharacterCount" ColumnName="CharacterCount" />
                 <ScalarProperty Name="ReferenceAudioName" ColumnName="ReferenceAudioName" />
                 <ScalarProperty Name="ReferenceAudioData" ColumnName="ReferenceAudioData" />
@@ -599,7 +608,7 @@
           <ConnectorPoint PointX="6.75" PointY="7.2689925130208328" />
           <ConnectorPoint PointX="7.5" PointY="7.2689925130208328" />
         </AssociationConnector>
-        <EntityTypeShape EntityType="PronunciationModel.Training" Width="1.5" PointX="7.375" PointY="9.75" Height="2.9417936197916674" />
+        <EntityTypeShape EntityType="PronunciationModel.Training" Width="1.5" PointX="7.375" PointY="9.75" Height="3.1340950520833335" />
       </Diagram>
     </Diagrams>
   </Designer>

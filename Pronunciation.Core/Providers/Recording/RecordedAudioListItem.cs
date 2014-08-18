@@ -9,10 +9,15 @@ namespace Pronunciation.Core.Providers.Recording
     {
         public string AudioKey { get; set; }
         public DateTime RecordingDate { get; set; }
+        public int? Duration { get; set; }
+
+        public RecordedAudioListItem()
+        {
+        }
 
         public string Text
         {
-            get { return RecordingDate.ToString("yyyy-MM-dd HH-mm-ss"); }
+            get { return RecordingDate.ToString("yyyy-MM-dd HH:mm:ss"); }
         }
 
         public override string ToString()

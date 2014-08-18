@@ -22,6 +22,9 @@ using Pronunciation.Core.Contexts;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
 using Microsoft.Win32;
 using Pronunciation.Trainer.Export;
+using Pronunciation.Trainer.Utility;
+using Pronunciation.Trainer.Database;
+using Pronunciation.Core.Audio;
 
 namespace Pronunciation.Trainer
 {
@@ -201,7 +204,7 @@ namespace Pronunciation.Trainer
             }
             else
             {
-                _audioContext.RefreshContext(selectedAudio.AudioName, selectedAudio.RawData, playAudio);
+                _audioContext.RefreshContext(selectedAudio, playAudio);
             }
         }
 
@@ -360,6 +363,7 @@ namespace Pronunciation.Trainer
                     AudioId = x.AudioId,
                     AudioName = x.AudioName,
                     ExerciseId = x.ExerciseId,
+                    Duration = x.Duration,
                     RawData = x.RawData
                 })
                 .OrderBy(x => new MultipartName(x.AudioName)).ToArray();
@@ -382,7 +386,6 @@ namespace Pronunciation.Trainer
                     audio = new ExerciseAudio
                     {
                         AudioId = Guid.NewGuid(),
-                        AudioName = importedAudioName,
                         ExerciseId = _activeRecord.ExerciseId
                     };
                     currentAudios.Add(audio);
@@ -390,12 +393,9 @@ namespace Pronunciation.Trainer
                     // In case if audio with the same name has been previously deleted we unregister it
                     _audioNamesTracker.UnregisterDeletedItem(importedAudioName);
                 }
-                else
-                {
-                    // Update audio name in case it differs only be case
-                    audio.AudioName = importedAudioName;
-                }
+                audio.AudioName = importedAudioName;
                 audio.RawData = File.ReadAllBytes(importedFile);
+                audio.Duration = AudioHelper.GetAudioLengthMs(audio.RawData); 
                 hasChanges = true;
             }
 

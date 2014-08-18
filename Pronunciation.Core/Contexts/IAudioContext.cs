@@ -27,6 +27,7 @@ namespace Pronunciation.Core.Contexts
         bool CanShowRecordingsHistory { get; }
         RecordingProviderWithTargetKey GetRecordingHistoryProvider();
 
+        string ContextDescription { get; }
         event AudioContextChangedHandler ContextChanged;
     }
 }

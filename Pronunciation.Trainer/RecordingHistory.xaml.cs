@@ -15,6 +15,7 @@ using Pronunciation.Core.Providers.Recording;
 using Pronunciation.Core.Contexts;
 using System.ComponentModel;
 using Pronunciation.Trainer.Export;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer
 {
@@ -60,7 +61,7 @@ namespace Pronunciation.Trainer
             {
                 SetListButtonsState(false);
             }
-            lstRecordings.Focus();
+            lstRecordings.CaptureKeyboardFocus();
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -107,7 +108,7 @@ namespace Pronunciation.Trainer
             }
             else
             {
-                _audioContext.RefreshContext(selectedRecording.AudioKey, playAudio);
+                _audioContext.RefreshContext(selectedRecording, playAudio);
             }
         }
 

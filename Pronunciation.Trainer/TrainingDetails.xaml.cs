@@ -20,6 +20,9 @@ using System.IO;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
 using Microsoft.Win32;
 using Pronunciation.Trainer.Export;
+using Pronunciation.Trainer.Utility;
+using Pronunciation.Core.Audio;
+using Pronunciation.Trainer.Database;
 
 namespace Pronunciation.Trainer
 {
@@ -65,7 +68,6 @@ namespace Pronunciation.Trainer
         private void Window_Initialized(object sender, EventArgs e)
         {
             _dbRecordContext = new Entities();
-
             audioPanel.RecordingCompleted += AudioPanel_RecordingCompleted;
         }
 
@@ -104,8 +106,6 @@ namespace Pronunciation.Trainer
 
             btnDeleteReference.IsEnabled = _activeRecord.ReferenceAudioData != null;
             btnApply.IsEnabled = !NeedsDialogResult;
-
-            int kk = GetContentLength();
         }
 
         private Training InitActiveRecord()
@@ -145,9 +145,7 @@ namespace Pronunciation.Trainer
         private void RefreshAudioContext(bool playAudio)
         {
             var selectedRecording = lstRecordings.SelectedRecordingsCount > 1 ? null : lstRecordings.SelectedRecording;
-            _audioContext.RefreshContext(_activeRecord.ReferenceAudioData, 
-                selectedRecording == null ? null : selectedRecording.AudioKey, 
-                playAudio);
+            _audioContext.RefreshContext(_activeRecord.ReferenceAudioData, selectedRecording, playAudio);
         }
 
         private void SetListButtonsState(bool isEnabled)
@@ -219,6 +217,10 @@ namespace Pronunciation.Trainer
                 _activeRecord.ReferenceAudioName = Path.GetFileNameWithoutExtension(dlg.FileName);
                 txtReferenceAudio.Text = _activeRecord.ReferenceAudioName;
 
+                int durationMs = AudioHelper.GetAudioLengthMs(_activeRecord.ReferenceAudioData);
+                _activeRecord.ReferenceAudioDuration = durationMs;
+                txtDuration.Text = FormatHelper.ToTimeString(durationMs, false);
+
                 RefreshAudioContext(false);
                 btnDeleteReference.IsEnabled = true;
             }
@@ -228,7 +230,9 @@ namespace Pronunciation.Trainer
         {
             _activeRecord.ReferenceAudioData = null;
             _activeRecord.ReferenceAudioName = null;
+            _activeRecord.ReferenceAudioDuration = null;
             txtReferenceAudio.Text = null;
+            txtDuration.Text = null;
 
             RefreshAudioContext(false);
             btnDeleteReference.IsEnabled = false;

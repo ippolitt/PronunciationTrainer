@@ -36,7 +36,7 @@ namespace Pronunciation.Core.Actions
         private bool _isAbortable;
         private bool _isSuspendable;
 
-        protected abstract ActionArgs<object> PrepareArgs(ActionContext context);
+        protected abstract bool PrepareArgs(ActionContext context, out object args);
         protected abstract object DoWork(ActionContext context, object args);
         protected abstract void ProcessCompleted(bool isSuccess, ExecutionInfo info);
 
@@ -103,11 +103,11 @@ namespace Pronunciation.Core.Actions
                 ActiveSequence = actionSequence
             };
 
-            ActionArgs<object> actionArgs = PrepareArgs(context);
-            if (actionArgs == null || !actionArgs.IsAllowed)
+            object args;
+            if (!PrepareArgs(context, out args))
                 return false;
 
-            _worker.RunWorkerAsync(new ExecutionInfo { Context = context, Args = actionArgs.Args });
+            _worker.RunWorkerAsync(new ExecutionInfo { Context = context, Args = args });
 
             ActionState = BackgroundActionState.Running;
             if (ActionStarted != null)
@@ -240,10 +240,10 @@ namespace Pronunciation.Core.Actions
             ResultProcessor = resultProcessor;
         }
 
-        protected override ActionArgs<object> PrepareArgs(ActionContext context)
+        protected override bool PrepareArgs(ActionContext context, out object args)
         {
-            bool isAllowed = Validator == null ? true : Validator(context);
-            return new ActionArgs<object>(isAllowed, null);
+            args = null;
+            return Validator == null ? true : Validator(context);
         }
 
         protected override object DoWork(ActionContext context, object args)
@@ -285,10 +285,10 @@ namespace Pronunciation.Core.Actions
             ResultProcessor = resultProcessor;
         }
 
-        protected override ActionArgs<object> PrepareArgs(ActionContext context)
+        protected override bool PrepareArgs(ActionContext context, out object args)
         {
-            bool isAllowed = Validator == null ? true : Validator(context);
-            return new ActionArgs<object>(isAllowed, null);
+            args = null;
+            return Validator == null ? true : Validator(context);
         }
 
         protected override object DoWork(ActionContext context, object args)
@@ -304,11 +304,12 @@ namespace Pronunciation.Core.Actions
 
     public class BackgroundActionWithArgs<TArgs> : BackgroundAction
     {
-        public Func<ActionContext, ActionArgs<TArgs>> ArgsBuilder { get; protected set; }
+        public Func<ActionContext, TArgs> ArgsBuilder { get; protected set; }
         public Action<ActionContext, TArgs> Worker { get; protected set; }
         public Action<ActionContext, TArgs, ActionResult> ResultProcessor { get; protected set; }
+        public bool ContinueExecutionWithNullArgs { get; set; }
 
-        public BackgroundActionWithArgs(Func<ActionContext, ActionArgs<TArgs>> argsBuilder,
+        public BackgroundActionWithArgs(Func<ActionContext, TArgs> argsBuilder,
             Action<ActionContext, TArgs> worker,
             Action<ActionContext, TArgs, ActionResult> resultProcessor)
         {
@@ -321,16 +322,15 @@ namespace Pronunciation.Core.Actions
             Action<TArgs> worker,
             Action<TArgs, ActionResult> resultProcessor)
         {
-            ArgsBuilder = (context) => new ActionArgs<TArgs>(argsBuilder());
+            ArgsBuilder = (context) => argsBuilder();
             Worker = (context, args) => worker(args);
             ResultProcessor = (context, args, result) => resultProcessor(args, result);
         }
 
-        protected override ActionArgs<object> PrepareArgs(ActionContext context)
+        protected override bool PrepareArgs(ActionContext context, out object args)
         {
-            ActionArgs<TArgs> actionArgs = ArgsBuilder(context);
-            return (actionArgs == null) ? new ActionArgs<object>(false, null)
-                : new ActionArgs<object>(actionArgs.IsAllowed, actionArgs.Args);
+            args = ArgsBuilder(context);
+            return (args == null ? ContinueExecutionWithNullArgs : true);
         }
 
         protected override object DoWork(ActionContext context, object args)
@@ -347,11 +347,12 @@ namespace Pronunciation.Core.Actions
 
     public class BackgroundActionWithArgs<TArgs, TResult> : BackgroundAction
     {
-        public Func<ActionContext, ActionArgs<TArgs>> ArgsBuilder { get; protected set; }
+        public Func<ActionContext, TArgs> ArgsBuilder { get; protected set; }
         public Func<ActionContext, TArgs, TResult> Worker { get; protected set; }
         public Action<ActionContext, TArgs, ActionResult<TResult>> ResultProcessor { get; protected set; }
+        public bool ContinueExecutionWithNullArgs { get; set; }
 
-        public BackgroundActionWithArgs(Func<ActionContext, ActionArgs<TArgs>> argsBuilder,
+        public BackgroundActionWithArgs(Func<ActionContext, TArgs> argsBuilder,
             Func<ActionContext, TArgs, TResult> worker,
             Action<ActionContext, TArgs, ActionResult<TResult>> resultProcessor)
         {
@@ -364,16 +365,15 @@ namespace Pronunciation.Core.Actions
             Func<TArgs, TResult> worker,
             Action<TArgs, ActionResult<TResult>> resultProcessor)
         {
-            ArgsBuilder = (context) => new ActionArgs<TArgs>(argsBuilder());
+            ArgsBuilder = (context) => argsBuilder();
             Worker = (context, args) => worker(args);
             ResultProcessor = (context, args, result) => resultProcessor(args, result);
         }
 
-        protected override ActionArgs<object> PrepareArgs(ActionContext context)
+        protected override bool PrepareArgs(ActionContext context, out object args)
         {
-            ActionArgs<TArgs> actionArgs = ArgsBuilder(context);
-            return (actionArgs == null) ? new ActionArgs<object>(false, null) 
-                : new ActionArgs<object>(actionArgs.IsAllowed, actionArgs.Args);
+            args = ArgsBuilder(context);
+            return (args == null ? ContinueExecutionWithNullArgs : true);
         }
 
         protected override object DoWork(ActionContext context, object args)

@@ -10,14 +10,19 @@ namespace Pronunciation.Core.Audio
 {
     public class AudioHelper
     {
-        public static TimeSpan GetAudioLength(string filePath)
+        public static int GetAudioLengthMs(string filePath)
         {
-            return GetAudioInfo(filePath).Duration;
+            return GetDurationMs(GetAudioInfo(filePath).Duration);
         }
 
-        public static TimeSpan GetAudioLength(byte[] rawData)
+        public static int GetAudioLengthMs(byte[] rawData)
         {
-            return GetAudioInfo(rawData).Duration;
+            return GetDurationMs(GetAudioInfo(rawData).Duration);
+        }
+
+        private static int GetDurationMs(TimeSpan duration)
+        {
+            return (int)Math.Round(duration.TotalMilliseconds);
         }
 
         public static AudioInfo GetAudioInfo(string filePath)

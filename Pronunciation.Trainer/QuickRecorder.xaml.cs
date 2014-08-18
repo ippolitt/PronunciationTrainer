@@ -19,6 +19,7 @@ using Pronunciation.Core;
 using System.IO;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
 using Pronunciation.Trainer.Export;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer
 {
@@ -52,6 +53,7 @@ namespace Pronunciation.Trainer
             if (lstRecordings.Items.Count > 0)
             {
                 lstRecordings.SelectedIndex = 0;
+                
             }
             else
             {
@@ -61,13 +63,14 @@ namespace Pronunciation.Trainer
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            // We must put focus somewhere inside the control otherwise hot keys don't work
-            lstRecordings.Focus();
+            // Each time user control is loaded we must put focus somewhere inside the control 
+            // otherwise hot keys don't work
+            CaptureKeyboardFocus();
         }
 
         public void CaptureKeyboardFocus()
         {
-            lstRecordings.Focus();
+            lstRecordings.CaptureKeyboardFocus();
         }
 
         private void AudioPanel_RecordingCompleted(string recordedFilePath, bool isTemporaryFile)
@@ -104,7 +107,7 @@ namespace Pronunciation.Trainer
             }
             else
             {
-                _audioContext.RefreshContext(selectedRecording.AudioKey, playAudio);
+                _audioContext.RefreshContext(selectedRecording, playAudio);
             }
         }
 

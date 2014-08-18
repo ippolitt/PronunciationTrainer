@@ -17,6 +17,7 @@ using System.ComponentModel;
 using Pronunciation.Core.Providers;
 using Pronunciation.Trainer.Views;
 using Pronunciation.Core.Providers.Exercise;
+using Pronunciation.Trainer.Database;
 
 namespace Pronunciation.Trainer
 {

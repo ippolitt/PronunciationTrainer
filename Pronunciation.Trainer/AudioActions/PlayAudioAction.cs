@@ -14,7 +14,7 @@ namespace Pronunciation.Trainer.AudioActions
         public PlayAudioAction(Func<PlaybackArgs> argsBuilder, Action<PlaybackArgs, ActionResult<PlaybackResult>> resultProcessor) 
             : base(argsBuilder, null, resultProcessor)
         {
-            base.Worker = (context, args) => PlayAudio(args);
+            this.Worker = (context, args) => PlayAudio(args);
             IsAbortable = true;
             IsSuspendable = true;
         }

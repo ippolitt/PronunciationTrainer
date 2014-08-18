@@ -12,6 +12,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer
 {
@@ -59,7 +60,7 @@ namespace Pronunciation.Trainer
             pl.MaxWidth = waveCanvas.ActualWidth;
             pl.MaxHeight = waveCanvas.ActualHeight;
 
-            WaveFormBuilder builder = new WaveFormBuilder();
+            var builder = new WaveFormBuilder();
             var points = builder.DrawNormalizedAudio(AudioSamples, maxWidth, maxHeight);
             foreach (var point in points)
             {

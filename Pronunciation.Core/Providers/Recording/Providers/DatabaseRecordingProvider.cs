@@ -8,6 +8,7 @@ using System.IO;
 using Pronunciation.Core.Database;
 using Pronunciation.Core.Contexts;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
+using Pronunciation.Core.Audio;
 
 namespace Pronunciation.Core.Providers.Recording.Providers
 {
@@ -53,7 +54,7 @@ WHERE TargetKey = @key AND TargetTypeId = {0}", targetKey.TargetTypeId), conn);
                 conn.Open();
 
                 var cmd = new SqlCeCommand(string.Format(
-@"SELECT AudioId, TargetKey, Recorded
+@"SELECT AudioId, TargetKey, Recorded, Duration
 FROM RecordedAudio
 WHERE TargetKey = @key AND TargetTypeId = {0}", targetKey.TargetTypeId), conn);
                 cmd.Parameters.AddWithValue("@key", targetKey.TargetKey);
@@ -65,7 +66,8 @@ WHERE TargetKey = @key AND TargetTypeId = {0}", targetKey.TargetTypeId), conn);
                         results.Add(new RecordedAudioListItem
                         {
                             AudioKey = ((Guid)reader["AudioId"]).ToString(),
-                            RecordingDate = (DateTime)reader["Recorded"]
+                            RecordingDate = (DateTime)reader["Recorded"],
+                            Duration = reader["Duration"] as int?
                         });
                     }
                 }
@@ -148,11 +150,12 @@ WHERE AudioId = @id", conn);
             IRecordingHistoryPolicy recordingPolicy)
         {
             byte[] audioData = File.ReadAllBytes(recordedFilePath);
+            int durationMs = AudioHelper.GetAudioLengthMs(audioData);
 
             Guid audioId;
             if (recordingPolicy is AlwaysAddRecordingPolicy)
             {
-                audioId = AddAudio(targetKey, recordingDate, audioData);
+                audioId = AddAudio(targetKey, recordingDate, durationMs, audioData);
             }
             else
             {
@@ -160,18 +163,18 @@ WHERE AudioId = @id", conn);
                 if (latestAudio != null && recordingPolicy.OverrideLatestAudio(recordingDate, latestAudio.Recorded))
                 {
                     audioId = latestAudio.AudioId;
-                    UpdateAudio(audioId, recordingDate, audioData);
+                    UpdateAudio(audioId, recordingDate, durationMs, audioData);
                 }
                 else
                 {
-                    audioId = AddAudio(targetKey, recordingDate, audioData);
+                    audioId = AddAudio(targetKey, recordingDate, durationMs, audioData);
                 }
             }
 
             return audioId.ToString();
         }
 
-        private Guid AddAudio(T targetKey, DateTime recordingDate, byte[] audioData)
+        private Guid AddAudio(T targetKey, DateTime recordingDate, int durationMs, byte[] audioData)
         {
             var audioId = Guid.NewGuid();
             using (SqlCeConnection conn = new SqlCeConnection(_connectionString))
@@ -179,13 +182,14 @@ WHERE AudioId = @id", conn);
                 conn.Open();
 
                 var cmd = new SqlCeCommand(string.Format(
-@"INSERT RecordedAudio(AudioId, Recorded, TargetKey, TargetTypeId, RawData)
-VALUES(@id, @recorded, @key, {0}, @data)", 
-                    targetKey.TargetTypeId), conn);
+@"INSERT RecordedAudio(AudioId, Recorded, TargetKey, TargetTypeId, Duration, RawData)
+VALUES(@id, @recorded, @key, {0}, @duration, @data)",
+                    targetKey.TargetTypeId, durationMs), conn);
 
                 cmd.Parameters.AddWithValue("@id", audioId);
                 cmd.Parameters.AddWithValue("@recorded", recordingDate);
                 cmd.Parameters.AddWithValue("@key", targetKey.TargetKey);
+                cmd.Parameters.AddWithValue("@duration", durationMs);
                 var parmData = cmd.Parameters.Add("@data", SqlDbType.Image);
                 parmData.Value = audioData;
 
@@ -197,7 +201,7 @@ VALUES(@id, @recorded, @key, {0}, @data)",
             return audioId;
         }
 
-        private void UpdateAudio(Guid audioId, DateTime recordingDate, byte[] audioData)
+        private void UpdateAudio(Guid audioId, DateTime recordingDate, int durationMs, byte[] audioData)
         {
             using (SqlCeConnection conn = new SqlCeConnection(_connectionString))
             {
@@ -205,10 +209,11 @@ VALUES(@id, @recorded, @key, {0}, @data)",
 
                 var cmd = new SqlCeCommand(
 @"UPDATE RecordedAudio
-SET Recorded = @recorded, RawData = @data
+SET Recorded = @recorded, Duration = @duration, RawData = @data
 WHERE AudioId = @id", conn);
                 cmd.Parameters.AddWithValue("@id", audioId);
                 cmd.Parameters.AddWithValue("@recorded", recordingDate);
+                cmd.Parameters.AddWithValue("@duration", durationMs);
                 var parmData = cmd.Parameters.Add("@data", SqlDbType.Image);
                 parmData.Value = audioData;
 

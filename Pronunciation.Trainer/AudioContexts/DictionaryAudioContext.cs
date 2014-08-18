@@ -14,28 +14,35 @@ namespace Pronunciation.Trainer.AudioContexts
     public class DictionaryAudioContext : IAudioContext
     {
         private readonly IDictionaryProvider _dictionaryProvider;
+        private readonly Dictionary<string, IndexEntry> _soundKeyIndex;
         private readonly IRecordingProvider<LPDTargetKey> _recordingProvider;
         private readonly IRecordingHistoryPolicy _recordingPolicy;
-        private LPDTargetKey _targetKey;
+        private LPDTargetKey _recordingKey;
         private PlaybackData _referenceAudio;
+        private IndexEntry _currentSound;
+        private bool _isUKSound;
 
         public event AudioContextChangedHandler ContextChanged;
 
-        public DictionaryAudioContext(IDictionaryProvider dictionaryProvider,
+        public DictionaryAudioContext(IDictionaryProvider dictionaryProvider, Dictionary<string, IndexEntry> soundKeyIndex,
             IRecordingProvider<LPDTargetKey> recordingProvider, IRecordingHistoryPolicy recordingPolicy)
         {
             _dictionaryProvider = dictionaryProvider;
+            _soundKeyIndex = soundKeyIndex;
             _recordingProvider = recordingProvider;
             _recordingPolicy = recordingPolicy;
         }
 
-        public void RefreshContext(IndexEntry currentIndex, bool useUkAudio, bool playImmediately)
+        public void RefreshContext(IndexEntry currentSound, bool isUKSound, bool playImmediately)
         {
-            _targetKey = null;
+            _currentSound = currentSound;
+            _isUKSound = isUKSound;
             _referenceAudio = null;
-            if (currentIndex != null)
+
+            _recordingKey = null;
+            if (currentSound != null)
             {
-                _targetKey = new LPDTargetKey(useUkAudio ? currentIndex.SoundKeyUK : currentIndex.SoundKeyUS);
+                _recordingKey = new LPDTargetKey(isUKSound ? currentSound.SoundKeyUK : currentSound.SoundKeyUS);
             }
 
             if (ContextChanged != null)
@@ -49,12 +56,21 @@ namespace Pronunciation.Trainer.AudioContexts
             if (string.IsNullOrEmpty(soundKey))
                 return;
 
-            _targetKey = new LPDTargetKey(soundKey);
+            _currentSound = null;
+            IndexEntry sound;
+            if (_soundKeyIndex.TryGetValue(soundKey, out sound))
+            {
+                _currentSound = sound;
+                _isUKSound = string.Equals(soundKey, sound.SoundKeyUK, StringComparison.OrdinalIgnoreCase);
+            }
+
             _referenceAudio = null;
             if (!string.IsNullOrEmpty(audioData))
             {
                 _referenceAudio = _dictionaryProvider.GetAudioFromScriptData(audioData);
             }
+
+            _recordingKey = new LPDTargetKey(soundKey);
 
             if (ContextChanged != null)
             {
@@ -64,28 +80,28 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public bool CanShowRecordingsHistory
         {
-            get { return _targetKey != null; }
+            get { return _recordingKey != null; }
         }
 
         public RecordingProviderWithTargetKey GetRecordingHistoryProvider()
         {
-            if (_targetKey == null)
+            if (_recordingKey == null)
                 throw new InvalidOperationException();
 
             return new RecordingProviderWithTargetKey<LPDTargetKey>(
-                _recordingProvider, _targetKey, new AlwaysAddRecordingPolicy()); 
+                _recordingProvider, _recordingKey, new AlwaysAddRecordingPolicy()); 
         }
 
         public bool IsReferenceAudioExists
         {
-            get { return _targetKey != null; }
+            get { return _referenceAudio != null || _currentSound != null; }
         }
 
         public bool IsRecordedAudioExists
         {
             get
             {
-                return _targetKey == null ? false : _recordingProvider.ContainsAudios(_targetKey);
+                return _recordingKey == null ? false : _recordingProvider.ContainsAudios(_recordingKey);
             }
         }
 
@@ -94,14 +110,24 @@ namespace Pronunciation.Trainer.AudioContexts
             get { return IsReferenceAudioExists; }
         }
 
+        public string ContextDescription
+        {
+            get 
+            { 
+                return _currentSound == null 
+                    ? null
+                    : string.Format("Active audio: \"{0}\" {1}", _currentSound.Text, _isUKSound ? "UK" : "US"); 
+            }
+        }
+
         public PlaybackData GetReferenceAudio()
         {
-            if (_targetKey == null)
-                return null;
+            if (_referenceAudio != null)
+                return _referenceAudio;
 
-            if (_referenceAudio == null)
+            if (_currentSound != null)
             {
-                _referenceAudio = _dictionaryProvider.GetAudio(_targetKey.SoundKey);
+                _referenceAudio = _dictionaryProvider.GetAudio(_isUKSound ? _currentSound.SoundKeyUK : _currentSound.SoundKeyUS);
             }
 
             return _referenceAudio;
@@ -109,17 +135,17 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public PlaybackData GetRecordedAudio()
         {
-            return _targetKey == null ? null : _recordingProvider.GetLatestAudio(_targetKey);
+            return _recordingKey == null ? null : _recordingProvider.GetLatestAudio(_recordingKey);
         }
 
         public RecordingSettings GetRecordingSettings()
         {
-            return _targetKey == null ? null : _recordingProvider.GetRecordingSettings(_targetKey);
+            return _recordingKey == null ? null : _recordingProvider.GetRecordingSettings(_recordingKey);
         }
 
         public string RegisterRecordedAudio(string recordedFilePath, DateTime recordingDate)
         {
-            return _recordingProvider.RegisterNewAudio(_targetKey, recordingDate, recordedFilePath, _recordingPolicy);
+            return _recordingProvider.RegisterNewAudio(_recordingKey, recordingDate, recordedFilePath, _recordingPolicy);
         }
     }
 }

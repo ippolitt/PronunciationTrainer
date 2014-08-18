@@ -68,7 +68,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Actions\ActionArgs.cs" />
     <Compile Include="Actions\ActionContext.cs" />
     <Compile Include="Actions\ActionResult.cs" />
     <Compile Include="Actions\BackgroundAction.cs" />
@@ -178,6 +177,7 @@
       <Generator>EntityModelCodeGenerator</Generator>
       <LastGenOutput>PronunciationModel.Designer.cs</LastGenOutput>
     </EntityDeploy>
+    <None Include="App.Config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

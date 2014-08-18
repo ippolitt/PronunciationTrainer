@@ -86,10 +86,12 @@
     </Compile>
     <Compile Include="AppSettingsBasedRecordingPolicy.cs" />
     <Compile Include="RecordingsList.cs" />
-    <Compile Include="BindingErrorTraceListener.cs" />
+    <Compile Include="Utility\BindingErrorTraceListener.cs" />
     <Compile Include="Commands\ExecuteActionCommand.cs" />
-    <Compile Include="ControlsHelper.cs" />
+    <Compile Include="Utility\ControlsHelper.cs" />
     <Compile Include="DictionaryContainerScriptingProxy.cs" />
+    <Compile Include="Utility\FormatHelper.cs" />
+    <Compile Include="ValueConverters\DurationToTimeConverter.cs" />
     <Compile Include="Views\ExerciseAudioListItemWithData.cs" />
     <Compile Include="Views\ExerciseAudioListItem.cs" />
     <Compile Include="Views\ExerciseListItem.cs" />
@@ -109,7 +111,7 @@
     </Compile>
     <Compile Include="ISupportsKeyboardFocus.cs" />
     <Compile Include="KeyGestures.cs" />
-    <Compile Include="PronunciationDbContext.cs" />
+    <Compile Include="Database\PronunciationDbContext.cs" />
     <Compile Include="DictionaryContainer.xaml.cs">
       <DependentUpon>DictionaryContainer.xaml</DependentUpon>
     </Compile>
@@ -119,19 +121,18 @@
     <Compile Include="ExerciseDetails.xaml.cs">
       <DependentUpon>ExerciseDetails.xaml</DependentUpon>
     </Compile>
-    <Compile Include="KeyboardMapper.cs" />
+    <Compile Include="Utility\KeyboardMapper.cs" />
     <Compile Include="QuickRecorder.xaml.cs">
       <DependentUpon>QuickRecorder.xaml</DependentUpon>
     </Compile>
     <Compile Include="SettingsPanel.xaml.cs">
       <DependentUpon>SettingsPanel.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Test.cs" />
     <Compile Include="UserControlExt.cs" />
     <Compile Include="WaveForm.xaml.cs">
       <DependentUpon>WaveForm.xaml</DependentUpon>
     </Compile>
-    <Compile Include="WaveFormBuilder.cs" />
+    <Compile Include="Utility\WaveFormBuilder.cs" />
     <Compile Include="WaveFormsComparison.xaml.cs">
       <DependentUpon>WaveFormsComparison.xaml</DependentUpon>
     </Compile>

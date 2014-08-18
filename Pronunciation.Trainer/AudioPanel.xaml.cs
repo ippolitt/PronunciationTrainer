@@ -22,6 +22,7 @@ using Pronunciation.Trainer.AudioActions;
 using Pronunciation.Core.Contexts;
 using Pronunciation.Trainer.Commands;
 using System.IO;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer
 {
@@ -30,12 +31,16 @@ namespace Pronunciation.Trainer
     /// </summary>
     public partial class AudioPanel : UserControlExt
     {
-        public delegate void RecordingCompletedHandler(string recordedFilePath, bool isTemporaryFile);
-
         private class DelayedActionArgs
         {
             public BackgroundAction Target;
         }
+
+        public delegate void RecordingCompletedHandler(string recordedFilePath, bool isTemporaryFile);
+        public event RecordingCompletedHandler RecordingCompleted;
+
+        public static readonly DependencyProperty ContextDescriptionProperty = DependencyProperty.Register(
+            "ContextDescription", typeof(string), typeof(AudioPanel));
 
         private readonly DispatcherTimer _delayedActionTimer = new DispatcherTimer();
         private readonly DispatcherTimer _moveSliderTimer = new DispatcherTimer();
@@ -57,8 +62,6 @@ namespace Pronunciation.Trainer
         private const string RecordProgressTemplate = "Recording, {0} seconds left..";
         private const int DelayedPlayIntervalMs = 500;
         private const int MoveSliderIntervalMs = 200;
-
-        public event RecordingCompletedHandler RecordingCompleted;
 
         public AudioPanel()
         {
@@ -93,7 +96,8 @@ namespace Pronunciation.Trainer
                 actionButton.Target.ActionCompleted += ActionButton_ActionCompleted;
             }
 
-            sliderPlay.Visibility = Visibility.Hidden;
+            sliderPlay.Visibility = Visibility.Collapsed;
+            lblStatus.Visibility = Visibility.Visible;
         }
 
         protected override void OnVisualTreeBuilt(bool isFirstBuild)
@@ -326,6 +330,8 @@ namespace Pronunciation.Trainer
             _showWaveformCommand.UpdateState(btnPlayReference.IsEnabled || btnPlayRecorded.IsEnabled);
             // Allow recordings history dialog if at least one recording exists
             _showHistoryCommand.UpdateState(_audioContext.CanShowRecordingsHistory && btnPlayRecorded.IsEnabled);
+
+            SetValue(ContextDescriptionProperty, _audioContext.ContextDescription);
         }
 
         private void ResetSlider()
@@ -395,23 +401,25 @@ namespace Pronunciation.Trainer
             if (args == null)
                 return null;
 
-            BackgroundAction[] postActions;
+            var postActions = new List<BackgroundAction>();
             switch (AppSettings.Instance.RecordedMode)
             {
-                case RecordedPlayMode.RecordedOnly:
-                    postActions = new[] { btnPlayRecorded.Target };
-                    break;
                 case RecordedPlayMode.RecordedThenReference:
-                    postActions = new[] { btnPlayRecorded.Target, btnPlayReference.Target };
+                    postActions.Add(btnPlayRecorded.Target);
+                    if (_audioContext.IsReferenceAudioExists)
+                    {
+                        postActions.Add(btnPlayReference.Target);
+                    }
                     break;
                 case RecordedPlayMode.ReferenceThenRecorded:
-                    postActions = new[] { btnPlayReference.Target, btnPlayRecorded.Target };
-                    break;
-                default:
-                    postActions = null;
+                    if (_audioContext.IsReferenceAudioExists)
+                    {
+                        postActions.Add(btnPlayReference.Target);
+                    }
+                    postActions.Add(btnPlayRecorded.Target);
                     break;
             }
-            context.ActiveSequence = new BackgroundActionSequence(postActions);
+            context.ActiveSequence = new BackgroundActionSequence(postActions.ToArray());
 
             return new RecordingArgs
             {
@@ -494,12 +502,14 @@ namespace Pronunciation.Trainer
         {
             if (sliderPlay.Visibility == Visibility.Visible)
             {
-                sliderPlay.Visibility = Visibility.Hidden;
+                sliderPlay.Visibility = Visibility.Collapsed;
+                lblStatus.Visibility = Visibility.Visible;
                 StopSliderPolling();
             }
             else
             {
                 sliderPlay.Visibility = Visibility.Visible;
+                lblStatus.Visibility = Visibility.Collapsed;
                 InitSliderPolling();
             }
         }

@@ -10,6 +10,7 @@ namespace Pronunciation.Trainer.Views
         public Guid AudioId { get; set; }
         public string AudioName { get; set; }
         public Guid ExerciseId { get; set; }
+        public int? Duration { get; set; }
 
         public string Text
         {

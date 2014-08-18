@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Threading;
 using System.Windows.Markup;
 using System.Globalization;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer
 {
