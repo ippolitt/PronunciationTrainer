@@ -12,17 +12,12 @@ namespace Pronunciation.Core.Audio
     {
         public static int GetAudioLengthMs(string filePath)
         {
-            return GetDurationMs(GetAudioInfo(filePath).Duration);
+            return ConvertDuration(GetAudioInfo(filePath).Duration);
         }
 
         public static int GetAudioLengthMs(byte[] rawData)
         {
-            return GetDurationMs(GetAudioInfo(rawData).Duration);
-        }
-
-        private static int GetDurationMs(TimeSpan duration)
-        {
-            return (int)Math.Round(duration.TotalMilliseconds);
+            return ConvertDuration(GetAudioInfo(rawData).Duration);
         }
 
         public static AudioInfo GetAudioInfo(string filePath)
@@ -70,15 +65,23 @@ namespace Pronunciation.Core.Audio
         private static AudioInfo GetAudioInfo(Stream input)
         {
             int samplesCount = 0;
-            Mp3Frame frame = Mp3Frame.LoadFromStream(input);
-            int sampleRate = frame.SampleRate;
-            while (frame != null)
+            int sampleRate = 0;
+            double durationMs = 0;
+            Mp3Frame frame;
+            while (true)
             {
-                samplesCount += frame.SampleCount;
                 frame = Mp3Frame.LoadFromStream(input);
+                if (frame == null)
+                    break;
+
+                // Sometimes it returns different SampleRate for the first frames so we must calculate the duration for each frame separately
+                durationMs += 1000 * (double)frame.SampleCount / (double)frame.SampleRate;
+                samplesCount += frame.SampleCount;
+                sampleRate = frame.SampleRate;
             }
 
-            return new AudioInfo(CalculateDuration(samplesCount, sampleRate), samplesCount, sampleRate);
+            // Return sampleRate from the last frame 
+            return new AudioInfo(ConvertDuration(durationMs), samplesCount, sampleRate);
         }
 
         private static AudioSamples CollectSamples(Stream input, AudioSamplesProcessingArgs processingArgs)
@@ -132,7 +135,7 @@ namespace Pronunciation.Core.Audio
                     }
                 }
 
-                samplesDuration = CalculateDuration(samplesCount, sampleRate);
+                samplesDuration = ConvertDuration(1000 * (double)samplesCount / (double)sampleRate);
                 if (!isAborted)
                 {
                     totalDuration = samplesDuration;
@@ -144,10 +147,14 @@ namespace Pronunciation.Core.Audio
                 : new AudioSamples(samplesDuration, totalDuration, leftSamples.ToArray(), rightSamples.ToArray());
         }
 
-        private static TimeSpan CalculateDuration(int samplesCount, int sampleRate)
+        private static int ConvertDuration(TimeSpan duration)
         {
-            double durationMs = Math.Ceiling(1000 * (double)samplesCount / (double)sampleRate);
-            return TimeSpan.FromMilliseconds(durationMs);
+            return (int)Math.Round(duration.TotalMilliseconds);
+        }
+
+        private static TimeSpan ConvertDuration(double durationMs)
+        {
+            return TimeSpan.FromMilliseconds(Math.Round(durationMs));
         }
     }
 }

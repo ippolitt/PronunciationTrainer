@@ -27,7 +27,7 @@ namespace Pronunciation.Test
                 //TimeSpan ts = TimeSpan.FromMilliseconds( 0);
                 //Console.WriteLine(ToTimeString(ts));
                 //MigrateExerciseDurations();
-               // MigrateRecordingDurations();
+                //MigrateRecordingDurations();
                 return;
 
                 bool? rr = false;

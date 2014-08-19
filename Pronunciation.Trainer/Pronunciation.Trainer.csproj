@@ -91,6 +91,7 @@
     <Compile Include="Utility\ControlsHelper.cs" />
     <Compile Include="DictionaryContainerScriptingProxy.cs" />
     <Compile Include="Utility\FormatHelper.cs" />
+    <Compile Include="Utility\MessageHelper.cs" />
     <Compile Include="ValueConverters\DurationToTimeConverter.cs" />
     <Compile Include="Views\ExerciseAudioListItemWithData.cs" />
     <Compile Include="Views\ExerciseAudioListItem.cs" />

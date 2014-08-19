@@ -11,6 +11,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.ComponentModel;
+using Pronunciation.Trainer.Utility;
+using System.Reflection;
 //using System.Windows.Shapes;
 
 namespace Pronunciation.Trainer
@@ -62,9 +64,24 @@ namespace Pronunciation.Trainer
             var activeTab = tabsRoot.SelectedItem as TabItemExt;
             if (activeTab != null && activeTab.DynamicContentType != null && activeTab.Content == null)
             {
-                FrameworkElement content = (FrameworkElement)Activator.CreateInstance(activeTab.DynamicContentType);
-                content.Margin = activeTab.DynamicContentMargin;
-                activeTab.Content = content;
+                try
+                {
+                    FrameworkElement content = (FrameworkElement)Activator.CreateInstance(activeTab.DynamicContentType);
+                    content.Margin = activeTab.DynamicContentMargin;
+                    activeTab.Content = content;
+                }
+                catch (Exception ex)
+                {
+                    if ((ex is TargetInvocationException) && ex.InnerException != null)
+                    {
+                        MessageHelper.ShowErrorOnControlInit(ex.InnerException, this);
+                    }
+                    else
+                    {
+                        MessageHelper.ShowErrorOnControlInit(ex, this);
+                    }
+                    activeTab.Content = "Error loading the content";
+                }
             }
         }
     }

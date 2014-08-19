@@ -89,10 +89,7 @@ namespace Pronunciation.Trainer.AudioContexts
         {
             get 
             {
-                return _exerciseAudio == null
-                    ? null
-                    : string.Format("Active audio: \"{0}\", duration: {1}",
-                        _exerciseAudio.AudioName, FormatHelper.ToTimeString(_exerciseAudio.Duration ?? 0, true)); 
+                return _exerciseAudio == null ? null : string.Format("Active audio: \"{0}\"", _exerciseAudio.AudioName); 
             }
         }
 

@@ -103,10 +103,18 @@ namespace Pronunciation.Trainer
                 splash.Show(false, true);
             }
 
-            BuildIndex(_dictionaryProvider.GetWordsIndex());
-            if (splash != null)
+            bool isSuccess = false;
+            try
             {
-                splash.Close(TimeSpan.FromSeconds(1));
+                BuildIndex(_dictionaryProvider.GetWordsIndex());
+                isSuccess = true;
+            }
+            finally
+            {
+                if (splash != null)
+                {
+                    splash.Close(TimeSpan.FromSeconds(isSuccess ? 1 : 0));
+                }
             }
         }
 
@@ -153,13 +161,15 @@ namespace Pronunciation.Trainer
 
         private void browser_LoadCompleted(object sender, NavigationEventArgs e)
         {
-            _currentPage = _loadingPage;
-            _loadingPage = null;
-
             // It means that the page has been loaded by clicking on a hyperlink inside a previous page
-            if (_currentPage == null && e.Uri != null)
+            if (_loadingPage == null && e.Uri != null)
             {
                 _currentPage = _dictionaryProvider.InitPageFromUrl(e.Uri);
+            }
+            else
+            {
+                _currentPage = _loadingPage;
+                _loadingPage = null;
             }
 
             IndexEntry currentWord = null;

@@ -102,7 +102,7 @@
             ToolTip="Show/hide slider" Click="btnShowSlider_Click">
             <Image Source="Resources/AudioSlider.png" Style="{StaticResource AudioImage}" />
         </Button>
-        <Slider Grid.Column="6" Margin="10,5,10,0" Name="sliderPlay" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ValueChanged="sliderPlay_ValueChanged" IsMoveToPointEnabled="True" />
+        <Slider Grid.Column="6" Margin="10,5,0,0" Name="sliderPlay" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ValueChanged="sliderPlay_ValueChanged" IsMoveToPointEnabled="True" />
         <TextBlock Grid.Column="6" Margin="5,0,5,0" Name="lblStatus" VerticalAlignment="Center" FontStyle="Italic">
             <TextBlock.Style>
                 <Style TargetType="TextBlock">

@@ -27,36 +27,38 @@
         <local:AudioPanel DockPanel.Dock="Top" Height="32" x:Name="audioPanel" />
         <Grid DockPanel.Dock="Top" Height="32"  Name="grid1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
-                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="45" />
                 <ColumnDefinition Width="258" />
                 <ColumnDefinition Width="86" />
                 <ColumnDefinition Width="143" />
                 <ColumnDefinition Width="164*" />
-                <ColumnDefinition Width="123" />
+                <ColumnDefinition Width="77" />
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="26" />
             </Grid.ColumnDefinitions>
-            <Border Name="borderSearch" Background="White" Height="23" Margin="0" Grid.Column="2">
+            <TextBlock Grid.Column="0" HorizontalAlignment="Left" Name="lblSearch" Text="Search:" Margin="0,6,0,0" />
+            <Border Name="borderSearch" Background="White" Height="23" Margin="0" Grid.Column="1">
                 <DockPanel>
                     <Image DockPanel.Dock="Left" Source="Resources/SearchWord.png" Stretch="None" />
                     <TextBox Name="txtSearch" BorderThickness="0" TextChanged="txtSearch_TextChanged" KeyDown="txtSearch_KeyDown" PreviewKeyDown="txtSearch_PreviewKeyDown" />
                 </DockPanel>
             </Border>
-            <TextBlock Grid.Column="3" Height="23" HorizontalAlignment="Right" Name="textBlock2" Text="Word lists:" Margin="0,6,10,0" />
-            <ComboBox Height="23" Name="cboWordLists" DropDownClosed="cboWordLists_DropDownClosed" Grid.Column="4" Margin="0,0,0,0" />
-            <TextBlock Height="23" Name="textBlock1" Text="Recent words:" Grid.Column="6" Margin="0,6,0,0" HorizontalAlignment="Left" />
-            <Button Height="23" Name="btnBack" HorizontalAlignment="Stretch" Focusable="False" 
+            <TextBlock Grid.Column="2" Height="23" HorizontalAlignment="Right" Name="textBlock2" Text="Word lists:" Margin="0,6,10,0" />
+            <ComboBox Height="23" Name="cboWordLists" DropDownClosed="cboWordLists_DropDownClosed" Grid.Column="3" Margin="0,0,0,0" />
+            <TextBlock Height="23" Name="textBlock1" Text="Recent words:" Grid.Column="5" Margin="0,6,0,0" HorizontalAlignment="Left" />
+            <Button Grid.Column="6" Height="23" Name="btnBack" HorizontalAlignment="Stretch" Focusable="False" 
                 Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                 ToolTip="Go to the previous page [{0}]">
                 <Image Source="Resources/ArrowBack.png" Stretch="None" Style="{StaticResource GreyedImage}" />
             </Button>
-            <Button Height="23" Name="btnForward" HorizontalAlignment="Stretch" Grid.Column="1" Focusable="False" 
+            <Button Grid.Column="7" Height="23" Name="btnForward" HorizontalAlignment="Stretch" Focusable="False" 
                 Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                 ToolTip="Go to the next page [{0}]">
                 <Image Source="Resources/ArrowForward.png" Stretch="None" Style="{StaticResource GreyedImage}" />
             </Button>
         </Grid>
-        <ListBox Name="lstSuggestions" DockPanel.Dock="Left" Width="123" Margin="0,5,0,0" ItemContainerStyle="{StaticResource IndexItem}" MouseLeftButtonUp="lstSuggestions_MouseLeftButtonUp" PreviewKeyDown="lstSuggestions_PreviewKeyDown" />
-        <ListBox Name="lstRecentWords" DockPanel.Dock="Right" Width="123" Margin="10,5,0,0" ItemContainerStyle="{StaticResource IndexItem}" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown" />       
+        <ListBox Name="lstSuggestions" DockPanel.Dock="Left" Width="128" Margin="0,5,0,0" ItemContainerStyle="{StaticResource IndexItem}" MouseLeftButtonUp="lstSuggestions_MouseLeftButtonUp" PreviewKeyDown="lstSuggestions_PreviewKeyDown" />
+        <ListBox Name="lstRecentWords" DockPanel.Dock="Right" Width="128" Margin="10,5,0,0" ItemContainerStyle="{StaticResource IndexItem}" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown" />       
         <WebBrowser Name="browser" LoadCompleted="browser_LoadCompleted" />
     </DockPanel>
 </local:UserControlExt>

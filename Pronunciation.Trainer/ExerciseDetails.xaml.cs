@@ -41,6 +41,7 @@ namespace Pronunciation.Trainer
         private ExerciseAudioContext _audioContext;
         private Exercise _activeRecord;
         private readonly CollectionChangeTracker<string> _audioNamesTracker;
+        private bool _suppressPlay = false;
 
         public ExerciseDetails()
         {
@@ -91,7 +92,9 @@ namespace Pronunciation.Trainer
             lstAudios.ItemsSource = LoadReferenceAudios();
             if (lstAudios.Items.Count > 0)
             {
+                _suppressPlay = true;
                 lstAudios.SelectedIndex = 0;
+                _suppressPlay = false;
                 lstAudios.Focus();
             }
             else
@@ -186,7 +189,7 @@ namespace Pronunciation.Trainer
 
         private void lstAudios_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            RefreshAudioContext(false);
+            RefreshAudioContext(!_suppressPlay);
             SetListButtonsState(true);
         }
 
@@ -278,6 +281,7 @@ namespace Pronunciation.Trainer
                     var currentItem = lstAudios.SelectedItem as ExerciseAudioListItemWithData;
                     ExerciseAudioListItemWithData[] audios = LoadReferenceAudios();
                     lstAudios.ItemsSource = audios;
+                    _suppressPlay = true;
                     if (currentItem == null)
                     {
                         lstAudios.SelectedIndex = 0;
@@ -286,6 +290,7 @@ namespace Pronunciation.Trainer
                     {
                         lstAudios.SelectedItem = audios.FirstOrDefault(x => x.AudioId == currentItem.AudioId);
                     }
+                    _suppressPlay = false;
                     lstAudios.Focus();
                 }
             }
@@ -319,7 +324,9 @@ namespace Pronunciation.Trainer
                 lstAudios.ItemsSource = LoadReferenceAudios();
                 if (lstAudios.Items.Count > 0)
                 {
+                    _suppressPlay = true;
                     lstAudios.SelectedIndex = 0;
+                    _suppressPlay = false;
                     lstAudios.Focus();
                 }
                 else

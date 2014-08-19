@@ -1,5 +1,15 @@
+Word lists migration:
+- Change TOP information in a word to specify a range (TOP 5000-7500) or think about some better approach
+- Regenerate index file for LPDFileSystemProvider to contain Rank information
+- Generate "Top words lists" and "top words navigation" only for iPhone
+- Return rank information from GetWordsIndex() method (both file and db provders)
+- Delete "GetWordsLists" methods from providers
+
 Top:
+- Create base MessageBox with predefined captions
+- Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 - Bugs
+	- When doubleclick on the item in audio list, refresh context is called two times: selection changed and double click
 	- Add handling for "EntityValidationErrors" (too long text etc)
 	- Bug: sometimes it's possible to start two players (rec and ref) simultineously
 	- Bug when sequence is scheduled and I start another action
@@ -14,8 +24,9 @@ Top:
 	- Cache latest audio files in providers (especially, LPD)
 	- Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
 - New functionality:
-	- Add a setting "Decrease recorded audio volume"
+	- Add at least main russian meaning to the LPD
 	- Add ability to mark certain words as problematic and practice them later
+	- Add a setting "Decrease recorded audio volume"
 	- Compare different reference pronunciation or different recorded ones
 	- Add special signs explanation (LPD or Amazon)
 	- Generate html for pronunciation notes (from dictionary CD)
@@ -23,28 +34,23 @@ Top:
 	- Create a text version of each sentence/phrase to be able to perform full text search
 	- Play any word in the dictionary when I double click on it
 - Usability improvements
-	- Reference audio text box in Training is too small
+	- Add text "Search" to LPD search textbox
 	- Topics sorting in Exercise list is done by ID, not by text
 	- Add parent topic to the topics list (align  right)
 	- Add a switch to hide/display exercise description
+	- Should LPD html page be able to catch the focus (after TAB click)?
 - Code improvements:
+	- Add error logging
 	- Add a possibility to start background action passing arguments explicitly. Simplify delegates signatures (some don't need ActionContext etc.)
-	- Create base MessageBox with predefined captions
 
 Waveforms:
-- Show waveforms even without palying the audio. Select several recordings and display waveforms for all of them
-- Implement logic of silence finder and automatically stop recording if there's a long pause
+ -Add ability to play certain part of waveform
+- Select several recordings and display waveforms for all of them
 - Clip pauses at the end and at the beginning in the Waveform
 - Add ability to move and stretch waveforms with a slider
 - Separate waveform on segments and allow to play a certain segment
 - Add word name to the last played audio
 - Play sound along with moving a slider on waveform
-
-Audio migration to DB:
-- Attach reference audios to Trainings. Clean garbadge
-- Shrink database after migration (both LPD and Trainer) and upload them
-- Backup all exercises (png+mp3) and upload them
-- Check exercises that have no recordings (see log). Upload 20, 21, 23 manually
 
 Possible problems:
 - Deleting many exercises may cause an exception because IN statement would be too long (when deleting recorded audios)

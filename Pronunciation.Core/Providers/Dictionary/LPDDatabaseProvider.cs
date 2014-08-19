@@ -101,7 +101,7 @@ WHERE WordId = @wordId", conn);
 
         public PageInfo InitPageFromUrl(Uri pageUrl)
         {
-            throw new NotSupportedException();
+            return null;
         }
 
         public PlaybackData GetAudio(string soundKey)
