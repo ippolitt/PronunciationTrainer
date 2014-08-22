@@ -95,17 +95,28 @@ namespace Pronunciation.Trainer
             if (lstRecordings.Items.Count > 0)
             {
                 lstRecordings.SelectedIndex = 0;
-                lstRecordings.Focus();
             }
             else
             {
                 _audioContext.RefreshContext(_activeRecord.ReferenceAudioData, null, false);
                 SetListButtonsState(false);
-                txtTitle.Focus();
             }
 
             btnDeleteReference.IsEnabled = _activeRecord.ReferenceAudioData != null;
             btnApply.IsEnabled = !NeedsDialogResult;
+        }
+
+        private void Window_ContentRendered(object sender, EventArgs e)
+        {
+            if (lstRecordings.Items.Count > 0)
+            {
+                // It works only after window content has been rendered
+                lstRecordings.FocusSelectedItem();
+            }
+            else
+            {
+                txtTitle.Focus();
+            }
         }
 
         private Training InitActiveRecord()
@@ -163,7 +174,7 @@ namespace Pronunciation.Trainer
 
             lstRecordings.AttachItemsSource(GetRecordedAudiosExceptDeleted());
             lstRecordings.SelectedRecording = lstRecordings.Recordings.Single(x => x.AudioKey == audioKey);
-            lstRecordings.Focus();
+            lstRecordings.FocusSelectedItem();
         }
 
         private RecordedAudioListItem[] GetRecordedAudiosExceptDeleted()
@@ -195,7 +206,7 @@ namespace Pronunciation.Trainer
             if (lstRecordings.Items.Count > 0)
             {
                 lstRecordings.SelectedIndex = 0;
-                lstRecordings.Focus();
+                lstRecordings.FocusSelectedItem();
             }
             else
             {

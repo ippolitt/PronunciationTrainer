@@ -13,6 +13,7 @@ using System.Windows.Navigation;
 using System.ComponentModel;
 using Pronunciation.Trainer.Utility;
 using System.Reflection;
+using Pronunciation.Trainer.Controls;
 //using System.Windows.Shapes;
 
 namespace Pronunciation.Trainer

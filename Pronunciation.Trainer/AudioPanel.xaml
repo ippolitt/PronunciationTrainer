@@ -1,9 +1,9 @@
-﻿<local:UserControlExt x:Class="Pronunciation.Trainer.AudioPanel"
+﻿<controls:UserControlExt x:Class="Pronunciation.Trainer.AudioPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Pronunciation.Trainer"
+             xmlns:controls="clr-namespace:Pronunciation.Trainer.Controls"
              mc:Ignorable="d" d:DesignHeight="32" d:DesignWidth="588" 
              x:Name="AudioPanelControl"
              Initialized="UserControl_Initialized">
@@ -30,7 +30,7 @@
             <ColumnDefinition Width="293*" />
         </Grid.ColumnDefinitions>
         <!-- For some reason action button, when clicked, locks keyboard focus -->
-        <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnPlayReference" Grid.Column="0"
+        <controls:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnPlayReference" Grid.Column="0"
             Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
             ToolTip="{Binding Path=DynamicTooltip}" 
             DefaultTooltip="Play reference audio [{0}]" RunningTooltip="Pause [Spacebar] or Stop [{0}]" PausedTooltip="Resume [Spacebar] or Stop [{0}]" >
@@ -49,8 +49,8 @@
                     </Style>
                 </Image.Style>
             </Image>
-        </local:ActionButton>
-        <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23"  x:Name="btnPlayRecorded" Grid.Column="1"
+        </controls:ActionButton>
+        <controls:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23"  x:Name="btnPlayRecorded" Grid.Column="1"
             Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
             ToolTip="{Binding Path=DynamicTooltip}" 
             DefaultTooltip="Play recorded audio [{0}]" RunningTooltip="Pause [Spacebar] or Stop [{0}]" PausedTooltip="Resume [Spacebar] or Stop [{0}]" >
@@ -69,8 +69,8 @@
                     </Style>
                 </Image.Style>
             </Image>
-        </local:ActionButton>      
-        <local:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnRecord" Grid.Column="2"                  
+        </controls:ActionButton>
+        <controls:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnRecord" Grid.Column="2"                  
             Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
             ToolTip="{Binding Path=DynamicTooltip}" 
             DefaultTooltip="Start recording audio [{0}]" RunningTooltip="Stop [Spacebar] or [{0}]" >                            
@@ -86,7 +86,7 @@
                     </Style>
                 </Image.Style>
             </Image>
-        </local:ActionButton>
+        </controls:ActionButton>
         <Button Focusable="False" Grid.Column="3"  HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" 
             x:Name="btnShowHistory" Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
             ToolTip="Show recordings history [{0}]">
@@ -122,4 +122,4 @@
             </TextBlock.Style>         
         </TextBlock>
     </Grid>
-</local:UserControlExt>
+</controls:UserControlExt>

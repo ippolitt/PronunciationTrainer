@@ -1,10 +1,3 @@
-Word lists migration:
-- Change TOP information in a word to specify a range (TOP 5000-7500) or think about some better approach
-- Regenerate index file for LPDFileSystemProvider to contain Rank information
-- Generate "Top words lists" and "top words navigation" only for iPhone
-- Return rank information from GetWordsIndex() method (both file and db provders)
-- Delete "GetWordsLists" methods from providers
-
 Top:
 - Create base MessageBox with predefined captions
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
@@ -15,6 +8,7 @@ Top:
 	- Bug when sequence is scheduled and I start another action
 	- There are no tags in my exported mp3 files
 - Performance:
+	- If we assign all index entries for LPD it eats + 6 MB (slowly, in background)
 	- Profile memory: when Exercise tab is first loaded etc.
 	- Why it eats so much memory? Elaborate (try working without DB)
 	- Why it eats so much memory when saving large audio files? (50 mb file and 400mb eats the application)
@@ -34,7 +28,6 @@ Top:
 	- Create a text version of each sentence/phrase to be able to perform full text search
 	- Play any word in the dictionary when I double click on it
 - Usability improvements
-	- Add text "Search" to LPD search textbox
 	- Topics sorting in Exercise list is done by ID, not by text
 	- Add parent topic to the topics list (align  right)
 	- Add a switch to hide/display exercise description
@@ -42,6 +35,7 @@ Top:
 - Code improvements:
 	- Add error logging
 	- Add a possibility to start background action passing arguments explicitly. Simplify delegates signatures (some don't need ActionContext etc.)
+	- Check if page URLs like 'file://127.0.0.1/C$/Folder/.../file.html' will work for non-admins (see method PrepareNavigationUri() in DictionaryContainer)
 
 Waveforms:
  -Add ability to play certain part of waveform

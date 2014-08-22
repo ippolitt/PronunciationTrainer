@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Pronunciation.Core.Providers.Recording;
 
-namespace Pronunciation.Trainer
+namespace Pronunciation.Trainer.Recording
 {
     public class AppSettingsBasedRecordingPolicy : IRecordingHistoryPolicy
     {

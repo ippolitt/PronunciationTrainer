@@ -60,8 +60,13 @@ namespace Pronunciation.Trainer
             else
             {
                 SetListButtonsState(false);
-            }
-            lstRecordings.CaptureKeyboardFocus();
+            }   
+        }
+
+        private void Window_ContentRendered(object sender, EventArgs e)
+        {
+            // It works only after window content has been rendered
+            lstRecordings.FocusSelectedItem();
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -80,7 +85,7 @@ namespace Pronunciation.Trainer
 
             lstRecordings.AttachItemsSource(_recordingProvider.GetAudioList());
             lstRecordings.SelectedRecording = lstRecordings.Recordings.Single(x => x.AudioKey == audioKey);
-            lstRecordings.Focus();
+            lstRecordings.FocusSelectedItem();
         }
 
         private void lstRecordings_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -141,7 +146,7 @@ namespace Pronunciation.Trainer
                 if (lstRecordings.Items.Count > 0)
                 {
                     lstRecordings.SelectedIndex = 0;
-                    lstRecordings.Focus();
+                    lstRecordings.FocusSelectedItem();
                 }
                 else
                 {

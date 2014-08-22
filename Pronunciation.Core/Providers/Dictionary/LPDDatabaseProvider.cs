@@ -12,8 +12,9 @@ using Pronunciation.Core.Database;
 
 namespace Pronunciation.Core.Providers.Dictionary
 {
-    public class LPDDatabaseProvider : LPDProviderBase, IDictionaryProvider
+    public class LPDDatabaseProvider : IDictionaryProvider
     {
+        private readonly string _baseFolder;
         private readonly string _lpdConnectionString;
         private readonly string _pageTemplate;
         private readonly string _indexFilePath;
@@ -23,8 +24,8 @@ namespace Pronunciation.Core.Providers.Dictionary
         private const string IndexFileName = "Index.txt";
 
         public LPDDatabaseProvider(string baseFolder, string lpdConnectionString) 
-            : base(baseFolder)
         {
+            _baseFolder = baseFolder;
             _lpdConnectionString = lpdConnectionString;
             _indexFilePath = Path.Combine(baseFolder, IndexFileName);
             _pageTemplate = File.ReadAllText(Path.Combine(baseFolder, PageTemplateFileName));
@@ -50,7 +51,7 @@ namespace Pronunciation.Core.Providers.Dictionary
 
                 // Load words
                 cmd.CommandText =
-@"SELECT w.WordId, w.Keyword AS Text, s1.SoundKey AS SoundKeyUK, s2.SoundKey AS SoundKeyUS  
+@"SELECT w.WordId, w.Keyword AS Text, w.UsageRank, s1.SoundKey AS SoundKeyUK, s2.SoundKey AS SoundKeyUS  
 FROM Words w 
     LEFT JOIN Sounds s1 ON w.SoundIdUK = s1.SoundId
     LEFT JOIN Sounds s2 ON w.SoundIdUS = s2.SoundId";
@@ -58,7 +59,7 @@ FROM Words w
 
                 // Load collocations
                 cmd.CommandText =
-@"SELECT c.WordId, c.CollocationText AS Text, s1.SoundKey AS SoundKeyUK, s2.SoundKey AS SoundKeyUS  
+@"SELECT c.WordId, c.CollocationText AS Text, NULL AS UsageRank, s1.SoundKey AS SoundKeyUK, s2.SoundKey AS SoundKeyUS  
 FROM Collocations c 
     LEFT JOIN Sounds s1 ON c.SoundIdUK = s1.SoundId
     LEFT JOIN Sounds s2 ON c.SoundIdUS = s2.SoundId";
@@ -69,7 +70,7 @@ FROM Collocations c
             return index;
         }
 
-        public PageInfo LoadArticlePage(string pageKey)
+        public ArticlePage PrepareArticlePage(string articleKey)
         {
             string pageBody = null;
             string keyword = null;
@@ -81,14 +82,14 @@ FROM Collocations c
 @"SELECT Keyword, HtmlPage
 FROM Words
 WHERE WordId = @wordId", conn);
-                cmd.Parameters.AddWithValue("@wordId", int.Parse(pageKey));
+                cmd.Parameters.AddWithValue("@wordId", int.Parse(articleKey));
 
                 using (var reader = cmd.ExecuteReader())
                 {
                     if (!reader.Read())
                     {
                         throw new ArgumentException(string.Format(
-                            "Dictionary entry with Id={0} doesn't exist!", pageKey));
+                            "Dictionary article with Id={0} doesn't exist!", articleKey));
                     }
 
                     keyword = reader["Keyword"] as string;
@@ -96,12 +97,13 @@ WHERE WordId = @wordId", conn);
                 }
             }
 
-            return new PageInfo(true, pageKey, BuildPageHtml(keyword, pageBody));
+            return new ArticlePage(articleKey, BuildPageHtml(keyword, pageBody));
         }
 
-        public PageInfo InitPageFromUrl(Uri pageUrl)
+        // May be called if a page contains a hyperlink to some external resource
+        public PageInfo PrepareGenericPage(Uri pageUrl)
         {
-            return null;
+            return new PageInfo(pageUrl);
         }
 
         public PlaybackData GetAudio(string soundKey)
@@ -147,6 +149,7 @@ WHERE SoundKey = @soundKey", conn);
                         ((int)reader["WordId"]).ToString(),
                         reader["Text"] as string,
                         isCollocation,
+                        reader["UsageRank"] as int?,
                         reader["SoundKeyUK"] as string,
                         reader["SoundKeyUS"] as string));
                 }
@@ -156,7 +159,7 @@ WHERE SoundKey = @soundKey", conn);
         private string BuildPageHtml(string title, string pageBody)
         {
             // Don't use AbsolutePath because it replaces spaces with "%20" symbol 
-            string pageBase = new Uri(BaseFolder).LocalPath;
+            string pageBase = new Uri(_baseFolder).LocalPath;
             if (!pageBase.EndsWith("/"))
             {
                 pageBase += "/";
@@ -169,8 +172,8 @@ WHERE SoundKey = @soundKey", conn);
             var bld = new StringBuilder();
             foreach (var entry in index)
             {
-                bld.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}",
-                    entry.Text, entry.PageKey, entry.IsCollocation ? 1 : 0,
+                bld.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}",
+                    entry.EntryText, entry.ArticleKey, entry.IsCollocation ? 1 : 0, entry.UsageRank,
                     entry.SoundKeyUK, entry.SoundKeyUS));
             }
 
@@ -185,10 +188,15 @@ WHERE SoundKey = @soundKey", conn);
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 5)
+                    if (data.Length != 6)
                         throw new InvalidOperationException("Index file is broken!");
 
-                    words.Add(new IndexEntry(data[1], data[0], data[2] == "1" ? true : false, data[3], data[4]));
+                    words.Add(new IndexEntry(data[1], 
+                        data[0], 
+                        data[2] == "1" ? true : false,
+                        string.IsNullOrEmpty(data[3]) ? (int?)null : int.Parse(data[3]), 
+                        data[4], 
+                        data[5]));
                 }
             }
 

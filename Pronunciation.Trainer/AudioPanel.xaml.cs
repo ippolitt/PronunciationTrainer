@@ -23,6 +23,7 @@ using Pronunciation.Core.Contexts;
 using Pronunciation.Trainer.Commands;
 using System.IO;
 using Pronunciation.Trainer.Utility;
+using Pronunciation.Trainer.Controls;
 
 namespace Pronunciation.Trainer
 {

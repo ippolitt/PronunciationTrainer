@@ -6,7 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows;
 
-namespace Pronunciation.Trainer
+namespace Pronunciation.Trainer.Controls
 {
     public class TabItemExt : TabItem
     {

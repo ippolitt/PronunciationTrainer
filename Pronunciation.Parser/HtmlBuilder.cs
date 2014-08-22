@@ -13,6 +13,13 @@ namespace Pronunciation.Parser
 {
     class HtmlBuilder
     {
+        public enum GenerationMode
+        {
+            Database,
+            FileSystem,
+            IPhone
+        }
+
         private class WordGroup
         {
             public string Name;
@@ -61,11 +68,12 @@ namespace Pronunciation.Parser
         private readonly Dictionary<char, string> _wordNameMap = new Dictionary<char, string>();
 
         private readonly WordUsageBuilder _usageBuilder;
+        private readonly Dictionary<int, int> _ranks;
         private readonly FileLoader _fileLoader;
         private readonly DatabaseUploader _dbUploader;
         private readonly string _logFile;
         private readonly string _binFolder;
-        private readonly bool _isDatabaseMode;
+        private readonly GenerationMode _generationMode;
 
         private const string TemplateFilePath = @"Html\FileTemplate.html";
         private const string TopTemplateFilePath = @"Html\TopTemplate.html";
@@ -82,9 +90,24 @@ namespace Pronunciation.Parser
 
         private const string XmlElementStrong = "strong";
 
-        private HtmlBuilder(bool isDatabaseMode)
+        private bool IsDatabaseMode
         {
-            _isDatabaseMode = isDatabaseMode;
+            get { return _generationMode == GenerationMode.Database; }
+        }
+
+        private bool GenerateTopWordsNavigation
+        {
+            get { return _generationMode == GenerationMode.IPhone; }
+        }
+
+        private bool GenerateTopWordsList
+        {
+            get { return _generationMode == GenerationMode.IPhone; }
+        }
+
+        private HtmlBuilder(GenerationMode generationMode)
+        {
+            _generationMode = generationMode;
             _binFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
             AddMap(XmlElementStrong, ReplacementType.LeaveOldTag, null, null);
@@ -108,7 +131,7 @@ namespace Pronunciation.Parser
                 "<img class=\"poll_image\" src=\"{0}\" />", false);
             AddMap("wlink", ReplacementType.ReplaceLink, "a", 
                 "<a class=\"word_link\" href=\"{0}\">{1}</a>", false);
-            if (_isDatabaseMode)
+            if (IsDatabaseMode)
             {
                 AddMap("sound_uk", ReplacementType.ReplaceSoundUK, "button",
                     "<button type=\"button\" class=\"audio_button audio_uk\" data-src=\"{0}\">{1}</button>",
@@ -163,16 +186,30 @@ namespace Pronunciation.Parser
                 .ToLower().Split(new []{ ',', ' '}));
         }
 
-        public HtmlBuilder(bool isDatabaseMode, string connectionString, string logFile, FileLoader fileLoader, string wordUsageFile)
-            : this(isDatabaseMode)
+        public HtmlBuilder(GenerationMode generationMode, string connectionString, string logFile, FileLoader fileLoader, string wordUsageFile)
+            : this(generationMode)
         {
             _logFile = logFile;
             _fileLoader = fileLoader;
-            if (isDatabaseMode)
+            if (IsDatabaseMode)
             {
                 _dbUploader = new DatabaseUploader(connectionString, fileLoader);
             }
             _usageBuilder = new WordUsageBuilder(wordUsageFile);
+            _ranks = PrepareRanks(_usageBuilder.GetRanks());
+        }
+
+        private Dictionary<int, int> PrepareRanks(int[] ranks)
+        {
+            var rankText = new Dictionary<int, int>();
+            int? previousRank = null;
+            foreach (int rank in ranks.OrderBy(x => x))
+            {
+                rankText.Add(rank, previousRank ?? 0);
+                previousRank = rank;
+            }
+
+            return rankText;
         }
 
         private void AddMap(string sourceTag, ReplacementType replacementType, string replacementTag, string additionalData)
@@ -200,7 +237,7 @@ namespace Pronunciation.Parser
             _usageBuilder.Initialize(words.Select(x => x.Keyword));
 
             var soundStats = new StringBuilder();
-            if (_isDatabaseMode)
+            if (IsDatabaseMode)
             {
                 GenerateInDatabase(words, soundStats, maxWords, isFakeMode);
             }
@@ -211,8 +248,11 @@ namespace Pronunciation.Parser
 
             File.AppendAllText(_logFile, "\r\nSound stats:\r\n" + soundStats.ToString());
 
-            GenerateTopList(htmlFolder);
-            Console.WriteLine("Generated top words lists");
+            if (GenerateTopWordsList)
+            {
+                GenerateTopList(htmlFolder);
+                Console.WriteLine("Generated top words lists");
+            }
 
             File.AppendAllText(_logFile, "Ended conversion.\r\n\r\n");
         }
@@ -327,16 +367,17 @@ namespace Pronunciation.Parser
                 foreach (var word in group.Words)
                 {
                     WordDescription description = GenerateHtml(word, pageBuilder, soundStats);
-                    indexBuilder.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}",
-                        description.Text, group.Name, 0,
+                    int? usageRank = description.UsageInfo == null ? (int?)null : description.UsageInfo.CombinedRank;
+                    indexBuilder.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}",
+                        description.Text, group.Name, 0, usageRank,
                         description.SoundKeyUK, description.SoundKeyUS));
 
                     if (description.Collocations != null)
                     {
                         foreach (var collocation in description.Collocations)
                         {
-                            indexBuilder.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}",
-                                collocation.Text, group.Name, 1,
+                            indexBuilder.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}",
+                                collocation.Text, group.Name, 1, null,
                                 collocation.SoundKeyUK, collocation.SoundKeyUS));
                         }
                     }
@@ -604,16 +645,29 @@ namespace Pronunciation.Parser
             if (wordDescription.UsageInfo != null)
             {
                 var rank = wordDescription.UsageInfo;
-                pageBuilder.AppendFormat(
+                if (GenerateTopWordsNavigation)
+                {
+                    pageBuilder.AppendFormat(
 @"      <span class=""word_usage"">Usage TOP: <strong>{0}</strong>{1}{2}</span>
 ",
-                    rank.CombinedRank,
-                     rank.PreviousWord == null ? null :
-                        string.Format("<a class=\"word_link previous_word\" href=\"{0}\">&lt; [{1}]</a>",
-                        PrepareLink(rank.PreviousWord.Keyword, false), rank.PreviousWord.Keyword),
-                    rank.NextWord == null ? null :
-                        string.Format("<a class=\"word_link next_word\" href=\"{0}\">[{1}] &gt;</a>",
-                        PrepareLink(rank.NextWord.Keyword, false), rank.NextWord.Keyword));
+                        rank.CombinedRank,
+                        rank.PreviousWord == null ? null :
+                            string.Format("<a class=\"word_link previous_word\" href=\"{0}\">&lt; [{1}]</a>",
+                            PrepareLink(rank.PreviousWord.Keyword, false), rank.PreviousWord.Keyword),
+                        rank.NextWord == null ? null :
+                            string.Format("<a class=\"word_link next_word\" href=\"{0}\">[{1}] &gt;</a>",
+                            PrepareLink(rank.NextWord.Keyword, false), rank.NextWord.Keyword));
+                }
+                else
+                {
+                    int previousRank = _ranks[rank.CombinedRank];
+                    pageBuilder.AppendFormat(
+@"      <span class=""word_usage"">Usage rank: top {0}{1}</span>
+",
+                        previousRank == 0 ? null : string.Format(@"<span class=""word_usage_from"">{0}</span>", previousRank),
+                        string.Format(@"<span class=""word_usage_to"">{0}</span>", rank.CombinedRank));
+                }
+
             }
 
             if (!string.IsNullOrEmpty(soundTextUK) || !string.IsNullOrEmpty(soundTextUS))
@@ -638,7 +692,7 @@ namespace Pronunciation.Parser
 
         private string PrepareImagePath(string imageName)
         {
-            if (_isDatabaseMode)
+            if (IsDatabaseMode)
             {
                 return string.Format("{0}{1}", ImagesPath, imageName);
             }
@@ -650,7 +704,7 @@ namespace Pronunciation.Parser
 
         private string PrepareLink(string keyword, bool isRootedSource)
         {
-            if (_isDatabaseMode)
+            if (IsDatabaseMode)
             {
                 return string.Format("javascript:void(loadPage('{0}'))", keyword);
             }
@@ -935,7 +989,7 @@ namespace Pronunciation.Parser
                         : (extractSounds ? CaptionBigUs : CaptionSmallUs);
 
                     string fileKey = Path.GetFileNameWithoutExtension(data);
-                    if (_isDatabaseMode)
+                    if (IsDatabaseMode)
                     {
                         result = string.Format(info.AdditionalData, fileKey, lang);
                     }

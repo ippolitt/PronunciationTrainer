@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
 
-namespace Pronunciation.Trainer
+namespace Pronunciation.Trainer.Dictionary
 {
     [ComVisibleAttribute(true)]
     public class DictionaryContainerScriptingProxy

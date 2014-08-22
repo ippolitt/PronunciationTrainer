@@ -2,12 +2,13 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Pronunciation.Trainer"
+        xmlns:controls="clr-namespace:Pronunciation.Trainer.Controls"
         xmlns:data="clr-namespace:Pronunciation.Trainer.Database"
         xmlns:my="clr-namespace:Pronunciation.Core.Database;assembly=Pronunciation.Core" 
         Title="Exercise" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
         UseLayoutRounding="True"
-        Initialized="Window_Initialized" Loaded="Window_Loaded" Closing="Window_Closing" Height="576" Width="782">
+        Initialized="Window_Initialized" Loaded="Window_Loaded" Closing="Window_Closing" ContentRendered="Window_ContentRendered" Height="576" Width="782">
     <DockPanel Name="rootPanel" Margin="10">
         <local:AudioPanel DockPanel.Dock="Top" Height="32" x:Name="audioPanel" />
 
@@ -119,7 +120,7 @@
                 </ScrollViewer>
             </Border>
 
-            <ListBox Grid.Row="1" Grid.Column="1" Margin="0,3,5,0" x:Name="lstAudios" TabIndex="100" 
+            <controls:ListBoxExt Grid.Row="1" Grid.Column="1" Margin="0,3,5,0" x:Name="lstAudios" TabIndex="100" 
                 SelectionChanged="lstAudios_SelectionChanged" MouseDoubleClick="lstAudios_MouseDoubleClick" SelectionMode="Extended" />
 
             <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,3,0,0" Name="actions" Orientation="Vertical" VerticalAlignment="Top">

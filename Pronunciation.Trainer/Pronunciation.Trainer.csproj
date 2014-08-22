@@ -77,19 +77,23 @@
     <Compile Include="AudioContexts\TrainingAudioContext.cs" />
     <Compile Include="AudioContexts\QuickRecorderAudioContext.cs" />
     <Compile Include="AudioContexts\ExerciseAudioContext.cs" />
+    <Compile Include="Controls\ComboBoxExt.cs" />
+    <Compile Include="Dictionary\DictionaryIndex.cs" />
+    <Compile Include="Dictionary\IndexPositionTracker.cs" />
     <Compile Include="Export\AudioExporter.cs" />
     <Compile Include="FileOverrideDialog.xaml.cs">
       <DependentUpon>FileOverrideDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\ListBoxExt.cs" />
     <Compile Include="RecordingHistory.xaml.cs">
       <DependentUpon>RecordingHistory.xaml</DependentUpon>
     </Compile>
-    <Compile Include="AppSettingsBasedRecordingPolicy.cs" />
-    <Compile Include="RecordingsList.cs" />
+    <Compile Include="Recording\AppSettingsBasedRecordingPolicy.cs" />
+    <Compile Include="Controls\RecordingsList.cs" />
     <Compile Include="Utility\BindingErrorTraceListener.cs" />
     <Compile Include="Commands\ExecuteActionCommand.cs" />
     <Compile Include="Utility\ControlsHelper.cs" />
-    <Compile Include="DictionaryContainerScriptingProxy.cs" />
+    <Compile Include="Dictionary\DictionaryContainerScriptingProxy.cs" />
     <Compile Include="Utility\FormatHelper.cs" />
     <Compile Include="Utility\MessageHelper.cs" />
     <Compile Include="ValueConverters\DurationToTimeConverter.cs" />
@@ -106,7 +110,7 @@
     <Compile Include="TrainingSelectionDialog.xaml.cs">
       <DependentUpon>TrainingSelectionDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="TabItemExt.cs" />
+    <Compile Include="Controls\TabItemExt.cs" />
     <Compile Include="DataImporter.xaml.cs">
       <DependentUpon>DataImporter.xaml</DependentUpon>
     </Compile>
@@ -129,7 +133,7 @@
     <Compile Include="SettingsPanel.xaml.cs">
       <DependentUpon>SettingsPanel.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserControlExt.cs" />
+    <Compile Include="Controls\UserControlExt.cs" />
     <Compile Include="WaveForm.xaml.cs">
       <DependentUpon>WaveForm.xaml</DependentUpon>
     </Compile>
@@ -165,7 +169,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Compile Include="ActionButton.cs" />
+    <Compile Include="Controls\ActionButton.cs" />
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -257,6 +261,9 @@
       <Link>lame.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Resource Include="Resources\ArrowDown.png" />
+    <Resource Include="Resources\ArrowUp.png" />
+    <Resource Include="Resources\ClearSearch.png" />
     <Resource Include="Resources\AudioHistory.png" />
     <Resource Include="Resources\AudioPlay.png" />
     <Resource Include="Resources\BuildingIndex.png" />

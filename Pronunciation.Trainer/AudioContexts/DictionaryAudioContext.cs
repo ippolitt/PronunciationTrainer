@@ -8,13 +8,14 @@ using System.IO;
 using System.Windows.Controls;
 using Pronunciation.Core.Providers.Recording;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
+using Pronunciation.Trainer.Dictionary;
 
 namespace Pronunciation.Trainer.AudioContexts
 {
     public class DictionaryAudioContext : IAudioContext
     {
         private readonly IDictionaryProvider _dictionaryProvider;
-        private readonly Dictionary<string, IndexEntry> _soundKeyIndex;
+        private readonly DictionaryIndex _dictionaryIndex;
         private readonly IRecordingProvider<LPDTargetKey> _recordingProvider;
         private readonly IRecordingHistoryPolicy _recordingPolicy;
         private LPDTargetKey _recordingKey;
@@ -24,11 +25,11 @@ namespace Pronunciation.Trainer.AudioContexts
 
         public event AudioContextChangedHandler ContextChanged;
 
-        public DictionaryAudioContext(IDictionaryProvider dictionaryProvider, Dictionary<string, IndexEntry> soundKeyIndex,
+        public DictionaryAudioContext(IDictionaryProvider dictionaryProvider, DictionaryIndex dictionaryIndex,
             IRecordingProvider<LPDTargetKey> recordingProvider, IRecordingHistoryPolicy recordingPolicy)
         {
             _dictionaryProvider = dictionaryProvider;
-            _soundKeyIndex = soundKeyIndex;
+            _dictionaryIndex = dictionaryIndex;
             _recordingProvider = recordingProvider;
             _recordingPolicy = recordingPolicy;
         }
@@ -56,12 +57,10 @@ namespace Pronunciation.Trainer.AudioContexts
             if (string.IsNullOrEmpty(soundKey))
                 return;
 
-            _currentSound = null;
-            IndexEntry sound;
-            if (_soundKeyIndex.TryGetValue(soundKey, out sound))
+            _currentSound = _dictionaryIndex.GetEntryBySoundKey(soundKey);
+            if (_currentSound != null)
             {
-                _currentSound = sound;
-                _isUKSound = string.Equals(soundKey, sound.SoundKeyUK, StringComparison.OrdinalIgnoreCase);
+                _isUKSound = string.Equals(soundKey, _currentSound.SoundKeyUK, StringComparison.OrdinalIgnoreCase);
             }
 
             _referenceAudio = null;
@@ -116,7 +115,7 @@ namespace Pronunciation.Trainer.AudioContexts
             { 
                 return _currentSound == null 
                     ? null
-                    : string.Format("Active audio: \"{0}\" {1}", _currentSound.Text, _isUKSound ? "UK" : "US"); 
+                    : string.Format("Active audio: \"{0}\" {1}", _currentSound.EntryText, _isUKSound ? "UK" : "US"); 
             }
         }
 

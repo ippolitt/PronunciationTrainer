@@ -30,6 +30,20 @@ iframe
 {
     float: right;
     font-size: 1em;
+    font-style: italic;
+}
+.word_usage_from
+{
+    font-weight: bold;
+}
+.word_usage_from:after
+{
+    content: "-";
+    font-weight: normal;
+}
+.word_usage_to
+{
+    font-weight: bold;
 }
 .previous_word, .next_word
 {

@@ -6,7 +6,7 @@ using System.Windows.Controls;
 using System.Windows;
 using Pronunciation.Trainer.Utility;
 
-namespace Pronunciation.Trainer
+namespace Pronunciation.Trainer.Controls
 {
     public class UserControlExt : UserControl
     {

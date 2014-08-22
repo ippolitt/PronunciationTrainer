@@ -8,7 +8,7 @@ using Pronunciation.Core.Actions;
 using System.Windows.Input;
 using System.Windows;
 
-namespace Pronunciation.Trainer
+namespace Pronunciation.Trainer.Controls
 {
     public class ActionButton : Button
     {

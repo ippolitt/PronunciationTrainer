@@ -25,6 +25,7 @@ using Pronunciation.Trainer.Export;
 using Pronunciation.Trainer.Utility;
 using Pronunciation.Trainer.Database;
 using Pronunciation.Core.Audio;
+using Pronunciation.Trainer.Recording;
 
 namespace Pronunciation.Trainer
 {
@@ -95,11 +96,22 @@ namespace Pronunciation.Trainer
                 _suppressPlay = true;
                 lstAudios.SelectedIndex = 0;
                 _suppressPlay = false;
-                lstAudios.Focus();
             }
             else
             {
                 SetListButtonsState(false);
+            }
+        }
+
+        private void Window_ContentRendered(object sender, EventArgs e)
+        {
+            if (lstAudios.Items.Count > 0)
+            {
+                // It works only after window content has been rendered
+                lstAudios.FocusSelectedItem();
+            }
+            else
+            {
                 bookIdComboBox.Focus();
             }
         }
@@ -291,7 +303,7 @@ namespace Pronunciation.Trainer
                         lstAudios.SelectedItem = audios.FirstOrDefault(x => x.AudioId == currentItem.AudioId);
                     }
                     _suppressPlay = false;
-                    lstAudios.Focus();
+                    lstAudios.FocusSelectedItem();
                 }
             }
         }
@@ -327,7 +339,7 @@ namespace Pronunciation.Trainer
                     _suppressPlay = true;
                     lstAudios.SelectedIndex = 0;
                     _suppressPlay = false;
-                    lstAudios.Focus();
+                    lstAudios.FocusSelectedItem();
                 }
                 else
                 {

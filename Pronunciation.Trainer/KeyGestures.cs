@@ -18,6 +18,21 @@ namespace Pronunciation.Trainer
             get { return new KeyGesture(Key.Right, ModifierKeys.Alt, "Alt+right arrow"); }
         }
 
+        public static KeyGesture PreviousWord
+        {
+            get { return new KeyGesture(Key.Up, ModifierKeys.Alt, "Alt+up arrow"); }
+        }
+
+        public static KeyGesture NextWord
+        {
+            get { return new KeyGesture(Key.Down, ModifierKeys.Alt, "Alt+down arrow"); }
+        }
+
+        public static KeyGesture ClearText
+        {
+            get { return new KeyGesture(Key.C, ModifierKeys.Alt, "Alt+C"); }
+        }
+
         public static KeyGesture PlayReference
         {
             get { return new KeyGesture(Key.A, ModifierKeys.Alt, "Alt+A"); }

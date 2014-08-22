@@ -20,6 +20,7 @@ using System.IO;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
 using Pronunciation.Trainer.Export;
 using Pronunciation.Trainer.Utility;
+using Pronunciation.Trainer.Controls;
 
 namespace Pronunciation.Trainer
 {
@@ -70,7 +71,7 @@ namespace Pronunciation.Trainer
 
         public void CaptureKeyboardFocus()
         {
-            lstRecordings.CaptureKeyboardFocus();
+            lstRecordings.FocusSelectedItem();
         }
 
         private void AudioPanel_RecordingCompleted(string recordedFilePath, bool isTemporaryFile)
@@ -79,7 +80,7 @@ namespace Pronunciation.Trainer
 
             lstRecordings.AttachItemsSource(_recordingProvider.GetAudioList());
             lstRecordings.SelectedRecording = lstRecordings.Recordings.Single(x => x.AudioKey == audioKey);
-            lstRecordings.Focus();
+            lstRecordings.FocusSelectedItem();
         }
 
         private void lstRecordings_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -202,7 +203,7 @@ namespace Pronunciation.Trainer
             if (lstRecordings.Items.Count > 0)
             {
                 lstRecordings.SelectedIndex = 0;
-                lstRecordings.Focus();
+                lstRecordings.FocusSelectedItem();
             }
             else
             {

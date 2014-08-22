@@ -114,6 +114,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="Providers\Dictionary\ArticleInfo.cs" />
     <Compile Include="Providers\Dictionary\LPDTargetKey.cs" />
     <Compile Include="Providers\Exercise\ExerciseTargetKey.cs" />
     <Compile Include="Providers\Recording\RecordedAudioListItem.cs" />
@@ -133,7 +134,6 @@
     <Compile Include="Providers\Dictionary\IndexEntry.cs" />
     <Compile Include="Providers\Dictionary\LPDDatabaseProvider.cs" />
     <Compile Include="Providers\Dictionary\LPDFileSystemProvider.cs" />
-    <Compile Include="Providers\Dictionary\LPDProviderBase.cs" />
     <Compile Include="Providers\Exercise\MultipartName.cs" />
     <Compile Include="Providers\Dictionary\PageInfo.cs" />
     <Compile Include="Providers\Training\TrainingTargetKey.cs" />

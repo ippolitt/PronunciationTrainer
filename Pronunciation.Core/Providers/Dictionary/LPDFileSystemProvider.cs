@@ -10,8 +10,9 @@ using Pronunciation.Core.Providers.Recording;
 
 namespace Pronunciation.Core.Providers.Dictionary
 {
-    public class LPDFileSystemProvider : LPDProviderBase, IDictionaryProvider
+    public class LPDFileSystemProvider : IDictionaryProvider
     {
+        private readonly string _baseFolder;
         private readonly string _dictionaryFolder;
         private readonly CallScriptMethodHandler _scriptMethodInvoker;
 
@@ -22,33 +23,39 @@ namespace Pronunciation.Core.Providers.Dictionary
         public delegate string CallScriptMethodHandler(string methodName, object[] methodArgs);
 
         public LPDFileSystemProvider(string baseFolder, CallScriptMethodHandler scriptMethodInvoker)
-            : base(baseFolder)
         {
-            _scriptMethodInvoker = scriptMethodInvoker;
+            _baseFolder = baseFolder;
             _dictionaryFolder = Path.Combine(baseFolder, DictionaryFolderName);
+            _scriptMethodInvoker = scriptMethodInvoker;
         }
 
-        public PageInfo LoadArticlePage(string pageKey)
+        public ArticlePage PrepareArticlePage(string articleKey)
         {
-            return new PageInfo(true, pageKey, BuildWordPath(pageKey));
+            Uri fileUrl = BuildWordPath(articleKey);
+            if (!File.Exists(fileUrl.LocalPath))
+                throw new ArgumentException(string.Format("Dictionary article '{0}' doesn't exist!", articleKey));
+
+            return new ArticlePage(articleKey, fileUrl);
         }
 
-        public PageInfo InitPageFromUrl(Uri pageUrl)
+        // This method is called for all hyperlinks inside a dictionary page
+        public PageInfo PrepareGenericPage(Uri pageUrl)
         {
-            string[] segments = pageUrl.Segments;
-            string fileName = HttpUtility.UrlDecode(segments[segments.Length - 1]);
-
             // Check if URI ends with "Dic/[subfolder]/[page name]"
+            string[] segments = pageUrl.Segments;
             bool isArticle = segments.Length >= 3
                 ? string.Equals(segments[segments.Length - 3], DictionaryFolderName + "/", StringComparison.OrdinalIgnoreCase)
                 : false;
 
-            string pageKey = Path.GetFileNameWithoutExtension(fileName);
-            Uri fileUrl = isArticle ? BuildWordPath(pageKey) : BuildWordListPath(pageKey);
-            if (!File.Exists(fileUrl.LocalPath))
-                return null;
-
-            return new PageInfo(isArticle, pageKey, fileUrl);
+            if (isArticle)
+            {
+                string pageKey = Path.GetFileNameWithoutExtension(HttpUtility.UrlDecode(segments[segments.Length - 1]));
+                return PrepareArticlePage(pageKey); 
+            }
+            else
+            {
+                return new PageInfo(pageUrl);
+            }
         }
 
         public PlaybackData GetAudio(string soundKey)
@@ -73,9 +80,9 @@ namespace Pronunciation.Core.Providers.Dictionary
 
         public List<IndexEntry> GetWordsIndex()
         {
-            string indexFile = Path.Combine(BaseFolder, IndexFileName);
+            string indexFile = Path.Combine(_baseFolder, IndexFileName);
             if (!File.Exists(indexFile))
-                return null;
+                throw new Exception(string.Format("Dictionary index file '{0}' doesn't exist!", indexFile));
 
             var words = new List<IndexEntry>();
             using (var reader = new StreamReader(indexFile, Encoding.UTF8))
@@ -83,10 +90,16 @@ namespace Pronunciation.Core.Providers.Dictionary
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 5)
+                    if (data.Length != 6)
                         throw new InvalidOperationException("Index file is broken!");
 
-                    words.Add(new IndexEntry(data[1], data[0], data[2] == "1" ? true : false, data[3], data[4]));
+                    words.Add(new IndexEntry(
+                        data[1], 
+                        data[0], 
+                        data[2] == "1" ? true : false,
+                        string.IsNullOrEmpty(data[3]) ? (int?)null : int.Parse(data[3]), 
+                        data[3], 
+                        data[4]));
                 }
             }
 

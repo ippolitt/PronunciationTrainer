@@ -2,20 +2,21 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Pronunciation.Trainer"
+        xmlns:controls="clr-namespace:Pronunciation.Trainer.Controls"
         Title="Pronunciation Trainer" Height="571" Width="827" Loaded="Window_Loaded"
         Closing="Window_Closing" Activated="Window_Activated">
     <TabControl Name="tabsRoot" TabStripPlacement="Top" Focusable="False" SelectionChanged="tabsRoot_SelectionChanged">
-        <local:TabItemExt Header="Dictionary" x:Name="tabDictionary" 
+        <controls:TabItemExt Header="Dictionary" x:Name="tabDictionary" 
                           DynamicContentType="local:DictionaryContainer" DynamicContentMargin="10" />
-        <local:TabItemExt Header="Exercises" x:Name="tabExercises"
+        <controls:TabItemExt Header="Exercises" x:Name="tabExercises"
                           DynamicContentType="local:ExerciseList" DynamicContentMargin="10" />
-        <local:TabItemExt Header="Training" x:Name="tabTraining"
+        <controls:TabItemExt Header="Training" x:Name="tabTraining"
                           DynamicContentType="local:TrainingList" DynamicContentMargin="10" />
-        <local:TabItemExt Header="Quick Recorder" x:Name="tabRecorder"
+        <controls:TabItemExt Header="Quick Recorder" x:Name="tabRecorder"
                           DynamicContentType="local:QuickRecorder" DynamicContentMargin="10" />     
-        <local:TabItemExt Header="Settings" x:Name="tabSettings"
+        <controls:TabItemExt Header="Settings" x:Name="tabSettings"
                           DynamicContentType="local:SettingsPanel" DynamicContentMargin="10,15,10,10" />
-        <!--<local:TabItemExt Header="Data import" x:Name="tabImport"
+        <!--<controls:TabItemExt Header="Data import" x:Name="tabImport"
                           DynamicContentType="local:DataImporter" DynamicContentMargin="10" />-->
     </TabControl>
 </Window>

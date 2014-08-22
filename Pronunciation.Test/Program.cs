@@ -28,6 +28,7 @@ namespace Pronunciation.Test
                 //Console.WriteLine(ToTimeString(ts));
                 //MigrateExerciseDurations();
                 //MigrateRecordingDurations();
+                bool gg = string.Equals(null, null);
                 return;
 
                 bool? rr = false;

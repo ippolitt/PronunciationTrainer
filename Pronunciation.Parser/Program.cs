@@ -22,11 +22,12 @@ namespace Pronunciation.Parser
         private const string HtmlSourceFile = DataFolder + "Results - Final.xml";
         private const string TopWordsFile = DataFolder + "TopWords.txt";
 
-        private const string HtmlFolderDB = @"D:\LEARN\English\Pronunciation\Trainer\LPD_DB";
-        private const string HtmlFolderFiles = @"D:\LEARN\English\Pronunciation\Trainer\LPD_File";
-        private const string LPDConnectionString = @"Data Source=D:\LEARN\English\Pronunciation\Trainer\Database\LPD.sdf;Max Database Size=4000;";
-        private const string TrainerConnectionString =
-@"Data Source=D:\LEARN\English\Pronunciation\Trainer\Database\PronunciationTrainer.sdf;Max Database Size=1000;Temp File Max Size=25;";
+        private const string TrainerFolder = @"D:\LEARN\English\Pronunciation\Trainer\";
+        private const string HtmlFolderDB = TrainerFolder + "LPD_DB";
+        private const string HtmlFolderFiles = TrainerFolder + "LPD_File";
+        private const string HtmlFolderIphone = TrainerFolder + "LPD_iPhone";
+        private const string LPDConnectionString = "Data Source=" + TrainerFolder + @"Database\LPD.sdf;Max Database Size=4000;";
+        private const string TrainerConnectionString = "Data Source=" + TrainerFolder + @"Database\PronunciationTrainer.sdf;Max Database Size=2000;";
 
         // Used for analysis
         private const string SourceFile = DataFolder + "En-En-Longman_Pronunciation.dsl";
@@ -40,12 +41,12 @@ namespace Pronunciation.Parser
             try
             {
                 //MigrateRecordingsToDB();
-                StoreLargeData();
+                //StoreLargeData();
                 //UploadFiles();
                 //UploadFilesBulk();
                 //TestUpload();
                 //MigrateRecordings();
-                return;
+                //return;
 
                 var rootFolder = Path.GetFullPath(Path.Combine(
                     Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), RootFolderPath));
@@ -69,26 +70,31 @@ namespace Pronunciation.Parser
                 //    Path.Combine(rootFolder, XmlFile),
                 //    true, false);
 
-                bool isDatabaseMode = true;
                 bool isFakeMode = true;
-                if (isDatabaseMode && !isFakeMode)
+                var generationMode = HtmlBuilder.GenerationMode.Database;
+
+                if (generationMode == HtmlBuilder.GenerationMode.Database && !isFakeMode)
                 {
                     CleanDatabase();
                 }
+
+                string outputHtmlFolder = generationMode == HtmlBuilder.GenerationMode.Database
+                    ? HtmlFolderDB
+                    : (generationMode == HtmlBuilder.GenerationMode.FileSystem ? HtmlFolderFiles : HtmlFolderIphone);
 
                 var fileLoader = new FileLoader(
                     Path.Combine(rootFolder, SoundsFolder),
                     Path.Combine(rootFolder, SoundsCacheFolder),
                     true);
                 var htmlBuilder = new HtmlBuilder(
-                    isDatabaseMode,
+                    generationMode,
                     LPDConnectionString,
                     Path.Combine(rootFolder, HtmlLogFile),
                     fileLoader,
                     Path.Combine(rootFolder, TopWordsFile));
                 htmlBuilder.ConvertToHtml(
                     Path.Combine(rootFolder, HtmlSourceFile),
-                    isDatabaseMode ? HtmlFolderDB : HtmlFolderFiles, 
+                    outputHtmlFolder,
                     -1,
                     isFakeMode);
 

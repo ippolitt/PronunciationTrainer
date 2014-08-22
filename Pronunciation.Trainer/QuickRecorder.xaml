@@ -1,9 +1,10 @@
-﻿<local:UserControlExt x:Class="Pronunciation.Trainer.QuickRecorder"
+﻿<controls:UserControlExt x:Class="Pronunciation.Trainer.QuickRecorder"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Pronunciation.Trainer"
+             xmlns:controls="clr-namespace:Pronunciation.Trainer.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="355" d:DesignWidth="870" Initialized="UserControl_Initialized" Loaded="UserControl_Loaded">
     <DockPanel Name="rootPanel">
@@ -19,7 +20,7 @@
                 <RowDefinition MinHeight="80" Height="*"></RowDefinition>
             </Grid.RowDefinitions>
             <TextBlock Grid.Column="0" Grid.Row="0" Margin="0,5,0,5" Name="textBlock1" Text="Recordings:" />
-            <local:RecordingsList Grid.Column="0" Grid.Row="1" Margin="0" x:Name="lstRecordings" 
+            <controls:RecordingsList Grid.Column="0" Grid.Row="1" Margin="0" x:Name="lstRecordings" 
                      MouseDoubleClick="lstRecordings_MouseDoubleClick" SelectionChanged="lstRecordings_SelectionChanged" SelectionMode="Extended" />
             <StackPanel Grid.Column="1" Grid.Row="1" Margin="10,0,0,0" Orientation="Vertical" VerticalAlignment="Top" >
                 <Button Margin="0,0,0,5" Content="Export" Name="btnExport" Click="btnExport_Click" ToolTip="Export the selected recordings as mp3 files" />
@@ -29,4 +30,4 @@
             </StackPanel>
         </Grid>
     </DockPanel>
-</local:UserControlExt>
+</controls:UserControlExt>
