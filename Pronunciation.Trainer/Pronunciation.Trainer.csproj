@@ -78,8 +78,11 @@
     <Compile Include="AudioContexts\QuickRecorderAudioContext.cs" />
     <Compile Include="AudioContexts\ExerciseAudioContext.cs" />
     <Compile Include="Controls\ComboBoxExt.cs" />
+    <Compile Include="Controls\ISuggestionItemInfo.cs" />
     <Compile Include="Dictionary\DictionaryIndex.cs" />
+    <Compile Include="Dictionary\IndexEntryImitation.cs" />
     <Compile Include="Dictionary\IndexPositionTracker.cs" />
+    <Compile Include="Controls\SuggestionsList.cs" />
     <Compile Include="Export\AudioExporter.cs" />
     <Compile Include="FileOverrideDialog.xaml.cs">
       <DependentUpon>FileOverrideDialog.xaml</DependentUpon>
@@ -90,12 +93,16 @@
     </Compile>
     <Compile Include="Recording\AppSettingsBasedRecordingPolicy.cs" />
     <Compile Include="Controls\RecordingsList.cs" />
+    <Compile Include="StyleSelectors\SuggestionsListItemStyleSelector.cs" />
     <Compile Include="Utility\BindingErrorTraceListener.cs" />
     <Compile Include="Commands\ExecuteActionCommand.cs" />
     <Compile Include="Utility\ControlsHelper.cs" />
     <Compile Include="Dictionary\DictionaryContainerScriptingProxy.cs" />
     <Compile Include="Utility\FormatHelper.cs" />
+    <Compile Include="Utility\IgnoreEventsRegion.cs" />
     <Compile Include="Utility\MessageHelper.cs" />
+    <Compile Include="ValueConverters\IStateToStringArgsProvider.cs" />
+    <Compile Include="ValueConverters\StateToStringConverter.cs" />
     <Compile Include="ValueConverters\DurationToTimeConverter.cs" />
     <Compile Include="Views\ExerciseAudioListItemWithData.cs" />
     <Compile Include="Views\ExerciseAudioListItem.cs" />
@@ -261,6 +268,8 @@
       <Link>lame.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Resource Include="Resources\SynchronizeList.png" />
+    <Resource Include="Resources\Favorites.png" />
     <Resource Include="Resources\ArrowDown.png" />
     <Resource Include="Resources\ArrowUp.png" />
     <Resource Include="Resources\ClearSearch.png" />

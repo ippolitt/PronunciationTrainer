@@ -1,5 +1,7 @@
 Top:
-- Create base MessageBox with predefined captions
+- Add a list "Unexpected pronunciation"
+- Should LPD html page be able to catch the focus (after TAB click)?
+- First click on Exercise takes too long. Should we warm-up the connection somehow?
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 - Bugs
 	- When doubleclick on the item in audio list, refresh context is called two times: selection changed and double click
@@ -18,8 +20,11 @@ Top:
 	- Cache latest audio files in providers (especially, LPD)
 	- Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
 - New functionality:
-	- Add at least main russian meaning to the LPD
 	- Add ability to mark certain words as problematic and practice them later
+	- Add ability to search by wildcards (e.g. select a certain problematic syllable - lrt - and practice many words with it)
+	- Add ability to expand list when I click on "..." (e.g. I want to through all items)
+	- Add bility to exclude "collocations" from search (useful when moving down the list of words)
+	- Add at least main russian meaning to the LPD
 	- Add a setting "Decrease recorded audio volume"
 	- Compare different reference pronunciation or different recorded ones
 	- Add special signs explanation (LPD or Amazon)
@@ -31,8 +36,8 @@ Top:
 	- Topics sorting in Exercise list is done by ID, not by text
 	- Add parent topic to the topics list (align  right)
 	- Add a switch to hide/display exercise description
-	- Should LPD html page be able to catch the focus (after TAB click)?
 - Code improvements:
+	- Create base MessageBox with predefined captions
 	- Add error logging
 	- Add a possibility to start background action passing arguments explicitly. Simplify delegates signatures (some don't need ActionContext etc.)
 	- Check if page URLs like 'file://127.0.0.1/C$/Folder/.../file.html' will work for non-admins (see method PrepareNavigationUri() in DictionaryContainer)
@@ -45,6 +50,7 @@ Waveforms:
 - Separate waveform on segments and allow to play a certain segment
 - Add word name to the last played audio
 - Play sound along with moving a slider on waveform
+- Add ability to show real amplitude of the sounds (don't stretch them) to compare loudness 
 
 Possible problems:
 - Deleting many exercises may cause an exception because IN statement would be too long (when deleting recorded audios)

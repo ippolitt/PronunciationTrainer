@@ -11,13 +11,7 @@ namespace Pronunciation.Trainer.Dictionary
         private IndexEntry[] _entries;
         private TokenizedIndexEntry[] _tokens;
         private Dictionary<string, IndexEntry> _soundKeys;
-        private readonly int _id;
         private bool _isInitialized;
-
-        public DictionaryIndex(int id)
-        {
-            _id = id;
-        }
 
         public void Build(IEnumerable<IndexEntry> entries, bool indexSoundKeys)
         {
@@ -35,11 +29,6 @@ namespace Pronunciation.Trainer.Dictionary
             _soundKeys = indexSoundKeys ? PopulateSoundKeys(_entries) : null;
 
             _isInitialized = true;
-        }
-
-        public int ID
-        {
-            get { return _id; }
         }
 
         public int EntriesCount

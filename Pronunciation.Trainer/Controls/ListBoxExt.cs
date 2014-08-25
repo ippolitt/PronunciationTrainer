@@ -11,10 +11,34 @@ namespace Pronunciation.Trainer.Controls
     {
         public void FocusSelectedItem()
         {
-            FocusSelectedItem(true);
+            FocusSelectedItemInternal(true);
         }
 
-        private void FocusSelectedItem(bool allowRetry)
+        public void ScrollToSelectedItem()
+        {
+            if (this.SelectedItem == null)
+                return;
+
+            // If ItemsSource has recently changed it may throw an exception so we do this call via Dispatcher
+            this.Dispatcher.BeginInvoke(new Action(ScrollToSelectedItemInternal));
+        }
+
+        private void ScrollToSelectedItemInternal()
+        {
+            if (this.SelectedItem == null)
+                return;
+
+            try
+            {
+                this.ScrollIntoView(this.SelectedItem);
+            }
+            catch 
+            {
+                // Errors are still possible sometimes
+            }
+        }
+
+        private void FocusSelectedItemInternal(bool allowRetry)
         {
             if (this.SelectedIndex < 0)
             {
@@ -34,7 +58,7 @@ namespace Pronunciation.Trainer.Controls
                 if (allowRetry)
                 {
                     // Retry asynchrously with low priority so that ItemContainerGenerator was able to generate all required items
-                    this.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => FocusSelectedItem(false)));
+                    this.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => FocusSelectedItemInternal(false)));
                 }
                 else
                 {

@@ -28,6 +28,16 @@ namespace Pronunciation.Trainer
             get { return new KeyGesture(Key.Down, ModifierKeys.Alt, "Alt+down arrow"); }
         }
 
+        public static KeyGesture SyncWord
+        {
+            get { return new KeyGesture(Key.Q, ModifierKeys.Alt, "Alt+Q"); }
+        }
+
+        public static KeyGesture Favorites
+        {
+            get { return new KeyGesture(Key.F, ModifierKeys.Alt, "Alt+F"); }
+        }
+
         public static KeyGesture ClearText
         {
             get { return new KeyGesture(Key.C, ModifierKeys.Alt, "Alt+C"); }

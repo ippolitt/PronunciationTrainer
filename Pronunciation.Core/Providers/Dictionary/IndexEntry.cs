@@ -19,16 +19,12 @@ namespace Pronunciation.Core.Providers.Dictionary
             return EntryText;
         }
 
-        public IndexEntry(string articleKey, string entryText, bool isCollocation)
+        public IndexEntry(string articleKey, string entryText, bool isCollocation, int? usageRank, 
+            string soundKeyUK, string soundKeyUS)
         {
             ArticleKey = articleKey;
             EntryText = entryText;
             IsCollocation = isCollocation;
-        }
-
-        public IndexEntry(string articleKey, string entryText, bool isCollocation, int? usageRank, string soundKeyUK, string soundKeyUS)
-            : this(articleKey, entryText, isCollocation)
-        {
             UsageRank = usageRank;
             SoundKeyUK = soundKeyUK;
             SoundKeyUS = soundKeyUS;

@@ -6,10 +6,16 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:Pronunciation.Trainer"
              xmlns:controls="clr-namespace:Pronunciation.Trainer.Controls"
+             xmlns:convert="clr-namespace:Pronunciation.Trainer.ValueConverters"
+             xmlns:styles="clr-namespace:Pronunciation.Trainer.StyleSelectors"
              mc:Ignorable="d" 
              d:DesignHeight="528" d:DesignWidth="826" Initialized="UserControl_Initialized"
              Loaded="UserControl_Loaded" PreviewKeyDown="UserControl_PreviewKeyDown">
     <UserControl.Resources>
+        <local:FavoritesTooltipArgsProvider x:Key="favoritesArgsProvider" />
+        <styles:SuggestionsListItemStyleSelector x:Key="suggestionsItemStyleSelector" />
+        <convert:StateToStringConverter x:Key="favoritesStateConverter" FormatArgsProvider="{StaticResource favoritesArgsProvider}"
+            FalseStringTemplate="Add the word to favorites [{0}]" TrueStringTemplate="Remove the word from favorites [{0}]" />
         <Style x:Key="GreyedImage" TargetType="Image">
             <Style.Triggers>
                 <Trigger Property="IsEnabled" Value="False">
@@ -17,68 +23,64 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
-        <Style x:Key="IndexItem" TargetType="ListBoxItem">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding Path=IsCollocation}" Value="True">
-                    <Setter Property="FontStyle" Value="Italic" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Path=ArticleKey}" Value="@">
-                    <Setter Property="Focusable" Value="False" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
     </UserControl.Resources>
     <DockPanel Name="rootPanel">
         <local:AudioPanel DockPanel.Dock="Top" Height="32" x:Name="audioPanel" />
-        <Grid DockPanel.Dock="Top" Height="32"  Name="grid1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="45" />
-                <ColumnDefinition Width="163*" />
-                <ColumnDefinition Width="75" />
-                <ColumnDefinition Width="200" />
-                <ColumnDefinition Width="23" />
-                <ColumnDefinition Width="50" />                
-                <ColumnDefinition Width="83" />
-                <ColumnDefinition Width="23" />
-                <ColumnDefinition Width="23" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" HorizontalAlignment="Left" Name="lblSearch" Text="Search:" Margin="0,6,0,0" />
-            <Border Grid.Column="1" Name="borderSearch" Background="White" Height="23" Margin="0,0,0,0">
-                <DockPanel>
-                    <Image DockPanel.Dock="Left" Source="Resources/SearchWord.png" Stretch="None" />
-                    <Button DockPanel.Dock="Right" Name="btnClearText" HorizontalAlignment="Stretch" Focusable="False" 
+        <DockPanel DockPanel.Dock="Top" Height="32">
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" HorizontalAlignment="Left">
+                <Border Width="150" Name="borderSearch" Background="White" Height="23" Margin="0,0,0,0">
+                    <DockPanel>
+                        <Image DockPanel.Dock="Left" Source="Resources/SearchWord.png" Stretch="None" />
+                        <Button DockPanel.Dock="Right" Name="btnClearText" HorizontalAlignment="Stretch" Focusable="False" 
                         Margin="0,0,1,0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Clear [{0}]">
-                        <Image Source="Resources/ClearSearch.png" Stretch="None" />
-                    </Button>
-                    <TextBox Name="txtSearch" BorderThickness="0" TextChanged="txtSearch_TextChanged" KeyDown="txtSearch_KeyDown" PreviewKeyDown="txtSearch_PreviewKeyDown" />
-                </DockPanel>
-            </Border>
-            <TextBlock Grid.Column="2" HorizontalAlignment="Right" Name="textBlock2" Text="Words list:" Margin="0,6,5,0" />
-            <controls:ComboBoxExt Grid.Column="3" Height="23" x:Name="cboWordLists" DisableAltGestures="True" DropDownClosed="cboWordLists_DropDownClosed" Margin="0,0,5,0" />            
-            <Button Grid.Column="4" Height="23" Width="23" Name="btnPrevious" HorizontalAlignment="Center" Focusable="False" 
-                Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                ToolTip="Previous word in the list [{0}]">
-                <Image Source="Resources/ArrowUp.png" Stretch="None" Style="{StaticResource GreyedImage}" />
-            </Button>
-            <Button Grid.Column="5" Height="23" Width="23" Name="btnNext" HorizontalAlignment="Left" Focusable="False" 
-                Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                ToolTip="Next word in the list [{0}]">
-                <Image Source="Resources/ArrowDown.png" Stretch="None" Style="{StaticResource GreyedImage}" />
-            </Button>            
-            <TextBlock Grid.Column="6" Name="textBlock1" Text="Recent words:" Margin="0,6,0,0" HorizontalAlignment="Left" />
-            <Button Grid.Column="7" Height="23" Width="23" Name="btnBack" HorizontalAlignment="Center" Focusable="False" 
-                Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                ToolTip="Go back [{0}]">
-                <Image Source="Resources/ArrowBack.png" Stretch="None" Style="{StaticResource GreyedImage}" />
-            </Button>
-            <Button Grid.Column="8" Height="23" Width="23" Name="btnForward" HorizontalAlignment="Center" Focusable="False" 
-                Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                ToolTip="Go forward [{0}]">
-                <Image Source="Resources/ArrowForward.png" Stretch="None" Style="{StaticResource GreyedImage}" />
-            </Button>
-        </Grid>
-        <controls:ListBoxExt x:Name="lstSuggestions" DockPanel.Dock="Left" Width="128" Margin="0,5,0,0" ItemContainerStyle="{StaticResource IndexItem}" MouseLeftButtonUp="lstSuggestions_MouseLeftButtonUp" PreviewKeyDown="lstSuggestions_PreviewKeyDown" />
-        <controls:ListBoxExt x:Name="lstRecentWords" DockPanel.Dock="Right" Width="128" Margin="10,5,0,0" ItemContainerStyle="{StaticResource IndexItem}" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown" />       
+                            <Image Source="Resources/ClearSearch.png" Stretch="None" />
+                        </Button>
+                        <TextBox Name="txtSearch" BorderThickness="0" TextChanged="txtSearch_TextChanged" KeyDown="txtSearch_KeyDown" PreviewKeyDown="txtSearch_PreviewKeyDown" />
+                    </DockPanel>
+                </Border>
+                <TextBlock Name="textBlock2" Text="Filter by rank:" Margin="10,0,5,0" VerticalAlignment="Center" />
+                <controls:ComboBoxExt Height="23" Width="120" x:Name="cboRanks" DisableAltGestures="True" SelectionChanged="cboRanks_SelectionChanged" KeyDown="cboRanks_KeyDown"  Margin="0,0,5,0" />
+                <TextBlock Name="textBlock3" Text="by category:" Margin="5,0,5,0" VerticalAlignment="Center" />
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Height="23" Width="23" Name="btnPrevious" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Previous word in the list [{0}]">
+                    <Image Source="Resources/ArrowUp.png" Stretch="None" Style="{StaticResource GreyedImage}" />
+                </Button>
+                <Button Height="23" Width="23" Name="btnNext" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Next word in the list [{0}]">
+                    <Image Source="Resources/ArrowDown.png" Stretch="None" Style="{StaticResource GreyedImage}" />
+                </Button>
+                <Button Height="23" Width="23" Name="btnSyncPage" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Find current word in the list [{0}]">
+                    <Image Source="Resources/SynchronizeList.png" Stretch="None" Style="{StaticResource GreyedImage}" />
+                </Button>                
+                <ToggleButton Height="23" Width="23" Name="btnFavorites" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ToggleButtonStyleKey }}"
+                    ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=IsChecked, Converter={StaticResource favoritesStateConverter}}">
+                    <Image Source="Resources/Favorites.png" Stretch="None" Style="{StaticResource GreyedImage}" />
+                </ToggleButton>
+                <TextBlock Name="textBlock1" Text="Recent words:" Margin="10,0,5,0" VerticalAlignment="Center" />
+                <Button Height="23" Width="23" Name="btnBack" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Go back [{0}]">
+                    <Image Source="Resources/ArrowBack.png" Stretch="None" Style="{StaticResource GreyedImage}" />
+                </Button>
+                <Button Height="23" Width="23" Name="btnForward" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Go forward [{0}]">
+                    <Image Source="Resources/ArrowForward.png" Stretch="None" Style="{StaticResource GreyedImage}" />
+                </Button>
+            </StackPanel>
+            <controls:ComboBoxExt Height="23" Margin="0,0,0,0" x:Name="cboCategories" DisableAltGestures="True" SelectionChanged="cboCategories_SelectionChanged" KeyDown="cboCategories_KeyDown" />            
+        </DockPanel>
+        <controls:SuggestionsList x:Name="lstSuggestions" DockPanel.Dock="Left" Width="150" Margin="0,5,0,0"
+            ItemContainerStyleSelector="{StaticResource suggestionsItemStyleSelector}" MouseLeftButtonUp="lstSuggestions_MouseLeftButtonUp" PreviewKeyDown="lstSuggestions_PreviewKeyDown"
+            SelectionChanged="lstSuggestions_SelectionChanged" />
+        <controls:ListBoxExt x:Name="lstRecentWords" DockPanel.Dock="Right" Width="128" Margin="10,5,0,0" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown" />       
         <WebBrowser Name="browser" LoadCompleted="browser_LoadCompleted" />
     </DockPanel>
 </controls:UserControlExt>
