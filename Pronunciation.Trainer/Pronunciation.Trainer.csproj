@@ -83,6 +83,10 @@
     <Compile Include="Dictionary\IndexEntryImitation.cs" />
     <Compile Include="Dictionary\IndexPositionTracker.cs" />
     <Compile Include="Controls\SuggestionsList.cs" />
+    <Compile Include="Dictionary\WordMembershipItem.cs" />
+    <Compile Include="Dictionary\WordCategoryInfo.cs" />
+    <Compile Include="Dictionary\WordCategoryManager.cs" />
+    <Compile Include="Dictionary\WordMembershipCollection.cs" />
     <Compile Include="Export\AudioExporter.cs" />
     <Compile Include="FileOverrideDialog.xaml.cs">
       <DependentUpon>FileOverrideDialog.xaml</DependentUpon>
@@ -141,6 +145,7 @@
       <DependentUpon>SettingsPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\UserControlExt.cs" />
+    <Compile Include="Views\WordCategoryListItem.cs" />
     <Compile Include="WaveForm.xaml.cs">
       <DependentUpon>WaveForm.xaml</DependentUpon>
     </Compile>

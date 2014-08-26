@@ -1,7 +1,13 @@
 Top:
-- Add a list "Unexpected pronunciation"
+- Add ordinal to categories
+- Add button "Refresh items" to hdnle situations when item has been added to a category and we want it to be relfected in the list
+- Add functionality for adding/removing custom categories (refresh dropdown list but preserve current item if possible)
+- Add a list "Unexpected pronunciation" (move files from Excel there)
+- Add status bar with session statistics (how many words recorded today) and list information (item 1 of 230)
+- Add a list with grammar notes (png images). Add these images to the different tab "Help" (use image container, not browser). Add them both to file and DB providers
 - Should LPD html page be able to catch the focus (after TAB click)?
 - First click on Exercise takes too long. Should we warm-up the connection somehow?
+- Will _dbContext cache all membership info that I ever Added or removed?
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 - Bugs
 	- When doubleclick on the item in audio list, refresh context is called two times: selection changed and double click
@@ -9,6 +15,7 @@ Top:
 	- Bug: sometimes it's possible to start two players (rec and ref) simultineously
 	- Bug when sequence is scheduled and I start another action
 	- There are no tags in my exported mp3 files
+	- Before removing the FakeEntity (for Exercise and Training) ensure they are not loaded into dbcontext
 - Performance:
 	- If we assign all index entries for LPD it eats + 6 MB (slowly, in background)
 	- Profile memory: when Exercise tab is first loaded etc.

@@ -157,9 +157,10 @@ namespace Pronunciation.Trainer
                 return;
 
             var dialog = new TrainingDetails();
-            dialog.NeedsDialogResult = true;
             dialog.CreateNew = true;
-            if (dialog.ShowDialog() == true && dialog.ActiveRecord != null)
+            dialog.IsApplyDisabled = true;
+            dialog.ShowDialog();
+            if (dialog.HasBeenCreated)
             {
                 MoveSelectedRecordingsToTraining(dialog.ActiveRecord.TrainingId, dialog.ActiveRecord.Title);
             }

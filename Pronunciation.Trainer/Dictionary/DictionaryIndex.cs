@@ -217,39 +217,22 @@ namespace Pronunciation.Trainer.Dictionary
 
             public int Compare(string x, string y)
             {
-                int result = 0;
-                if (x == y || (x == null && y == null))
+                int result = string.Compare(x, y);
+                if (result != 0 && x != null && y != null)
                 {
-                    result = 0;
-                }
-                else if (x == null)
-                {
-                    result = -1;
-                }
-                else if (y == null)
-                {
-                    result = 1;
-                }
-                else if (string.Equals(x, y, StringComparison.OrdinalIgnoreCase))
-                {
-                    // We rank case-sensitive match with the search text higher than case-insensitive one.
-                    // So if search text is "A", then we display: "A, a" 
-                    if (x.StartsWith(_searchText))
+                    // Check if they differ only by case and ensure that case-sensitive match with the search text 
+                    // is higher than case-insensitive one. So if search text is "A", then we display: "A, a" 
+                    if (string.Equals(x, y, StringComparison.OrdinalIgnoreCase))
                     {
-                        result = -1;
+                        if (x.StartsWith(_searchText))
+                        {
+                            result = -1;
+                        }
+                        else if (y.StartsWith(_searchText))
+                        {
+                            result = 1;
+                        }
                     }
-                    else if (y.StartsWith(_searchText))
-                    {
-                        result = 1;
-                    }
-                    else
-                    {
-                        result = x.CompareTo(y);
-                    }
-                }
-                else
-                {
-                    result = x.CompareTo(y);
                 }
 
                 return result;

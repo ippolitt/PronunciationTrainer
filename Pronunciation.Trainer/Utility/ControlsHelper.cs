@@ -47,5 +47,19 @@ namespace Pronunciation.Trainer.Utility
         {
             return GetContainer(element, AllowedContainerType.Window) != null;
         }
+
+        public static bool HasTextBecomeLonger(TextChangedEventArgs e)
+        {
+            if (e != null && e.Changes != null)
+            {
+                foreach (TextChange change in e.Changes)
+                {
+                    if (change.AddedLength > change.RemovedLength)
+                        return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

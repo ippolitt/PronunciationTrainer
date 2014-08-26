@@ -14,10 +14,10 @@ namespace Pronunciation.Trainer.Database
     public class PronunciationDbContext
     {
         private readonly Entities _dbContext;
-        private readonly Lazy<ObservableCollection<ExerciseListItem>> _exercises;
         private readonly Lazy<ObservableCollection<Topic>> _topics;
         private readonly Lazy<ObservableCollection<ExerciseType>> _exerciseTypes;
         private readonly Lazy<ObservableCollection<Book>> _books;
+        private readonly Lazy<ObservableCollection<ExerciseListItem>> _exercises;
         private readonly Lazy<ObservableCollection<TrainingListItem>> _trainings;
 
         private readonly static Lazy<PronunciationDbContext> _instance = new Lazy<PronunciationDbContext>(
@@ -58,11 +58,6 @@ namespace Pronunciation.Trainer.Database
             });
         }
 
-        public ObservableCollection<ExerciseListItem> Exercises
-        {
-            get { return _exercises.Value; }
-        }
-
         public ObservableCollection<Topic> Topics
         {
             get { return _topics.Value; }
@@ -76,6 +71,11 @@ namespace Pronunciation.Trainer.Database
         public ObservableCollection<Book> Books
         {
             get { return _books.Value; }
+        }
+
+        public ObservableCollection<ExerciseListItem> Exercises
+        {
+            get { return _exercises.Value; }
         }
 
         public ObservableCollection<TrainingListItem> Trainings

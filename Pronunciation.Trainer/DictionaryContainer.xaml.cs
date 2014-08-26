@@ -27,6 +27,10 @@ using Pronunciation.Trainer.Recording;
 using Pronunciation.Trainer.Dictionary;
 using Pronunciation.Trainer.Controls;
 using Pronunciation.Trainer.ValueConverters;
+using Pronunciation.Trainer.Database;
+using System.ComponentModel;
+using Pronunciation.Trainer.Views;
+using System.Media;
 
 namespace Pronunciation.Trainer
 {
@@ -56,6 +60,7 @@ namespace Pronunciation.Trainer
         private class CurrentPageInfo
         {
             public PageInfo Page;
+            public string WordName;
             public IndexEntry WordIndex;
         }
 
@@ -67,6 +72,7 @@ namespace Pronunciation.Trainer
         private CurrentPageInfo _currentPage;
         private DictionaryIndex _mainIndex;
         private DictionaryIndex _searchIndex;
+        private WordCategoryManager _categoryManager;
         private readonly IgnoreEventsRegion _ignoreEvents = new IgnoreEventsRegion();
 
         private ExecuteActionCommand _commandBack;
@@ -85,15 +91,12 @@ namespace Pronunciation.Trainer
             InitializeComponent();
         }
 
-        private bool IsFilterActive
-        {
-            get { return !ReferenceEquals(_searchIndex, _mainIndex); }
-        }
-
         private void UserControl_Initialized(object sender, EventArgs e)
         {
             _mainIndex = new DictionaryIndex();
             _searchIndex = _mainIndex;
+
+            _categoryManager = new WordCategoryManager();
 
             //_dictionaryProvider = new LPDFileSystemProvider(AppSettings.Instance.Folders.DictionaryFile, CallScriptMethod);
             _dictionaryProvider = new LPDDatabaseProvider(AppSettings.Instance.Folders.DictionaryDB, AppSettings.Instance.Connections.LPD);
@@ -117,7 +120,7 @@ namespace Pronunciation.Trainer
             _commandClearText = new ExecuteActionCommand(ClearText, true);
             _commandPrevious = new ExecuteActionCommand(GoPreviousItem, false);
             _commandNext = new ExecuteActionCommand(GoNextItem, false);
-            _commandFavorites = new ExecuteActionCommand(SetFavorite, false);
+            _commandFavorites = new ExecuteActionCommand(SetFavoriteFromCommand, false);
             _commandSyncPage = new ExecuteActionCommand(SynchronizePage, false);
 
             this.InputBindings.Add(new KeyBinding(_commandBack, KeyGestures.NavigateBack));
@@ -133,13 +136,17 @@ namespace Pronunciation.Trainer
             btnClearText.Command = _commandClearText;
             btnPrevious.Command = _commandPrevious;
             btnNext.Command = _commandNext;
-            btnFavorites.Command = _commandFavorites;
             btnSyncPage.Command = _commandSyncPage;
+            // process command and toggle button separately to distinguish action source
+            btnFavorites.IsEnabled = false;
 
-            cboRanks.ItemsSource = GetWordLists();
             using (var region = _ignoreEvents.Start())
             {
+                cboRanks.ItemsSource = GetWordLists();
                 cboRanks.SelectedIndex = 0;
+
+                cboCategories.ItemsSource = GetCategoriesList();
+                cboCategories.SelectedIndex = 0;
             }
 
             SplashScreen splash = null;
@@ -241,22 +248,24 @@ namespace Pronunciation.Trainer
                         _currentPage.WordIndex = _mainIndex.GetWordByPageKey(((ArticlePage)_currentPage.Page).ArticleKey);
                     }
 
-                    // We register only recent words, not collocations
                     if (_currentPage.WordIndex != null)
                     {
+                        _currentPage.WordName = _currentPage.WordIndex.EntryText;
+
+                        // We register only recent words, not collocations
                         RegisterRecentWord(_currentPage.WordIndex);
                     }
                 }
 
-                _commandFavorites.UpdateState(_currentPage.WordIndex != null);
                 _commandSyncPage.UpdateState(_currentPage.WordIndex != null);
 
                 RefreshAudioContext(sourceIndex ?? _currentPage.WordIndex);
                 RefreshHistoryNavigationState();
+                RefreshFavoritesState(_currentPage.WordName);
             }
             catch (Exception ex)
             {
-                _commandFavorites.UpdateState(false);
+                RefreshFavoritesState(null);
 
                 // For some reason errors in this event are not caught by the handlers in App.cs
                 MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -303,6 +312,24 @@ namespace Pronunciation.Trainer
             _commandForward.UpdateState(_history.CanGoForward);
         }
 
+        private void RefreshFavoritesState(string wordName)
+        {
+            if (string.IsNullOrEmpty(wordName))
+            {
+                _commandFavorites.UpdateState(false);
+                btnFavorites.IsEnabled = false;
+            }
+            else
+            {
+                _commandFavorites.UpdateState(true);
+                btnFavorites.IsEnabled = true;
+                using (var region = _ignoreEvents.Start())
+                {
+                    btnFavorites.IsChecked = _categoryManager.IsInFavorites(_currentPage.WordName);
+                }
+            }
+        }
+
         private void GoBack()
         {
             if (_history.CanGoBack)
@@ -336,10 +363,41 @@ namespace Pronunciation.Trainer
                 NavigateWord(entry, NavigationSource.ListNavigation);
             }
         }
-
-        private void SetFavorite()
+       
+        private void btnFavorites_Checked(object sender, RoutedEventArgs e)
         {
-            bool isAdd = (btnFavorites.IsChecked == true);
+            if (_ignoreEvents.IsActive)
+                return;
+
+            SetFavorite(true);
+        }
+
+        private void btnFavorites_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (_ignoreEvents.IsActive)
+                return;
+
+            SetFavorite(false);
+        }
+
+        private void SetFavoriteFromCommand()
+        {
+            btnFavorites.IsChecked = !(btnFavorites.IsChecked ?? false);
+        }
+
+        private void SetFavorite(bool isChecked)
+        {
+            if (_currentPage == null || string.IsNullOrEmpty(_currentPage.WordName))
+                return;
+
+            if (isChecked)
+            {
+                _categoryManager.AddToFavorites(_currentPage.WordName);
+            }
+            else
+            {
+                _categoryManager.RemoveFromFavorites(_currentPage.WordName);
+            }
         }
 
         private void ClearText()
@@ -361,32 +419,17 @@ namespace Pronunciation.Trainer
             if (_ignoreEvents.IsActive)
                 return;
 
-            var selectedItem = cboRanks.SelectedItem as KeyTextPair<int>;
-            if (selectedItem == null)
-                return;
-
-            if (selectedItem.Key == 0)
-            {
-                _searchIndex = _mainIndex;
-                LoadSuggestions(lstSuggestions, txtSearch.Text);
-                if (lstSuggestions.Items.Count <= 0 && string.IsNullOrEmpty(txtSearch.Text))
-                {
-                    lstSuggestions.AttachItemsSource(new[] { GetHintSuggestion() });
-                }
-            }
-            else
-            {
-                _searchIndex = new DictionaryIndex();
-                _searchIndex.Build(_mainIndex.Entries.Where(x => x.UsageRank == selectedItem.Key), false);
-
-                LoadSuggestions(lstSuggestions, txtSearch.Text);
-                lstSuggestions.SelectFirstItem(false, true);
-            }
+            ActivateFilter();
+            RefreshSuggestions();
         }
 
         private void cboCategories_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (_ignoreEvents.IsActive)
+                return;
 
+            ActivateFilter();
+            RefreshSuggestions();
         }
 
         private void txtSearch_TextChanged(object sender, TextChangedEventArgs e)
@@ -394,20 +437,51 @@ namespace Pronunciation.Trainer
             if (_ignoreEvents.IsActive)
                 return;
 
-            LoadSuggestions(lstSuggestions, txtSearch.Text);
-            if (lstSuggestions.Items.Count <= 0 && string.IsNullOrEmpty(txtSearch.Text) && !IsFilterActive)
+            bool hasSuggestions = RefreshSuggestions();
+            if (!hasSuggestions && ControlsHelper.HasTextBecomeLonger(e))
             {
-                lstSuggestions.AttachItemsSource(new[] { GetHintSuggestion() });
-            }
-            else
-            {
-                lstSuggestions.SelectFirstItem(false, true);
+                SystemSounds.Beep.Play();
             }
         }
 
-        private void LoadSuggestions(SuggestionsList lst, string searchText)
+        private void ActivateFilter()
         {
-            if (IsFilterActive)
+            var selectedRank = cboRanks.SelectedItem as KeyTextPair<int>;
+            var selectedCategory = cboCategories.SelectedItem as WordCategoryListItem;
+
+            int rank = selectedRank == null ? 0 : selectedRank.Key;
+            Guid categoryId = selectedCategory == null ? Guid.Empty : selectedCategory.WordCategoryId;
+            if (rank == 0 && categoryId == Guid.Empty)
+            {
+                _searchIndex = _mainIndex;
+            }
+            else
+            {
+                var query = rank == 0 ? _mainIndex.Entries : _mainIndex.Entries.Where(x => x.UsageRank == rank);
+                if (categoryId != Guid.Empty)
+                {
+                    HashSet<string> categoryWords = _categoryManager.GetCategoryWords(categoryId);
+                    if (categoryWords != null && categoryWords.Count > 0)
+                    {
+                        query = query.Where(x => categoryWords.Contains(x.EntryText));
+                    }
+                    else
+                    {
+                        // It means there are no words in the category
+                        query = new IndexEntry[0];
+                    }
+                }
+
+                _searchIndex = new DictionaryIndex();
+                _searchIndex.Build(query, false);
+            }
+        }
+
+        private bool RefreshSuggestions()
+        {
+            string searchText = txtSearch.Text;
+            bool isFilterActive = !ReferenceEquals(_searchIndex, _mainIndex);
+            if (isFilterActive)
             {
                 if (string.IsNullOrEmpty(searchText))
                 {
@@ -458,12 +532,39 @@ namespace Pronunciation.Trainer
 
                     lstSuggestions.AttachItemsSource(filterEntries);
                 }
-            } 
+            }
+
+            bool hasSuggestions = lstSuggestions.Items.Count > 0;
+            if (hasSuggestions)
+            {
+                lstSuggestions.SelectFirstItem(false, true);
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(searchText))
+                {
+                    if (!isFilterActive)
+                    {
+                        lstSuggestions.AttachItemsSource(new[] { GetHintSuggestion() });
+                    }
+                }
+                else
+                {
+                    lstSuggestions.AttachItemsSource(new[] { GetNoMatchSuggestion() });
+                }                
+            }
+
+            return hasSuggestions;
         }
 
         private IndexEntryImitation GetHintSuggestion()
         {
             return new IndexEntryImitation("Start typing...");
+        }
+
+        private IndexEntryImitation GetNoMatchSuggestion()
+        {
+            return new IndexEntryImitation("No matching results");
         }
 
         private void txtSearch_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -628,6 +729,14 @@ namespace Pronunciation.Trainer
                 new KeyTextPair<int>(5000, "Top 3000-5000"),
                 new KeyTextPair<int>(7500, "Top 5000-7500")
             };
+        }
+
+        private List<WordCategoryListItem> GetCategoriesList()
+        {
+            var categories = new List<WordCategoryListItem> { new WordCategoryListItem { DisplayName = "none" } };
+            categories.AddRange(_categoryManager.GetAllCategories().OrderBy(x => x));
+
+            return categories;
         }
     }
 

@@ -8,6 +8,7 @@
              xmlns:controls="clr-namespace:Pronunciation.Trainer.Controls"
              xmlns:convert="clr-namespace:Pronunciation.Trainer.ValueConverters"
              xmlns:styles="clr-namespace:Pronunciation.Trainer.StyleSelectors"
+             xmlns:data="clr-namespace:Pronunciation.Trainer.Database"
              mc:Ignorable="d" 
              d:DesignHeight="528" d:DesignWidth="826" Initialized="UserControl_Initialized"
              Loaded="UserControl_Loaded" PreviewKeyDown="UserControl_PreviewKeyDown">
@@ -58,7 +59,7 @@
                     ToolTip="Find current word in the list [{0}]">
                     <Image Source="Resources/SynchronizeList.png" Stretch="None" Style="{StaticResource GreyedImage}" />
                 </Button>                
-                <ToggleButton Height="23" Width="23" Name="btnFavorites" Focusable="False" 
+                <ToggleButton Height="23" Width="23" Name="btnFavorites" Focusable="False" Checked="btnFavorites_Checked" Unchecked="btnFavorites_Unchecked"
                     Margin="0" Style="{StaticResource {x:Static ToolBar.ToggleButtonStyleKey }}"
                     ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=IsChecked, Converter={StaticResource favoritesStateConverter}}">
                     <Image Source="Resources/Favorites.png" Stretch="None" Style="{StaticResource GreyedImage}" />

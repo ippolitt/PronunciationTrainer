@@ -8,6 +8,11 @@ namespace Pronunciation.Core.Database
     
     public partial class Exercise
     {
+        public Exercise()
+        {
+            this.ExerciseAudios = new HashSet<ExerciseAudio>();
+        }
+
         public Guid ExerciseId { get; set; }
         public Nullable<int> ExerciseTypeId { get; set; }
         public Nullable<int> BookId { get; set; }

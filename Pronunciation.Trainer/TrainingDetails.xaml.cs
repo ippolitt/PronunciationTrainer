@@ -32,8 +32,9 @@ namespace Pronunciation.Trainer
     public partial class TrainingDetails : Window
     {
         public bool CreateNew { get; set; }
-        public bool NeedsDialogResult { get; set; }
+        public bool IsApplyDisabled { get; set; }
         public Guid? TrainingId { get; set; }
+        public bool HasBeenCreated { get; private set; }
 
         private Entities _dbRecordContext;
         private TrainingAudioContext _audioContext;
@@ -42,6 +43,7 @@ namespace Pronunciation.Trainer
         private readonly CollectionChangeTracker<string> _audioKeysTracker;
         private bool _isLoadingContent;
         private bool _isContentChanged;
+        private bool _isCreated;
 
         private static readonly string ContentFormat = DataFormats.Rtf;
         private static readonly string NewLineSymbol = Environment.NewLine;
@@ -103,7 +105,7 @@ namespace Pronunciation.Trainer
             }
 
             btnDeleteReference.IsEnabled = _activeRecord.ReferenceAudioData != null;
-            btnApply.IsEnabled = !NeedsDialogResult;
+            btnApply.IsEnabled = !IsApplyDisabled;
         }
 
         private void Window_ContentRendered(object sender, EventArgs e)
@@ -274,10 +276,6 @@ namespace Pronunciation.Trainer
             btnOK.Focus();
 
             SaveChanges();
-            if (NeedsDialogResult)
-            {
-                DialogResult = true;
-            }
             this.Close();
         }
 
@@ -304,9 +302,14 @@ namespace Pronunciation.Trainer
                     _activeRecord.Created = DateTime.Now;
                 }
                 _dbRecordContext.SaveChanges();
+                if (CreateNew)
+                {
+                    HasBeenCreated = true;
+                }
                 PronunciationDbContext.Instance.NotifyTrainingChanged(_activeRecord.TrainingId, CreateNew);
                 CreateNew = false;
             }
+
             // Reset it even if the data context thinks there are no changes (data context logic is smarter than ours)
             _isContentChanged = false;
 
@@ -346,11 +349,6 @@ namespace Pronunciation.Trainer
                     _recordingProvider.DeleteAudios(_audioKeysTracker.GetAddedItems());
                 }
                 _audioKeysTracker.Reset();
-            }
-
-            if (NeedsDialogResult)
-            {
-                DialogResult = !_dbRecordContext.HasChanges();
             }
         }
 

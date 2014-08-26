@@ -102,6 +102,8 @@
     </Compile>
     <Compile Include="Database\Topic.cs" />
     <Compile Include="Database\TopicExt.cs" />
+    <Compile Include="Database\WordCategory.cs" />
+    <Compile Include="Database\WordCategoryMembership.cs" />
     <Compile Include="KeyTextPair.cs" />
     <Compile Include="Contexts\IAudioContext.cs" />
     <Compile Include="Contexts\PlaybackData.cs" />
