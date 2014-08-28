@@ -1,10 +1,9 @@
 Top:
 - Add ordinal to categories
-- Add button "Refresh items" to hdnle situations when item has been added to a category and we want it to be relfected in the list
-- Add functionality for adding/removing custom categories (refresh dropdown list but preserve current item if possible)
-- Add a list "Unexpected pronunciation" (move files from Excel there)
+- Add button "Refresh items" to hdnle situations when item has been added to a category and we want it to be relfected in the list (ir think of another strategy)
 - Add status bar with session statistics (how many words recorded today) and list information (item 1 of 230)
 - Add a list with grammar notes (png images). Add these images to the different tab "Help" (use image container, not browser). Add them both to file and DB providers
+- Add a list "Unexpected pronunciation" (move files from Excel there)
 - Should LPD html page be able to catch the focus (after TAB click)?
 - First click on Exercise takes too long. Should we warm-up the connection somehow?
 - Will _dbContext cache all membership info that I ever Added or removed?
@@ -26,6 +25,7 @@ Top:
 	- Optimize IsAudioExists calls (AudioPanel currently makes it twice)
 	- Cache latest audio files in providers (especially, LPD)
 	- Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
+	- Think of another DB engine (SQLLite?). Test it with big databases and storing image/binary/ntext data.  
 - New functionality:
 	- Add ability to mark certain words as problematic and practice them later
 	- Add ability to search by wildcards (e.g. select a certain problematic syllable - lrt - and practice many words with it)
@@ -39,12 +39,19 @@ Top:
 	- Add a "Sound search" functionality
 	- Create a text version of each sentence/phrase to be able to perform full text search
 	- Play any word in the dictionary when I double click on it
+	- Add ability to add any word in the exercise to dictionary favorites
 - Usability improvements
+	- Improve category dialog: add with hot key, delete with DEL
+	- Rename Trainings to Readings
+	- Use + and - images instead of "Add"/"Delete" text
+	- Make EN/US buttons in LPD html smaller when targeting database (they are rarely clicked)
 	- Topics sorting in Exercise list is done by ID, not by text
 	- Add parent topic to the topics list (align  right)
 	- Add a switch to hide/display exercise description
+	- We should be able to see waveforms when an audio is playing (but not when is recording)
 - Code improvements:
-	- Create base MessageBox with predefined captions
+	- Use stack panel in AudioPanel (read first what is better: Grid or stack panel)
+	- Use Lazy for Active record in Exercise/Trainig details dialog
 	- Add error logging
 	- Add a possibility to start background action passing arguments explicitly. Simplify delegates signatures (some don't need ActionContext etc.)
 	- Check if page URLs like 'file://127.0.0.1/C$/Folder/.../file.html' will work for non-admins (see method PrepareNavigationUri() in DictionaryContainer)

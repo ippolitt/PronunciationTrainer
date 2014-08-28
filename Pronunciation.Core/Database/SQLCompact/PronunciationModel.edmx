@@ -8,14 +8,18 @@
         <EntityContainer Name="PronunciationModelStoreContainer">
           <EntitySet Name="AudioTargetType" EntityType="PronunciationModel.Store.AudioTargetType" store:Type="Tables" />
           <EntitySet Name="Book" EntityType="PronunciationModel.Store.Book" store:Type="Tables" />
+          <EntitySet Name="DictionaryCategory" EntityType="PronunciationModel.Store.DictionaryCategory" store:Type="Tables" />
+          <EntitySet Name="DictionaryCategoryMember" EntityType="PronunciationModel.Store.DictionaryCategoryMember" store:Type="Tables" />
           <EntitySet Name="Exercise" EntityType="PronunciationModel.Store.Exercise" store:Type="Tables" />
           <EntitySet Name="ExerciseAudio" EntityType="PronunciationModel.Store.ExerciseAudio" store:Type="Tables" />
           <EntitySet Name="ExerciseType" EntityType="PronunciationModel.Store.ExerciseType" store:Type="Tables" />
           <EntitySet Name="RecordedAudio" EntityType="PronunciationModel.Store.RecordedAudio" store:Type="Tables" />
           <EntitySet Name="Topic" EntityType="PronunciationModel.Store.Topic" store:Type="Tables" />
           <EntitySet Name="Training" EntityType="PronunciationModel.Store.Training" store:Type="Tables" />
-          <EntitySet Name="WordCategory" EntityType="PronunciationModel.Store.WordCategory" store:Type="Tables" />
-          <EntitySet Name="WordCategoryMembership" EntityType="PronunciationModel.Store.WordCategoryMembership" store:Type="Tables" />
+          <AssociationSet Name="FK_DictionaryCategoryMember_DictionaryCategory" Association="PronunciationModel.Store.FK_DictionaryCategoryMember_DictionaryCategory">
+            <End Role="DictionaryCategory" EntitySet="DictionaryCategory" />
+            <End Role="DictionaryCategoryMember" EntitySet="DictionaryCategoryMember" />
+          </AssociationSet>
           <AssociationSet Name="FK_Exercise_Book" Association="PronunciationModel.Store.FK_Exercise_Book">
             <End Role="Book" EntitySet="Book" />
             <End Role="Exercise" EntitySet="Exercise" />
@@ -44,10 +48,6 @@
             <End Role="Topic" EntitySet="Topic" />
             <End Role="Topic1" EntitySet="Topic" />
           </AssociationSet>
-          <AssociationSet Name="FK_WordCategoryMembership_WordCategory" Association="PronunciationModel.Store.FK_WordCategoryMembership_WordCategory">
-            <End Role="WordCategory" EntitySet="WordCategory" />
-            <End Role="WordCategoryMembership" EntitySet="WordCategoryMembership" />
-          </AssociationSet>
         </EntityContainer>
         <EntityType Name="AudioTargetType">
           <Key>
@@ -64,6 +64,23 @@
           <Property Name="Title" Type="nvarchar" MaxLength="200" />
           <Property Name="ShortName" Type="nvarchar" Nullable="false" MaxLength="20" />
           <Property Name="Author" Type="nvarchar" MaxLength="50" />
+        </EntityType>
+        <EntityType Name="DictionaryCategory">
+          <Key>
+            <PropertyRef Name="CategoryId" />
+          </Key>
+          <Property Name="CategoryId" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="DisplayName" Type="nvarchar" Nullable="false" MaxLength="100" />
+          <Property Name="Description" Type="nvarchar" MaxLength="500" />
+          <Property Name="IsSystemCategory" Type="bit" />
+        </EntityType>
+        <EntityType Name="DictionaryCategoryMember">
+          <Key>
+            <PropertyRef Name="MembershipId" />
+          </Key>
+          <Property Name="MembershipId" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="CategoryId" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="WordName" Type="nvarchar" Nullable="false" MaxLength="100" />
         </EntityType>
         <EntityType Name="Exercise">
           <Key>
@@ -137,23 +154,20 @@
           <Property Name="CharacterCount" Type="int" />
           <Property Name="ReferenceAudioDuration" Type="int" />
         </EntityType>
-        <EntityType Name="WordCategory">
-          <Key>
-            <PropertyRef Name="WordCategoryId" />
-          </Key>
-          <Property Name="WordCategoryId" Type="uniqueidentifier" Nullable="false" />
-          <Property Name="DisplayName" Type="nvarchar" Nullable="false" MaxLength="100" />
-          <Property Name="Description" Type="nvarchar" MaxLength="500" />
-          <Property Name="IsSystemCategory" Type="bit" />
-        </EntityType>
-        <EntityType Name="WordCategoryMembership">
-          <Key>
-            <PropertyRef Name="MembershipId" />
-          </Key>
-          <Property Name="MembershipId" Type="uniqueidentifier" Nullable="false" />
-          <Property Name="WordCategoryId" Type="uniqueidentifier" Nullable="false" />
-          <Property Name="WordName" Type="nvarchar" Nullable="false" MaxLength="100" />
-        </EntityType>
+        <Association Name="FK_DictionaryCategoryMember_DictionaryCategory">
+          <End Role="DictionaryCategory" Type="PronunciationModel.Store.DictionaryCategory" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="DictionaryCategoryMember" Type="PronunciationModel.Store.DictionaryCategoryMember" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="DictionaryCategory">
+              <PropertyRef Name="CategoryId" />
+            </Principal>
+            <Dependent Role="DictionaryCategoryMember">
+              <PropertyRef Name="CategoryId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_Exercise_Book">
           <End Role="Book" Type="PronunciationModel.Store.Book" Multiplicity="0..1" />
           <End Role="Exercise" Type="PronunciationModel.Store.Exercise" Multiplicity="*" />
@@ -240,20 +254,6 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_WordCategoryMembership_WordCategory">
-          <End Role="WordCategory" Type="PronunciationModel.Store.WordCategory" Multiplicity="1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="WordCategoryMembership" Type="PronunciationModel.Store.WordCategoryMembership" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="WordCategory">
-              <PropertyRef Name="WordCategoryId" />
-            </Principal>
-            <Dependent Role="WordCategoryMembership">
-              <PropertyRef Name="WordCategoryId" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
       </Schema></edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
@@ -295,11 +295,11 @@
             <End Role="ExerciseAudio" EntitySet="ExerciseAudios" />
           </AssociationSet>
           <EntitySet Name="Trainings" EntityType="PronunciationModel.Training" />
-          <EntitySet Name="WordCategories" EntityType="PronunciationModel.WordCategory" />
-          <EntitySet Name="WordCategoryMemberships" EntityType="PronunciationModel.WordCategoryMembership" />
-          <AssociationSet Name="FK_WordCategoryMembership_WordCategory" Association="PronunciationModel.FK_WordCategoryMembership_WordCategory">
-            <End Role="WordCategory" EntitySet="WordCategories" />
-            <End Role="WordCategoryMembership" EntitySet="WordCategoryMemberships" />
+          <EntitySet Name="DictionaryCategories" EntityType="PronunciationModel.DictionaryCategory" />
+          <EntitySet Name="DictionaryCategoryMembers" EntityType="PronunciationModel.DictionaryCategoryMember" />
+          <AssociationSet Name="FK_DictionaryCategoryMember_DictionaryCategory" Association="PronunciationModel.FK_DictionaryCategoryMember_DictionaryCategory">
+            <End Role="DictionaryCategory" EntitySet="DictionaryCategories" />
+            <End Role="DictionaryCategoryMember" EntitySet="DictionaryCategoryMembers" />
           </AssociationSet>
         </EntityContainer>
         <EntityType Name="Book">
@@ -488,34 +488,34 @@
           <Property Type="Int32" Name="CharacterCount" />
           <Property Type="Int32" Name="ReferenceAudioDuration" />
         </EntityType>
-        <EntityType Name="WordCategory">
+        <EntityType Name="DictionaryCategory">
           <Key>
-            <PropertyRef Name="WordCategoryId" />
+            <PropertyRef Name="CategoryId" />
           </Key>
-          <Property Type="Guid" Name="WordCategoryId" Nullable="false" />
+          <Property Type="Guid" Name="CategoryId" Nullable="false" />
           <Property Type="String" Name="DisplayName" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
           <Property Type="String" Name="Description" MaxLength="500" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="WordCategoryMemberships" Relationship="PronunciationModel.FK_WordCategoryMembership_WordCategory" FromRole="WordCategory" ToRole="WordCategoryMembership" />
           <Property Type="Boolean" Name="IsSystemCategory" />
+          <NavigationProperty Name="DictionaryCategoryMembers" Relationship="PronunciationModel.FK_DictionaryCategoryMember_DictionaryCategory" FromRole="DictionaryCategory" ToRole="DictionaryCategoryMember" />
         </EntityType>
-        <EntityType Name="WordCategoryMembership">
+        <EntityType Name="DictionaryCategoryMember">
           <Key>
             <PropertyRef Name="MembershipId" />
           </Key>
           <Property Type="Guid" Name="MembershipId" Nullable="false" />
-          <Property Type="Guid" Name="WordCategoryId" Nullable="false" />
+          <Property Type="Guid" Name="CategoryId" Nullable="false" />
           <Property Type="String" Name="WordName" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="WordCategory" Relationship="PronunciationModel.FK_WordCategoryMembership_WordCategory" FromRole="WordCategoryMembership" ToRole="WordCategory" />
+          <NavigationProperty Name="DictionaryCategory" Relationship="PronunciationModel.FK_DictionaryCategoryMember_DictionaryCategory" FromRole="DictionaryCategoryMember" ToRole="DictionaryCategory" />
         </EntityType>
-        <Association Name="FK_WordCategoryMembership_WordCategory">
-          <End Type="PronunciationModel.WordCategory" Role="WordCategory" Multiplicity="1" />
-          <End Type="PronunciationModel.WordCategoryMembership" Role="WordCategoryMembership" Multiplicity="*" />
+        <Association Name="FK_DictionaryCategoryMember_DictionaryCategory">
+          <End Type="PronunciationModel.DictionaryCategory" Role="DictionaryCategory" Multiplicity="1" />
+          <End Type="PronunciationModel.DictionaryCategoryMember" Role="DictionaryCategoryMember" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="WordCategory">
-              <PropertyRef Name="WordCategoryId" />
+            <Principal Role="DictionaryCategory">
+              <PropertyRef Name="CategoryId" />
             </Principal>
-            <Dependent Role="WordCategoryMembership">
-              <PropertyRef Name="WordCategoryId" />
+            <Dependent Role="DictionaryCategoryMember">
+              <PropertyRef Name="CategoryId" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -621,26 +621,26 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="WordCategories">
-            <EntityTypeMapping TypeName="PronunciationModel.WordCategory">
-              <MappingFragment StoreEntitySet="WordCategory">
+          <EntitySetMapping Name="DictionaryCategories">
+            <EntityTypeMapping TypeName="PronunciationModel.DictionaryCategory">
+              <MappingFragment StoreEntitySet="DictionaryCategory">
                 <ScalarProperty Name="IsSystemCategory" ColumnName="IsSystemCategory" />
                 <ScalarProperty Name="Description" ColumnName="Description" />
                 <ScalarProperty Name="DisplayName" ColumnName="DisplayName" />
-                <ScalarProperty Name="WordCategoryId" ColumnName="WordCategoryId" />
+                <ScalarProperty Name="CategoryId" ColumnName="CategoryId" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="WordCategoryMemberships">
-            <EntityTypeMapping TypeName="PronunciationModel.WordCategoryMembership">
-              <MappingFragment StoreEntitySet="WordCategoryMembership">
+          <EntitySetMapping Name="DictionaryCategoryMembers">
+            <EntityTypeMapping TypeName="PronunciationModel.DictionaryCategoryMember">
+              <MappingFragment StoreEntitySet="DictionaryCategoryMember">
                 <ScalarProperty Name="WordName" ColumnName="WordName" />
-                <ScalarProperty Name="WordCategoryId" ColumnName="WordCategoryId" />
+                <ScalarProperty Name="CategoryId" ColumnName="CategoryId" />
                 <ScalarProperty Name="MembershipId" ColumnName="MembershipId" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-        </EntityContainerMapping>
+          </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>
   </edmx:Runtime>
@@ -702,13 +702,13 @@
           <ConnectorPoint PointX="7.5" PointY="7.2689925130208328" />
         </AssociationConnector>
         <EntityTypeShape EntityType="PronunciationModel.Training" Width="1.5" PointX="7.375" PointY="9.75" Height="3.1340950520833335" />
-        <EntityTypeShape EntityType="PronunciationModel.WordCategory" Width="1.5" PointX="3.125" PointY="11.25" Height="1.787985026041671" />
-        <EntityTypeShape EntityType="PronunciationModel.WordCategoryMembership" Width="1.5" PointX="5.375" PointY="11.25" Height="1.7879850260416745" />
-        <AssociationConnector Association="PronunciationModel.FK_WordCategoryMembership_WordCategory" >
-          <ConnectorPoint PointX="4.625" PointY="12.143992513020836" />
-          <ConnectorPoint PointX="5.375" PointY="12.143992513020836" />
+        <EntityTypeShape EntityType="PronunciationModel.DictionaryCategory" Width="1.5" PointX="9.375" PointY="9.875" Height="1.9802864583333353" />
+        <EntityTypeShape EntityType="PronunciationModel.DictionaryCategoryMember" Width="1.5" PointX="11.625" PointY="10" Height="1.7879850260416745" />
+        <AssociationConnector Association="PronunciationModel.FK_DictionaryCategoryMember_DictionaryCategory" >
+          <ConnectorPoint PointX="10.875" PointY="10.893992513020837" />
+          <ConnectorPoint PointX="11.625" PointY="10.893992513020837" />
         </AssociationConnector>
-      </Diagram>
+        </Diagram>
     </Diagrams>
   </Designer>
 </edmx:Edmx>

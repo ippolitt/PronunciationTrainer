@@ -56,7 +56,6 @@ namespace Pronunciation.Trainer.Utility
             _builder.Length = 0;
 
             throw new InvalidOperationException(final);
-            //MessageBox.Show(final, "Binding Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
   }
 }

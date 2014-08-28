@@ -23,6 +23,38 @@ namespace Pronunciation.Trainer.Controls
             this.Dispatcher.BeginInvoke(new Action(ScrollToSelectedItemInternal));
         }
 
+        public bool SelectItem(object item, bool setFocus, bool scrollIntoView)
+        {
+            if (item == null || this.Items.Count <= 0)
+                return false;
+
+            if (!ReferenceEquals(this.SelectedItem, item))
+            {
+                this.SelectedItem = item;
+            }
+
+            if (ReferenceEquals(this.SelectedItem, item))
+            {
+                ChangeSelectedItemPresentation(setFocus, scrollIntoView);
+                return true;
+            }
+
+            return false;
+        }
+
+        protected void ChangeSelectedItemPresentation(bool setFocus, bool scrollIntoView)
+        {
+            if (scrollIntoView)
+            {
+                // Scroll should be before Focus (for some reason it works better)
+                this.ScrollToSelectedItem();
+            }
+            if (setFocus)
+            {
+                this.FocusSelectedItem();
+            }
+        }
+
         private void ScrollToSelectedItemInternal()
         {
             if (this.SelectedItem == null)

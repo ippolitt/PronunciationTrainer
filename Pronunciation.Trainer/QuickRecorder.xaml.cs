@@ -122,10 +122,9 @@ namespace Pronunciation.Trainer
             if (lstRecordings.SelectedRecordingsCount <= 0)
                 return;
 
-            var result = MessageBox.Show(
+            if(MessageHelper.ShowConfirmation(
                 "Are you sure that you want to delete the selected recordings? This action cannot be undone.",
-                "Confirm deletion", MessageBoxButton.YesNo);
-            if (result == MessageBoxResult.Yes)
+                "Confirm deletion"))
             {
                 bool isSuccess = _recordingProvider.DeleteAudios(lstRecordings.SelectedRecordings.Select(x => x.AudioKey));
                 if (isSuccess)
@@ -135,7 +134,7 @@ namespace Pronunciation.Trainer
                 else
                 {
                     lstRecordings.AttachItemsSource(_recordingProvider.GetAudioList());
-                    MessageBox.Show("Some of the selected recordings haven't been deleted!", "Warning");
+                    MessageHelper.ShowWarning("Some of the selected recordings haven't been deleted!");
                 }
 
                 ResetSelectedRecording();
@@ -157,6 +156,7 @@ namespace Pronunciation.Trainer
                 return;
 
             var dialog = new TrainingDetails();
+            dialog.Owner = ControlsHelper.GetWindow(this);
             dialog.CreateNew = true;
             dialog.IsApplyDisabled = true;
             dialog.ShowDialog();
@@ -186,14 +186,14 @@ namespace Pronunciation.Trainer
             if (isSuccess)
             {
                 lstRecordings.RemoveSelected();
-                MessageBox.Show(string.Format(
-                    "Succesfully moved the selected recordings to the training '{0}'.", trainingTitle), "Success");
+                MessageHelper.ShowInfo(string.Format(
+                    "Succesfully moved the selected recordings to the training '{0}'.", trainingTitle));
             }
             else
             {
                 lstRecordings.AttachItemsSource(_recordingProvider.GetAudioList());
-                MessageBox.Show(string.Format(
-                    "Some of the selected recordings haven't been moved to the training '{0}'.", trainingTitle), "Warning");    
+                MessageHelper.ShowWarning(string.Format(
+                    "Some of the selected recordings haven't been moved to the training '{0}'.", trainingTitle));    
             }
 
             ResetSelectedRecording();

@@ -16,6 +16,7 @@ using Pronunciation.Core.Database;
 using Pronunciation.Trainer.Views;
 using Pronunciation.Core.Providers.Training;
 using Pronunciation.Trainer.Database;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer
 {
@@ -69,10 +70,9 @@ namespace Pronunciation.Trainer
             if (trainingsDataGrid.SelectedItems.Count <= 0)
                 return;
 
-            var result = MessageBox.Show(
+            if(MessageHelper.ShowConfirmation(
                 "Are you sure that you want to delete the selected records? All the assosiated audios will be deleted as well.",
-                "Confirm deletion", MessageBoxButton.YesNo);
-            if (result == MessageBoxResult.Yes)
+                "Confirm deletion"))
             {
                 var trainingsToDelete = trainingsDataGrid.SelectedItems.Cast<TrainingListItem>().ToArray();
                 PronunciationDbContext.Instance.RemoveTrainings(trainingsToDelete);

@@ -79,14 +79,19 @@
     <Compile Include="AudioContexts\ExerciseAudioContext.cs" />
     <Compile Include="Controls\ComboBoxExt.cs" />
     <Compile Include="Controls\ISuggestionItemInfo.cs" />
+    <Compile Include="Controls\OnOffButton.cs" />
     <Compile Include="Dictionary\DictionaryIndex.cs" />
     <Compile Include="Dictionary\IndexEntryImitation.cs" />
     <Compile Include="Dictionary\IndexPositionTracker.cs" />
     <Compile Include="Controls\SuggestionsList.cs" />
-    <Compile Include="Dictionary\WordMembershipItem.cs" />
+    <Compile Include="Dictionary\WordCategoryItem.cs" />
     <Compile Include="Dictionary\WordCategoryInfo.cs" />
-    <Compile Include="Dictionary\WordCategoryManager.cs" />
-    <Compile Include="Dictionary\WordMembershipCollection.cs" />
+    <Compile Include="Dictionary\CategoryManager.cs" />
+    <Compile Include="Dictionary\WordCategoriesCollection.cs" />
+    <Compile Include="Dictionary\WordCategoryStateTracker.cs" />
+    <Compile Include="EditCategories.xaml.cs">
+      <DependentUpon>EditCategories.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Export\AudioExporter.cs" />
     <Compile Include="FileOverrideDialog.xaml.cs">
       <DependentUpon>FileOverrideDialog.xaml</DependentUpon>
@@ -105,9 +110,8 @@
     <Compile Include="Utility\FormatHelper.cs" />
     <Compile Include="Utility\IgnoreEventsRegion.cs" />
     <Compile Include="Utility\MessageHelper.cs" />
-    <Compile Include="ValueConverters\IStateToStringArgsProvider.cs" />
-    <Compile Include="ValueConverters\StateToStringConverter.cs" />
     <Compile Include="ValueConverters\DurationToTimeConverter.cs" />
+    <Compile Include="Views\UsageRankListItem.cs" />
     <Compile Include="Views\ExerciseAudioListItemWithData.cs" />
     <Compile Include="Views\ExerciseAudioListItem.cs" />
     <Compile Include="Views\ExerciseListItem.cs" />
@@ -145,6 +149,7 @@
       <DependentUpon>SettingsPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\UserControlExt.cs" />
+    <Compile Include="Views\DictionaryCategoryListItem.cs" />
     <Compile Include="Views\WordCategoryListItem.cs" />
     <Compile Include="WaveForm.xaml.cs">
       <DependentUpon>WaveForm.xaml</DependentUpon>
@@ -162,6 +167,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="DictionaryContainer.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="EditCategories.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -273,8 +282,10 @@
       <Link>lame.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Resource Include="Resources\FavoritesOff.png" />
+    <Resource Include="Resources\FavoritesOn.png" />
+    <Resource Include="Resources\EditCategories.png" />
     <Resource Include="Resources\SynchronizeList.png" />
-    <Resource Include="Resources\Favorites.png" />
     <Resource Include="Resources\ArrowDown.png" />
     <Resource Include="Resources\ArrowUp.png" />
     <Resource Include="Resources\ClearSearch.png" />

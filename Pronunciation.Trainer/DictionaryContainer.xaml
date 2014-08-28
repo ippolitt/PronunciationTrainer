@@ -13,16 +13,25 @@
              d:DesignHeight="528" d:DesignWidth="826" Initialized="UserControl_Initialized"
              Loaded="UserControl_Loaded" PreviewKeyDown="UserControl_PreviewKeyDown">
     <UserControl.Resources>
-        <local:FavoritesTooltipArgsProvider x:Key="favoritesArgsProvider" />
         <styles:SuggestionsListItemStyleSelector x:Key="suggestionsItemStyleSelector" />
-        <convert:StateToStringConverter x:Key="favoritesStateConverter" FormatArgsProvider="{StaticResource favoritesArgsProvider}"
-            FalseStringTemplate="Add the word to favorites [{0}]" TrueStringTemplate="Remove the word from favorites [{0}]" />
         <Style x:Key="GreyedImage" TargetType="Image">
+            <Setter Property="Stretch" Value="None" />
             <Style.Triggers>
                 <Trigger Property="IsEnabled" Value="False">
                     <Setter Property="Opacity" Value="0.5" />
                 </Trigger>
             </Style.Triggers>
+        </Style>
+        <Style x:Key="CategoryCell" TargetType="DataGridCell">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style x:Key="CategoryNameCell" TargetType="DataGridCell" BasedOn="{StaticResource CategoryCell}">
+            <Setter Property="ToolTip" Value="{Binding Path=DisplayName}" />
+        </Style>        
+        <Style x:Key="IsAssignedCell" TargetType="DataGridCell" BasedOn="{StaticResource CategoryCell}">
+            <EventSetter Event="PreviewMouseLeftButtonDown" Handler="DataGridCell_PreviewMouseLeftButtonDown" />
+            <Setter Property="Margin" Value="0,2,0,0"/>
         </Style>
     </UserControl.Resources>
     <DockPanel Name="rootPanel">
@@ -43,37 +52,52 @@
                 <controls:ComboBoxExt Height="23" Width="120" x:Name="cboRanks" DisableAltGestures="True" SelectionChanged="cboRanks_SelectionChanged" KeyDown="cboRanks_KeyDown"  Margin="0,0,5,0" />
                 <TextBlock Name="textBlock3" Text="by category:" Margin="5,0,5,0" VerticalAlignment="Center" />
             </StackPanel>
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Height="23" Width="23" Name="btnPrevious" Focusable="False" 
-                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                    ToolTip="Previous word in the list [{0}]">
-                    <Image Source="Resources/ArrowUp.png" Stretch="None" Style="{StaticResource GreyedImage}" />
-                </Button>
-                <Button Height="23" Width="23" Name="btnNext" Focusable="False" 
-                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                    ToolTip="Next word in the list [{0}]">
-                    <Image Source="Resources/ArrowDown.png" Stretch="None" Style="{StaticResource GreyedImage}" />
-                </Button>
-                <Button Height="23" Width="23" Name="btnSyncPage" Focusable="False" 
-                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                    ToolTip="Find current word in the list [{0}]">
-                    <Image Source="Resources/SynchronizeList.png" Stretch="None" Style="{StaticResource GreyedImage}" />
-                </Button>                
-                <ToggleButton Height="23" Width="23" Name="btnFavorites" Focusable="False" Checked="btnFavorites_Checked" Unchecked="btnFavorites_Unchecked"
-                    Margin="0" Style="{StaticResource {x:Static ToolBar.ToggleButtonStyleKey }}"
-                    ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=IsChecked, Converter={StaticResource favoritesStateConverter}}">
-                    <Image Source="Resources/Favorites.png" Stretch="None" Style="{StaticResource GreyedImage}" />
-                </ToggleButton>
-                <TextBlock Name="textBlock1" Text="Recent words:" Margin="10,0,5,0" VerticalAlignment="Center" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" Width="170" Margin="10,0,0,0">
                 <Button Height="23" Width="23" Name="btnBack" Focusable="False" 
                     Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                     ToolTip="Go back [{0}]">
-                    <Image Source="Resources/ArrowBack.png" Stretch="None" Style="{StaticResource GreyedImage}" />
+                    <Image Source="Resources/ArrowBack.png" Style="{StaticResource GreyedImage}" />
                 </Button>
                 <Button Height="23" Width="23" Name="btnForward" Focusable="False" 
                     Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                     ToolTip="Go forward [{0}]">
-                    <Image Source="Resources/ArrowForward.png" Stretch="None" Style="{StaticResource GreyedImage}" />
+                    <Image Source="Resources/ArrowForward.png" Style="{StaticResource GreyedImage}" />
+                </Button>
+                <Button Height="23" Width="23" Name="btnPrevious" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Previous word in the list [{0}]">
+                    <Image Source="Resources/ArrowUp.png" Style="{StaticResource GreyedImage}" />
+                </Button>
+                <Button Height="23" Width="23" Name="btnNext" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Next word in the list [{0}]">
+                    <Image Source="Resources/ArrowDown.png" Style="{StaticResource GreyedImage}" />
+                </Button>
+                <Button Height="23" Width="23" Name="btnSyncPage" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Find current word in the list [{0}]">
+                    <Image Source="Resources/SynchronizeList.png" Style="{StaticResource GreyedImage}" />
+                </Button>                
+                <controls:OnOffButton Height="23" Width="23" x:Name="btnFavorites" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    StateOnTooltip="Remove the word from favorites [{0}]" StateOffTooltip="Add the word to favorites [{0}]">
+                    <Image>
+                        <Image.Style>
+                            <Style TargetType="Image" BasedOn="{StaticResource GreyedImage}">
+                                <Setter Property="Source" Value="Resources/FavoritesOff.png" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=btnFavorites, Path=IsOn}" Value="True">
+                                        <Setter Property="Source" Value="Resources/FavoritesOn.png" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                </controls:OnOffButton>
+                <Button Height="23" Width="23" Name="btnEditCategories" Focusable="False" Click="btnEditCategories_Click" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Edit list of categories">
+                    <Image Source="Resources/EditCategories.png" Style="{StaticResource GreyedImage}" />
                 </Button>
             </StackPanel>
             <controls:ComboBoxExt Height="23" Margin="0,0,0,0" x:Name="cboCategories" DisableAltGestures="True" SelectionChanged="cboCategories_SelectionChanged" KeyDown="cboCategories_KeyDown" />            
@@ -81,7 +105,27 @@
         <controls:SuggestionsList x:Name="lstSuggestions" DockPanel.Dock="Left" Width="150" Margin="0,5,0,0"
             ItemContainerStyleSelector="{StaticResource suggestionsItemStyleSelector}" MouseLeftButtonUp="lstSuggestions_MouseLeftButtonUp" PreviewKeyDown="lstSuggestions_PreviewKeyDown"
             SelectionChanged="lstSuggestions_SelectionChanged" />
-        <controls:ListBoxExt x:Name="lstRecentWords" DockPanel.Dock="Right" Width="128" Margin="10,5,0,0" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown" />       
+        <TabControl Name="tabsHistory" DockPanel.Dock="Right" Width="170" Margin="10,5,0,0" TabStripPlacement="Top" Focusable="False">
+            <controls:TabItemExt Header="Recent words" x:Name="tabRecent">
+                <controls:ListBoxExt x:Name="lstRecentWords" BorderThickness="0" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown" />
+            </controls:TabItemExt>
+            <controls:TabItemExt Header="Categories" x:Name="tabCategories">
+                <DataGrid Name="categoriesDataGrid" AutoGenerateColumns="False" EnableRowVirtualization="True" BorderThickness="0"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HeadersVisibility="None" GridLinesVisibility="None"
+                          CanUserReorderColumns="False" CanUserAddRows="True" CanUserDeleteRows="True" Margin="0,3,0,0" Background="White"
+                          CanUserResizeRows="False" IsReadOnly="False" SelectionMode="Single" SelectionUnit="Cell" CellStyle="{StaticResource CategoryCell}" >
+                    <DataGrid.Columns>
+                        <DataGridTextColumn x:Name="displayNameColumn" Binding="{Binding Path=DisplayName, Mode=OneWay}" Width="*" CellStyle="{StaticResource CategoryNameCell}" />
+                        <DataGridCheckBoxColumn x:Name="isAssignedColumn" Binding="{Binding Path=IsAssigned, Mode=TwoWay}" Width="30" CellStyle="{StaticResource IsAssignedCell}" />
+                    </DataGrid.Columns>
+                    <DataGrid.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="White"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black"/>
+                        <!-- in .NET 4.5 there's "InactiveSelectionHighlightBrushKey" -->
+                    </DataGrid.Resources>
+                </DataGrid>
+            </controls:TabItemExt>
+        </TabControl>        
         <WebBrowser Name="browser" LoadCompleted="browser_LoadCompleted" />
     </DockPanel>
 </controls:UserControlExt>

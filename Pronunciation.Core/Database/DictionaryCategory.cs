@@ -12,12 +12,18 @@ namespace Pronunciation.Core.Database
     using System;
     using System.Collections.Generic;
 
-    public partial class WordCategoryMembership
+    public partial class DictionaryCategory
     {
-        public System.Guid MembershipId { get; set; }
-        public System.Guid WordCategoryId { get; set; }
-        public string WordName { get; set; }
+        public DictionaryCategory()
+        {
+            this.DictionaryCategoryMembers = new HashSet<DictionaryCategoryMember>();
+        }
 
-        public virtual WordCategory WordCategory { get; set; }
+        public System.Guid CategoryId { get; set; }
+        public string DisplayName { get; set; }
+        public string Description { get; set; }
+        public Nullable<bool> IsSystemCategory { get; set; }
+
+        public virtual ICollection<DictionaryCategoryMember> DictionaryCategoryMembers { get; set; }
     }
 }

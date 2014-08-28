@@ -23,7 +23,7 @@
         public DbSet<RecordedAudio> RecordedAudios { get; set; }
         public DbSet<ExerciseAudio> ExerciseAudios { get; set; }
         public DbSet<Training> Trainings { get; set; }
-        public DbSet<WordCategory> WordCategories { get; set; }
-        public DbSet<WordCategoryMembership> WordCategoryMemberships { get; set; }
+        public DbSet<DictionaryCategory> DictionaryCategories { get; set; }
+        public DbSet<DictionaryCategoryMember> DictionaryCategoryMembers { get; set; }
     }
 }

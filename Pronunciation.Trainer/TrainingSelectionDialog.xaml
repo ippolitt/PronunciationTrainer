@@ -15,7 +15,6 @@
             Path=DataContext.Trainings}"
             AutoGenerateColumns="False" EnableRowVirtualization="True"
                   HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ItemsSource="{Binding}"  Name="trainingsDataGrid" 
-                  RowDetailsVisibilityMode="VisibleWhenSelected"
                   CanUserReorderColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" 
                   CanUserResizeRows="False" IsReadOnly="True" SelectionMode="Single"
                   MouseDoubleClick="trainingsDataGrid_MouseDoubleClick">

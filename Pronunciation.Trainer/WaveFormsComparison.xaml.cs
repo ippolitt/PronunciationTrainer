@@ -123,7 +123,10 @@ namespace Pronunciation.Trainer
 
         private void btnClose_Click(object sender, RoutedEventArgs e)
         {
-            this.Close();
+            if (ControlsHelper.IsExplicitCloseRequired(btnClose))
+            {
+                this.Close();
+            }
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)

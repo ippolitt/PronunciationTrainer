@@ -14,6 +14,7 @@ using System.ComponentModel;
 using Pronunciation.Core.Database;
 using Pronunciation.Trainer.Views;
 using Pronunciation.Trainer.Database;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer
 {
@@ -46,7 +47,7 @@ namespace Pronunciation.Trainer
         {
             if (trainingsDataGrid.SelectedItems.Count != 1)
             {
-                MessageBox.Show("You must select exactly one training!", "Select training");
+                MessageHelper.ShowInfo("You must select exactly one training!", "Select training");
                 return;
             }
 
@@ -59,7 +60,10 @@ namespace Pronunciation.Trainer
         {
             SelectedTraining = null;
             this.DialogResult = false;
-            this.Close();
+            if (ControlsHelper.IsExplicitCloseRequired(btnCancel))
+            {
+                this.Close();
+            }
         }
 
         private void trainingsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)

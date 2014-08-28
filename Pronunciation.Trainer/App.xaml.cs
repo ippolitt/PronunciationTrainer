@@ -46,12 +46,12 @@ namespace Pronunciation.Trainer
         private void Application_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             e.Handled = true;
-            MessageBox.Show(e.Exception.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageHelper.ShowError(e.Exception);
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            MessageBox.Show((e.ExceptionObject as Exception).Message, "Thread error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageHelper.ShowError(e.ExceptionObject as Exception);
         }
     }
 }

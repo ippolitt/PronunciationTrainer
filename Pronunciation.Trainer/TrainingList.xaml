@@ -19,8 +19,7 @@
         <DataGrid DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}, 
             Path=DataContext.Trainings}"
             AutoGenerateColumns="False" EnableRowVirtualization="True"
-                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ItemsSource="{Binding}"  Name="trainingsDataGrid" 
-                  RowDetailsVisibilityMode="VisibleWhenSelected"
+                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ItemsSource="{Binding}" Name="trainingsDataGrid" 
                   CanUserReorderColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" 
                   CanUserResizeRows="False" IsReadOnly="True" 
                   MouseDoubleClick="trainingsDataGrid_MouseDoubleClick">

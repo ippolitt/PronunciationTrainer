@@ -61,5 +61,17 @@ namespace Pronunciation.Trainer.Utility
 
             return false;
         }
+
+        public static bool IsExplicitCloseRequired(Button cancelButton)
+        {
+            // When window is shown with ShowDialog and there's a button with IsCancel = true we don't need
+            // to call the Close explicitly (otherwise it will be called two times)
+            return !(cancelButton.IsCancel && IsModalWindow); 
+        }
+
+        public static bool IsModalWindow
+        {
+            get { return System.Windows.Interop.ComponentDispatcher.IsThreadModal; }
+        }
     }
 }

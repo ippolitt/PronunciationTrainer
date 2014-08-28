@@ -9,6 +9,7 @@ using Pronunciation.Core.Contexts;
 using System.Windows;
 using Pronunciation.Trainer.Views;
 using Pronunciation.Core.Providers.Exercise;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer.Export
 {
@@ -63,7 +64,7 @@ namespace Pronunciation.Trainer.Export
                     message = string.Format("Exported {0} of {1} selected recordings.", exportedCount, exportItems.Count);
                 }
             }
-            MessageBox.Show(message, "Export result");
+            MessageHelper.ShowInfo(message, "Export result");
         }
 
         public void ExportExerciseAudios(IRecordingProvider<ExerciseTargetKey> provider, 
@@ -110,7 +111,7 @@ namespace Pronunciation.Trainer.Export
                         exportedRecordingCount, exportItems.Count(x => !x.IsReferenceAudio));
                 }
             }
-            MessageBox.Show(message, "Export result");
+            MessageHelper.ShowInfo(message, "Export result");
         }
 
         private string BuildRecordingFileName(RecordedAudioListItem recording)
@@ -259,10 +260,9 @@ namespace Pronunciation.Trainer.Export
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(string.Format(
-                            "Couldn't export audio to file '{0}' because of the following error: {1}",
-                            Path.GetFileName(exportItem.DestinationFile), ex.Message),
-                        "Export error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageHelper.ShowError(string.Format(
+                        "Couldn't export audio to file '{0}' because of the following error: {1}",
+                        Path.GetFileName(exportItem.DestinationFile), ex.Message));
                 }
             }
 

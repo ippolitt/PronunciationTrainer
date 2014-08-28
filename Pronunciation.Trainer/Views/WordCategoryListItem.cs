@@ -2,33 +2,63 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Collections;
+using Pronunciation.Trainer.Dictionary;
+using System.ComponentModel;
 
 namespace Pronunciation.Trainer.Views
 {
-    public class WordCategoryListItem : IComparable<WordCategoryListItem>
+    public class WordCategoryListItem : INotifyPropertyChanged
     {
-        public Guid WordCategoryId { get; set; }
-        public string DisplayName { get; set; }
-        public bool? IsSystemCategory { get; set; }
+        public Guid CategoryId { get; private set; }
+        public const string IsAssignedPropertyName = "IsAssigned";
+        public const string DisplayNamePropertyName = "DisplayName";
 
-        public override string ToString()
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private bool _isAssigned;
+        private string _displayName;
+
+        public WordCategoryListItem(Guid categoryId, string displayName)
         {
-            return DisplayName;
+            CategoryId = categoryId;
+            _displayName = displayName;
         }
 
-        public int CompareTo(WordCategoryListItem other)
+        public string DisplayName
         {
-            if (other == null)
-                return 1;
-            
-            if ((this.IsSystemCategory ?? false) == (other.IsSystemCategory ?? false))
+            get
             {
-                return string.Compare(this.DisplayName, other.DisplayName);
+                return _displayName;
             }
-            else
+            set
             {
-                return (this.IsSystemCategory == true) ? -1 : 1;
+                if (_displayName == value)
+                    return;
+
+                _displayName = value;
+                if (PropertyChanged != null)
+                {
+                    PropertyChanged(this, new PropertyChangedEventArgs(DisplayNamePropertyName));
+                }
+            }
+        }
+
+        public bool IsAssigned 
+        { 
+            get 
+            { 
+                return _isAssigned; 
+            }
+            set 
+            {
+                if (_isAssigned == value)
+                    return;
+
+                _isAssigned = value;
+                if (PropertyChanged != null)
+                {
+                    PropertyChanged(this, new PropertyChangedEventArgs(IsAssignedPropertyName));
+                }
             }
         }
     }

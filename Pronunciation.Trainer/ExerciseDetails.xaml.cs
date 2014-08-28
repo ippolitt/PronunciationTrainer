@@ -35,7 +35,6 @@ namespace Pronunciation.Trainer
     public partial class ExerciseDetails : Window
     {
         public bool CreateNew { get; set; }
-        public bool NeedsDialogResult { get; set; }
         public Guid? ExerciseId { get; set; }
 
         private Entities _dbRecordContext;
@@ -162,16 +161,15 @@ namespace Pronunciation.Trainer
             btnOK.Focus();
 
             SaveChanges();
-            if (NeedsDialogResult)
-            {
-                DialogResult = true;
-            }
             this.Close();
         }
 
         private void btnCancel_Click(object sender, RoutedEventArgs e)
         {
-            this.Close();
+            if (ControlsHelper.IsExplicitCloseRequired(btnCancel))
+            {
+                this.Close();
+            }
         }
 
         private void btnApply_Click(object sender, RoutedEventArgs e)
@@ -238,11 +236,9 @@ namespace Pronunciation.Trainer
 
             if (_dbRecordContext.HasChanges())
             {
-                var result = MessageBox.Show(
+                if(!MessageHelper.ShowConfirmation(
                     "You have some pending changes. Are you sure you want to discard them?",
-                    "Confirm discarding changes",
-                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
-                if (result == MessageBoxResult.No)
+                    "Confirm discarding changes"))
                 {
                     e.Cancel = true;
                     return;
@@ -256,11 +252,6 @@ namespace Pronunciation.Trainer
                         _audioNamesTracker.GetAddedItems().Select(x => new ExerciseTargetKey(_activeRecord.ExerciseId, x)));
                 }
                 _audioNamesTracker.Reset();
-            }
-
-            if (NeedsDialogResult)
-            {
-                DialogResult = !_dbRecordContext.HasChanges();
             }
         }
 
@@ -324,10 +315,9 @@ namespace Pronunciation.Trainer
             if (lstAudios.SelectedItems.Count <= 0)
                 return;
 
-            var result = MessageBox.Show(
+            if(MessageHelper.ShowConfirmation(
                 "Along with the selected audios all the assosiated recordings will be deleted as well. Do you want to proceed?",
-                "Confirm deletion", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
-            if (result == MessageBoxResult.Yes)
+                "Confirm deletion"))
             {
                 ExerciseAudioListItemWithData[] audiosToDelete = lstAudios.SelectedItems.Cast<ExerciseAudioListItemWithData>().ToArray();
                 DeleteReferenceAudios(audiosToDelete);

@@ -43,7 +43,6 @@ namespace Pronunciation.Trainer
         private readonly CollectionChangeTracker<string> _audioKeysTracker;
         private bool _isLoadingContent;
         private bool _isContentChanged;
-        private bool _isCreated;
 
         private static readonly string ContentFormat = DataFormats.Rtf;
         private static readonly string NewLineSymbol = Environment.NewLine;
@@ -287,7 +286,10 @@ namespace Pronunciation.Trainer
 
         private void btnCancel_Click(object sender, RoutedEventArgs e)
         {
-            this.Close();
+            if (ControlsHelper.IsExplicitCloseRequired(btnCancel))
+            {
+                this.Close();
+            }
         }
 
         private void SaveChanges()
@@ -332,11 +334,9 @@ namespace Pronunciation.Trainer
             if (_isContentChanged ||_audioKeysTracker.HasDeletedItems || _audioKeysTracker.HasAddedItems 
                 || _dbRecordContext.HasChanges())
             {
-                var result = MessageBox.Show(
+                if(!MessageHelper.ShowConfirmation(
                     "You have some pending changes. Are you sure you want to discard them?",
-                    "Confirm discarding changes",
-                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
-                if (result == MessageBoxResult.No)
+                    "Confirm discarding changes"))
                 {
                     e.Cancel = true;
                     return;

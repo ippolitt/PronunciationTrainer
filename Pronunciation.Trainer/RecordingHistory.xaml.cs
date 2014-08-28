@@ -127,10 +127,9 @@ namespace Pronunciation.Trainer
             if (lstRecordings.SelectedRecordingsCount <= 0)
                 return;
 
-            var result = MessageBox.Show(
+            if (MessageHelper.ShowConfirmation(
                 "Are you sure that you want to delete the selected recordings? This action cannot be undone.",
-                "Confirm deletion", MessageBoxButton.YesNo);
-            if (result == MessageBoxResult.Yes)
+                "Confirm deletion"))
             {
                 bool isSuccess = _recordingProvider.DeleteAudios(lstRecordings.SelectedRecordings.Select(x => x.AudioKey));
                 if (isSuccess)
@@ -140,7 +139,7 @@ namespace Pronunciation.Trainer
                 else
                 {
                     lstRecordings.AttachItemsSource(_recordingProvider.GetAudioList());
-                    MessageBox.Show("Some of the selected recordings haven't been deleted!", "Warning");
+                    MessageHelper.ShowWarning("Some of the selected recordings haven't been deleted!");
                 }
 
                 if (lstRecordings.Items.Count > 0)

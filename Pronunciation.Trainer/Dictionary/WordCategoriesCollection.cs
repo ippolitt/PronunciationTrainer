@@ -6,34 +6,29 @@ using Pronunciation.Core.Database;
 
 namespace Pronunciation.Trainer.Dictionary
 {
-    public class WordMembershipCollection
+    public class WordCategoriesCollection
     {
-        private readonly List<WordMembershipItem> _items;
+        private readonly List<WordCategoryItem> _items;
         private readonly Guid _favoritesCategoryId;
         private readonly Entities _dbContext;
         private readonly string _wordName;
 
         private readonly static EntityComparer _comparer = new EntityComparer();
 
-        public WordMembershipCollection(string wordName, Guid favoritesCategoryId,
-            Entities dbContext, IEnumerable<WordMembershipItem> initialItems)
+        public WordCategoriesCollection(string wordName, Guid favoritesCategoryId,
+            Entities dbContext, IEnumerable<WordCategoryItem> initialItems)
         {
             _wordName = wordName;
             _favoritesCategoryId = favoritesCategoryId;
             _dbContext = dbContext;
             if (initialItems == null)
             {
-                _items = new List<WordMembershipItem>();
+                _items = new List<WordCategoryItem>();
             }
             else
             {
-                _items = new List<WordMembershipItem>(initialItems);
+                _items = new List<WordCategoryItem>(initialItems);
             }
-        }
-
-        public bool ContainsFavorites
-        {
-            get { return ContainsCategory(_favoritesCategoryId); }
         }
 
         public bool ContainsCategory(Guid categoryId)
@@ -56,24 +51,24 @@ namespace Pronunciation.Trainer.Dictionary
                 return 0;
 
             var distinctIds = new HashSet<Guid>(categoryIds);
-            var itemsToRemove = new List<WordMembershipItem>(_items.Where(x => distinctIds.Contains(x.CategoryId)));
+            var itemsToRemove = new List<WordCategoryItem>(_items.Where(x => distinctIds.Contains(x.CategoryId)));
             return StoreItems(itemsToRemove, null);
         }
 
-        public int AddItems(IEnumerable<WordMembershipItem> newItems)
+        public int AddItems(IEnumerable<WordCategoryItem> newItems)
         {
             if (newItems == null)
                 return 0;
 
             var distinctItems = newItems.Distinct(_comparer).ToArray();
-            var itemsToAdd = new List<WordMembershipItem>(distinctItems.Where(x => !_items.Contains(x, _comparer)));
+            var itemsToAdd = new List<WordCategoryItem>(distinctItems.Where(x => !_items.Contains(x, _comparer)));
             return StoreItems(null, itemsToAdd);
         }
 
         public void UpdateFromCategoryInfo(WordCategoryInfo info)
         {
-            var itemsToRemove = new List<WordMembershipItem>();
-            var itemsToAdd = new List<WordMembershipItem>();
+            var itemsToRemove = new List<WordCategoryItem>();
+            var itemsToAdd = new List<WordCategoryItem>();
             if (info == null)
             {
                 itemsToRemove.AddRange(_items);
@@ -88,13 +83,13 @@ namespace Pronunciation.Trainer.Dictionary
 
                 itemsToRemove.AddRange(_items.Where(x => distinctIds.Contains(x.CategoryId)));
                 itemsToAdd.AddRange(distinctIds.Where(x => _items.All(y => y.CategoryId != x))
-                    .Select(x => new WordMembershipItem(x)));
+                    .Select(x => new WordCategoryItem(x)));
             }
 
             StoreItems(itemsToRemove, itemsToAdd);
         }
 
-        private int StoreItems(List<WordMembershipItem> itemsToRemove, List<WordMembershipItem> itemsToAdd)
+        private int StoreItems(List<WordCategoryItem> itemsToRemove, List<WordCategoryItem> itemsToAdd)
         {
             int removeCount = itemsToRemove == null ? 0 : itemsToRemove.Count;       
             int addCount = itemsToAdd == null ? 0 : itemsToAdd.Count;
@@ -103,11 +98,11 @@ namespace Pronunciation.Trainer.Dictionary
                 // Important: removed items should be processed first!
                 if (removeCount > 0)
                 {
-                    RemoveDatabaseMembership(itemsToRemove);
+                    RemoveDatabaseMembers(itemsToRemove);
                 }
                 if (addCount > 0)
                 {
-                    AddDatabaseMembership(itemsToAdd);
+                    AddDatabaseMembers(itemsToAdd);
                 }
 
                 // Save all changes in one call
@@ -129,41 +124,41 @@ namespace Pronunciation.Trainer.Dictionary
             return addCount + removeCount;
         }
 
-        private void AddDatabaseMembership(IEnumerable<WordMembershipItem> items)
+        private void AddDatabaseMembers(IEnumerable<WordCategoryItem> items)
         {
             foreach (var item in items)
             {
-                WordCategoryMembership membership = _dbContext.WordCategoryMemberships.Create();
-                membership.MembershipId = item.MembershipId;
-                membership.WordName = _wordName;
-                membership.WordCategoryId = item.CategoryId;
-                _dbContext.WordCategoryMemberships.Add(membership);
+                DictionaryCategoryMember member = _dbContext.DictionaryCategoryMembers.Create();
+                member.MembershipId = item.MembershipId;
+                member.WordName = _wordName;
+                member.CategoryId = item.CategoryId;
+                _dbContext.DictionaryCategoryMembers.Add(member);
             }
         }
 
-        private void RemoveDatabaseMembership(IEnumerable<WordMembershipItem> items)
+        private void RemoveDatabaseMembers(IEnumerable<WordCategoryItem> items)
         {
             foreach (var item in items)
             {
-                WordCategoryMembership entity;
-                var entry = _dbContext.ChangeTracker.Entries<WordCategoryMembership>()
+                DictionaryCategoryMember entity;
+                var entry = _dbContext.ChangeTracker.Entries<DictionaryCategoryMember>()
                     .FirstOrDefault(e => e.Entity.MembershipId == item.MembershipId);
                 if (entry == null)
                 {
-                    entity = new WordCategoryMembership { MembershipId = item.MembershipId };
-                    _dbContext.WordCategoryMemberships.Attach(entity);
+                    entity = new DictionaryCategoryMember { MembershipId = item.MembershipId };
+                    _dbContext.DictionaryCategoryMembers.Attach(entity);
                 }
                 else
                 {
                     entity = entry.Entity;
                 }
-                _dbContext.WordCategoryMemberships.Remove(entity);
+                _dbContext.DictionaryCategoryMembers.Remove(entity);
             } 
         }
 
-        private class EntityComparer : IEqualityComparer<WordMembershipItem>
+        private class EntityComparer : IEqualityComparer<WordCategoryItem>
         {
-            public bool Equals(WordMembershipItem x, WordMembershipItem y)
+            public bool Equals(WordCategoryItem x, WordCategoryItem y)
             {
                 if (x != null && y != null)
                 {
@@ -175,7 +170,7 @@ namespace Pronunciation.Trainer.Dictionary
                 }
             }
 
-            public int GetHashCode(WordMembershipItem obj)
+            public int GetHashCode(WordCategoryItem obj)
             {
                 return obj == null ? 0 : obj.CategoryId.GetHashCode();
             }

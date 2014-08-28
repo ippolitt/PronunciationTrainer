@@ -12,6 +12,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Pronunciation.Core.Parsers;
+using Pronunciation.Trainer.Utility;
 
 namespace Pronunciation.Trainer
 {
@@ -30,7 +31,7 @@ namespace Pronunciation.Trainer
             TopicParser parser = new TopicParser(txtTopicsFile.Text);
             parser.ImportTopics();
 
-            MessageBox.Show("Import succesfully completed!");
+            MessageHelper.ShowInfo("Import succesfully completed!");
         }
 
 //with orderedrows as 
