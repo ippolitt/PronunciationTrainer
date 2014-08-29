@@ -19,9 +19,8 @@ namespace Pronunciation.Core.Providers.Dictionary
         private readonly string _pageTemplate;
         private readonly string _indexFilePath;
 
-        private const string WorkingFolderName = "LPD";
         private const string PageTemplateFileName = "PageTemplate.html";
-        private const string IndexFileName = "Index.txt";
+        private const string IndexFileName = "IndexDB.txt";
 
         public LPDDatabaseProvider(string baseFolder, string lpdConnectionString) 
         {

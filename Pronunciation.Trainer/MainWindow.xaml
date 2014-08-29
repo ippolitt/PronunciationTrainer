@@ -7,7 +7,7 @@
         Closing="Window_Closing" Activated="Window_Activated">
     <TabControl Name="tabsRoot" TabStripPlacement="Top" Focusable="False" SelectionChanged="tabsRoot_SelectionChanged">
         <controls:TabItemExt Header="Dictionary" x:Name="tabDictionary" 
-                          DynamicContentType="local:DictionaryContainer" DynamicContentMargin="10" />
+                          DynamicContentType="local:DictionaryContainer" DynamicContentMargin="10,10,10,0" />
         <controls:TabItemExt Header="Exercises" x:Name="tabExercises"
                           DynamicContentType="local:ExerciseList" DynamicContentMargin="10" />
         <controls:TabItemExt Header="Training" x:Name="tabTraining"

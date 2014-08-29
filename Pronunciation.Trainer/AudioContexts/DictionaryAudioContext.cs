@@ -119,6 +119,11 @@ namespace Pronunciation.Trainer.AudioContexts
             }
         }
 
+        public string CurrentSoundName
+        {
+            get { return _currentSound == null ? null : _currentSound.EntryText; }
+        }
+
         public PlaybackData GetReferenceAudio()
         {
             if (_referenceAudio != null)

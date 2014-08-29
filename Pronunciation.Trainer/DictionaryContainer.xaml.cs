@@ -74,6 +74,7 @@ namespace Pronunciation.Trainer
         private DictionaryIndex _searchIndex;
         private CategoryManager _categoryManager;
         private WordCategoryStateTracker _categoryTracker;
+        private SessionStatisticsCollector _statsCollector;
         private readonly IgnoreEventsRegion _ignoreEvents = new IgnoreEventsRegion();
 
         private ExecuteActionCommand _commandBack;
@@ -86,6 +87,7 @@ namespace Pronunciation.Trainer
 
         private const int MaxNumberOfSuggestions = 100;
         private const int VisibleNumberOfSuggestions = 30;
+        private const string StatisticsTemplate = "Session statistics: viewed {0} pages, recorded {1} audios";
 
         public DictionaryContainer()
         {
@@ -97,11 +99,13 @@ namespace Pronunciation.Trainer
             _mainIndex = new DictionaryIndex();
             _searchIndex = _mainIndex;
 
-            _categoryManager = new CategoryManager();
+            _categoryManager = new CategoryManager(ProcessWordCategoriesChanged);
             _categoryTracker = new WordCategoryStateTracker(_categoryManager);
+            _statsCollector = new SessionStatisticsCollector();
+            _statsCollector.SessionStatisticsChanged += StatsCollector_SessionStatisticsChanged;
 
-            //_dictionaryProvider = new LPDFileSystemProvider(AppSettings.Instance.Folders.DictionaryFile, CallScriptMethod);
-            _dictionaryProvider = new LPDDatabaseProvider(AppSettings.Instance.Folders.DictionaryDB, AppSettings.Instance.Connections.LPD);
+            //_dictionaryProvider = new LPDFileSystemProvider(AppSettings.Instance.Folders.Dictionary, CallScriptMethod);
+            _dictionaryProvider = new LPDDatabaseProvider(AppSettings.Instance.Folders.Dictionary, AppSettings.Instance.Connections.LPD);
 
             _audioContext = new DictionaryAudioContext(_dictionaryProvider, _mainIndex,
                 AppSettings.Instance.Recorders.LPD, new AppSettingsBasedRecordingPolicy());
@@ -144,6 +148,7 @@ namespace Pronunciation.Trainer
             btnFavorites.StateOnTooltipArgs = new object[] { KeyGestures.Favorites.DisplayString };
             btnFavorites.StateOffTooltipArgs = btnFavorites.StateOnTooltipArgs;
             btnFavorites.RefreshTooltip();
+            lblSessionStats.Text = string.Format(StatisticsTemplate, 0, 0);
 
             using (var region = _ignoreEvents.Start())
             {
@@ -189,6 +194,11 @@ namespace Pronunciation.Trainer
             {
                 CaptureKeyboardFocus();
             }
+        }
+
+        private void StatsCollector_SessionStatisticsChanged(int viewevPagesCount, int recordedWordsCount)
+        {
+            lblSessionStats.Text = string.Format(StatisticsTemplate, viewevPagesCount, recordedWordsCount);
         }
 
         public void NavigateWordFromHyperlink(string wordName)
@@ -245,13 +255,16 @@ namespace Pronunciation.Trainer
 
                 if (_currentPage.Page is ArticlePage)
                 {
+                    string pageKey = ((ArticlePage)_currentPage.Page).ArticleKey;
+                    _statsCollector.RegisterViewedPage(pageKey);
+
                     if (sourceIndex != null && !sourceIndex.IsCollocation)
                     {
                         _currentPage.WordIndex = sourceIndex;
                     }
                     else
                     {
-                        _currentPage.WordIndex = _mainIndex.GetWordByPageKey(((ArticlePage)_currentPage.Page).ArticleKey);
+                        _currentPage.WordIndex = _mainIndex.GetWordByPageKey(pageKey);
                     }
 
                     if (_currentPage.WordIndex != null)
@@ -288,6 +301,7 @@ namespace Pronunciation.Trainer
         private void AudioPanel_RecordingCompleted(string recordedFilePath, bool isTemporaryFile)
         {
             _audioContext.RegisterRecordedAudio(recordedFilePath, DateTime.Now);
+            _statsCollector.RegisterRecordedWord(_audioContext.CurrentSoundName);
         }
 
         private void RefreshAudioContext(IndexEntry index)
@@ -419,7 +433,7 @@ namespace Pronunciation.Trainer
                 return;
 
             ActivateFilter();
-            RefreshSuggestions(false);
+            RefreshSuggestions(true);
         }
 
         private void cboCategories_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -428,7 +442,7 @@ namespace Pronunciation.Trainer
                 return;
 
             ActivateFilter();
-            RefreshSuggestions(false);
+            RefreshSuggestions(true);
         }
 
         private void txtSearch_TextChanged(object sender, TextChangedEventArgs e)
@@ -436,10 +450,40 @@ namespace Pronunciation.Trainer
             if (_ignoreEvents.IsActive)
                 return;
 
-            bool hasSuggestions = RefreshSuggestions(false);
+            bool hasSuggestions = RefreshSuggestions(true);
             if (!hasSuggestions && ControlsHelper.HasTextBecomeLonger(e))
             {
                 SystemSounds.Beep.Play();
+            }
+        }
+
+        private void ProcessWordCategoriesChanged(string wordName, Guid[] addedCategoryIds, Guid[] removedCategoryIds)
+        {
+            var category = cboCategories.SelectedItem as DictionaryCategoryListItem;
+            if (category == null || category.IsServiceItem)
+                return;
+
+            // If current category matches one of the modified we should refresh suggestions list
+            if ((addedCategoryIds != null && addedCategoryIds.Contains(category.CategoryId))
+                || (removedCategoryIds != null && removedCategoryIds.Contains(category.CategoryId)))
+            {
+                int initialPosition = lstSuggestions.SelectedIndex;
+                bool restoreFocus = lstSuggestions.IsKeyboardFocusWithin;
+                
+                ActivateFilter();
+                bool hasSuggestions = RefreshSuggestions(false);
+                if (hasSuggestions)
+                {
+                    if (initialPosition <= 0)
+                    {
+                        lstSuggestions.SelectFirstItem(restoreFocus, true);
+                    }
+                    else
+                    {
+                        // Trying to restore list's position
+                        lstSuggestions.SelectClosestItem(initialPosition, restoreFocus, true);
+                    }
+                }
             }
         }
 
@@ -477,7 +521,7 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private bool RefreshSuggestions(bool synchronizeWithPage)
+        private bool RefreshSuggestions(bool selectFirstItem)
         {
             string searchText = txtSearch.Text;
             bool isFilterActive = !ReferenceEquals(_searchIndex, _mainIndex);
@@ -537,16 +581,7 @@ namespace Pronunciation.Trainer
             bool hasSuggestions = lstSuggestions.Items.Count > 0;
             if (hasSuggestions)
             {
-                bool isSynchronized = false;
-                if (synchronizeWithPage)
-                {
-                    if (_currentPage != null && _currentPage.WordIndex != null)
-                    {
-                        isSynchronized = lstSuggestions.SelectItem(_currentPage.WordIndex, true, true);
-                    }
-                }
-
-                if (!isSynchronized)
+                if (selectFirstItem)
                 {
                     lstSuggestions.SelectFirstItem(false, true);
                 }

@@ -13,12 +13,22 @@ namespace Pronunciation.Trainer.Controls
 
         public bool CanSelectPrevious
         {
-            get { return GetPreviousItem(false, this.SelectedIndex) != null; }
+            get { return GetPreviousItem() != null; }
         }
 
         public bool CanSelectNext
         {
-            get { return GetNextItem(false, this.SelectedIndex) != null; }
+            get { return GetNextItem() != null; }
+        }
+
+        public object GetPreviousItem()
+        {
+            return GetPreviousItem(false, this.SelectedIndex);
+        }
+
+        public object GetNextItem()
+        {
+            return GetNextItem(false, this.SelectedIndex);
         }
 
         public object SelectPreviousItem(bool setFocus, bool scrollIntoView)
@@ -52,6 +62,34 @@ namespace Pronunciation.Trainer.Controls
             }
 
             return firstItem;
+        }
+
+        public object SelectClosestItem(int itemIndex, bool setFocus, bool scrollIntoView)
+        {
+            if (this.Items.Count <= 0)
+                return null;
+
+            object item;
+            if (itemIndex < 0)
+            {
+                itemIndex = 0;
+            }
+            else if (itemIndex >= this.Items.Count)
+            {
+                itemIndex = this.Items.Count - 1;
+            }
+
+            item = GetNextItem(true, itemIndex - 1);
+            if (item == null)
+            {
+                item = GetPreviousItem(true, itemIndex);
+            }
+            if (item != null)
+            {
+                ChangeSelectedItemPresentation(setFocus, scrollIntoView);
+            }
+
+            return item;
         }
 
         public void AttachItemsSource<T>(IEnumerable<T> items)

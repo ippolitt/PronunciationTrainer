@@ -84,7 +84,7 @@
     <Compile Include="Dictionary\IndexEntryImitation.cs" />
     <Compile Include="Dictionary\IndexPositionTracker.cs" />
     <Compile Include="Controls\SuggestionsList.cs" />
-    <Compile Include="Dictionary\WordCategoryItem.cs" />
+    <Compile Include="Dictionary\SessionStatisticsCollector.cs" />
     <Compile Include="Dictionary\WordCategoryInfo.cs" />
     <Compile Include="Dictionary\CategoryManager.cs" />
     <Compile Include="Dictionary\WordCategoriesCollection.cs" />
@@ -282,8 +282,7 @@
       <Link>lame.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Resource Include="Resources\FavoritesOff.png" />
-    <Resource Include="Resources\FavoritesOn.png" />
+    <Resource Include="Resources\Favorites.png" />
     <Resource Include="Resources\EditCategories.png" />
     <Resource Include="Resources\SynchronizeList.png" />
     <Resource Include="Resources\ArrowDown.png" />

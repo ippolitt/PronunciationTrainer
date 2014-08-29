@@ -1,14 +1,10 @@
 Top:
-- Add ordinal to categories
-- Add button "Refresh items" to hdnle situations when item has been added to a category and we want it to be relfected in the list (ir think of another strategy)
-- Add status bar with session statistics (how many words recorded today) and list information (item 1 of 230)
 - Add a list with grammar notes (png images). Add these images to the different tab "Help" (use image container, not browser). Add them both to file and DB providers
-- Add a list "Unexpected pronunciation" (move files from Excel there)
 - Should LPD html page be able to catch the focus (after TAB click)?
-- First click on Exercise takes too long. Should we warm-up the connection somehow?
-- Will _dbContext cache all membership info that I ever Added or removed?
+- Add a list "Unexpected pronunciation" (move files from Excel there)
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 - Bugs
+	- Alt+left/right arrow doesn't work when focus is inside the browser
 	- When doubleclick on the item in audio list, refresh context is called two times: selection changed and double click
 	- Add handling for "EntityValidationErrors" (too long text etc)
 	- Bug: sometimes it's possible to start two players (rec and ref) simultineously
@@ -16,8 +12,9 @@ Top:
 	- There are no tags in my exported mp3 files
 	- Before removing the FakeEntity (for Exercise and Training) ensure they are not loaded into dbcontext
 - Performance:
-	- If we assign all index entries for LPD it eats + 6 MB (slowly, in background)
+	- First click on Exercise takes too long. Should we warm-up the connection somehow?
 	- Profile memory: when Exercise tab is first loaded etc.
+	- If we assign all index entries for LPD it eats + 6 MB (slowly, in background)
 	- Why it eats so much memory? Elaborate (try working without DB)
 	- Why it eats so much memory when saving large audio files? (50 mb file and 400mb eats the application)
 	- Test InMemory recorder - how much memory does it eats for long recordings? Should we flush to disk?
@@ -40,6 +37,7 @@ Top:
 	- Create a text version of each sentence/phrase to be able to perform full text search
 	- Play any word in the dictionary when I double click on it
 	- Add ability to add any word in the exercise to dictionary favorites
+	- Add a setting "Active book" to avoid displaying exercises from other books
 - Usability improvements
 	- Improve category dialog: add with hot key, delete with DEL
 	- Rename Trainings to Readings
@@ -49,6 +47,7 @@ Top:
 	- Add parent topic to the topics list (align  right)
 	- Add a switch to hide/display exercise description
 	- We should be able to see waveforms when an audio is playing (but not when is recording)
+	- Review logic for building TOP words - why it's 1200 instead of 1000?
 - Code improvements:
 	- Use stack panel in AudioPanel (read first what is better: Grid or stack panel)
 	- Use Lazy for Active record in Exercise/Trainig details dialog
