@@ -344,21 +344,11 @@ namespace Pronunciation.Trainer
             if (_activeRecord.ExerciseData == null)
             {
                 imgContent.Source = null;
-                return;
             }
-
-            BitmapImage image = new BitmapImage();
-            image.BeginInit();
-            image.CacheOption = BitmapCacheOption.OnLoad;
-            //image.UriSource = imageUrl;
-            //image.CreateOptions = BitmapCreateOptions.IgnoreImageCache; // required if we want to reload image from URL
-            using (var imageStream = new MemoryStream(_activeRecord.ExerciseData))
+            else
             {
-                image.StreamSource = imageStream;
-                image.EndInit();
+                imgContent.Source = ControlsHelper.ImageFromRawData(_activeRecord.ExerciseData);
             }
-
-            imgContent.Source = image;
         }
 
         private ExerciseAudioListItemWithData[] LoadReferenceAudios()

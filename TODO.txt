@@ -1,7 +1,4 @@
 Top:
-- Add a list with grammar notes (png images). Add these images to the different tab "Help" (use image container, not browser). Add them both to file and DB providers
-- Should LPD html page be able to catch the focus (after TAB click)?
-- Add a list "Unexpected pronunciation" (move files from Excel there)
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 - Bugs
 	- Alt+left/right arrow doesn't work when focus is inside the browser
@@ -23,6 +20,7 @@ Top:
 	- Cache latest audio files in providers (especially, LPD)
 	- Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
 	- Think of another DB engine (SQLLite?). Test it with big databases and storing image/binary/ntext data.  
+	- Use other control instead of WebBrowser (see http://stackoverflow.com/questions/18119125/options-for-embedding-chromium-instead-of-ie-webbrowser-control-with-wpf-c)
 - New functionality:
 	- Add ability to mark certain words as problematic and practice them later
 	- Add ability to search by wildcards (e.g. select a certain problematic syllable - lrt - and practice many words with it)

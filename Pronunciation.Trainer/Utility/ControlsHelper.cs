@@ -5,6 +5,8 @@ using System.Text;
 using System.Windows.Media;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
+using System.IO;
 
 namespace Pronunciation.Trainer.Utility
 {
@@ -72,6 +74,35 @@ namespace Pronunciation.Trainer.Utility
         public static bool IsModalWindow
         {
             get { return System.Windows.Interop.ComponentDispatcher.IsThreadModal; }
+        }
+
+        public static BitmapImage ImageFromRawData(byte[] data)
+        {
+            BitmapImage image = new BitmapImage();
+            image.BeginInit();
+            image.CacheOption = BitmapCacheOption.OnLoad;
+            //image.UriSource = imageUrl;
+            //image.CreateOptions = BitmapCreateOptions.IgnoreImageCache; // required if we want to reload image from URL
+            using (var imageStream = new MemoryStream(data))
+            {
+                image.StreamSource = imageStream;
+                image.EndInit();
+            }
+
+            return image;
+        }
+
+        public static BitmapImage ImageFromUrl(Uri imageUrl)
+        {
+            BitmapImage image = new BitmapImage();
+            image.BeginInit();
+            image.CacheOption = BitmapCacheOption.OnLoad;
+            // Required if we want to reload image from URL
+            image.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+            image.UriSource = imageUrl;
+            image.EndInit();
+
+            return image;
         }
     }
 }

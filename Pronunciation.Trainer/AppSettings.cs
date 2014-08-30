@@ -110,6 +110,7 @@ namespace Pronunciation.Trainer
             private const string DictionaryFolderName = "LPD";
             private const string ExercisesFolderName = "Exercises";
             private const string DatabaseFolderName = "Database";
+            private const string TheoryFolderName = "Theory";
             private const string TempFolderName = "Temp";
 
             public AppFolders(string baseFolder)
@@ -150,6 +151,11 @@ namespace Pronunciation.Trainer
             public string Database
             {
                 get { return Path.Combine(_baseFolder, DatabaseFolderName); }
+            }
+
+            public string Theory
+            {
+                get { return Path.Combine(_baseFolder, TheoryFolderName); }
             }
         }
 

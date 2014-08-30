@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Pronunciation.Trainer"
         xmlns:controls="clr-namespace:Pronunciation.Trainer.Controls"
-        Title="Pronunciation Trainer" Height="571" Width="827" Loaded="Window_Loaded"
+        Title="Pronunciation Trainer" Height="571" Width="827" Loaded="Window_Loaded" UseLayoutRounding="True"
         Closing="Window_Closing" Activated="Window_Activated">
     <TabControl Name="tabsRoot" TabStripPlacement="Top" Focusable="False" SelectionChanged="tabsRoot_SelectionChanged">
         <controls:TabItemExt Header="Dictionary" x:Name="tabDictionary" 
@@ -13,7 +13,9 @@
         <controls:TabItemExt Header="Training" x:Name="tabTraining"
                           DynamicContentType="local:TrainingList" DynamicContentMargin="10" />
         <controls:TabItemExt Header="Quick Recorder" x:Name="tabRecorder"
-                          DynamicContentType="local:QuickRecorder" DynamicContentMargin="10" />     
+                          DynamicContentType="local:QuickRecorder" DynamicContentMargin="10" />
+        <controls:TabItemExt Header="Theory " x:Name="tabTheory"
+                          DynamicContentType="local:Theory" DynamicContentMargin="10" />
         <controls:TabItemExt Header="Settings" x:Name="tabSettings"
                           DynamicContentType="local:SettingsPanel" DynamicContentMargin="10,15,10,10" />
         <!--<controls:TabItemExt Header="Data import" x:Name="tabImport"

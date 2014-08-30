@@ -103,6 +103,9 @@
     <Compile Include="Recording\AppSettingsBasedRecordingPolicy.cs" />
     <Compile Include="Controls\RecordingsList.cs" />
     <Compile Include="StyleSelectors\SuggestionsListItemStyleSelector.cs" />
+    <Compile Include="Theory.xaml.cs">
+      <DependentUpon>Theory.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Utility\BindingErrorTraceListener.cs" />
     <Compile Include="Commands\ExecuteActionCommand.cs" />
     <Compile Include="Utility\ControlsHelper.cs" />
@@ -209,6 +212,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="RecordingHistory.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Theory.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

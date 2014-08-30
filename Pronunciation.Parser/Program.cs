@@ -46,7 +46,8 @@ namespace Pronunciation.Parser
                 //UploadFilesBulk();
                 //TestUpload();
                 //MigrateRecordings();
-                //return;
+                //ImportCategories();
+                return;
 
                 var rootFolder = Path.GetFullPath(Path.Combine(
                     Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), RootFolderPath));
@@ -400,6 +401,40 @@ namespace Pronunciation.Parser
                 parmBody.Value = File.ReadAllBytes(@"D:\Temp\Recordings\track 48.mp3");//track 01.mp3
                 //track 48
                 int res = cmd.ExecuteNonQuery();
+            }
+        }
+
+        private static void ImportCategories()
+        {
+            var categoryId = new Guid("8c3d00db-4787-48a5-b807-9d5fd0246e51");
+            string sourceFile = @"D:\LEARN\English\Pronunciation\Words.txt";
+            var words = new HashSet<string>();
+
+            foreach (var line in File.ReadAllLines(sourceFile))
+            {
+                if(string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                words.Add(line.Split('\t')[0]);
+            }
+
+            using (SqlCeConnection conn = new SqlCeConnection(TrainerConnectionString))
+            {
+                conn.Open();
+                // return;
+
+                SqlCeCommand cmd = new SqlCeCommand(
+@"INSERT DictionaryCategoryMember(MembershipId, CategoryId, WordName)
+VALUES(@id, '8c3d00db-4787-48a5-b807-9d5fd0246e51', @word)", conn);
+                var parmId = cmd.Parameters.Add("@Id", SqlDbType.UniqueIdentifier);
+                var parmWord = cmd.Parameters.Add("word", SqlDbType.NVarChar);
+
+                foreach (var word in words)
+                {
+                    parmId.Value = Guid.NewGuid();
+                    parmWord.Value = word;
+                    cmd.ExecuteNonQuery();
+                }
             }
         }
     }

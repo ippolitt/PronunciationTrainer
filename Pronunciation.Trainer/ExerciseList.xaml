@@ -9,13 +9,12 @@
              xmlns:my="clr-namespace:Pronunciation.Core.Database;assembly=Pronunciation.Core" Loaded="UserControl_Loaded"
              Initialized="UserControl_Initialized">
     <DockPanel Name="rootPanel">
-        <Canvas Name="header" Height="34" DockPanel.Dock="Top">
-            <Button Canvas.Left="0" Canvas.Top="6" Content="Add" Height="23" Name="btnAdd" Width="68" Click="btnAdd_Click" />
-            <Button Canvas.Left="74" Canvas.Top="6" Content="Delete" Height="23" Name="btnDelete" Width="68" Click="btnDelete_Click" />
-        </Canvas>
-        <Canvas Name="footer" Height="35" DockPanel.Dock="Bottom"></Canvas>
+        <StackPanel Name="header" Height="35" DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Left">
+            <Button Content="Add" Height="23" Name="btnAdd" Width="68" Click="btnAdd_Click" />
+            <Button Content="Delete" Height="23" Name="btnDelete" Width="68" Margin="5,0,0,0" Click="btnDelete_Click" />
+        </StackPanel>
         <DataGrid DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}, 
-            Path=DataContext.Exercises}"
+            Path=DataContext.Exercises}" Margin="0,0,0,5"
             AutoGenerateColumns="False" EnableRowVirtualization="True"
                   HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ItemsSource="{Binding}"  Name="exerciseDataGrid"
                   CanUserReorderColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" 

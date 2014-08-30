@@ -131,6 +131,8 @@
     <Compile Include="Providers\Recording\Providers\DatabaseRecordingProvider.cs" />
     <Compile Include="Providers\Recording\IRecordingTargetKey.cs" />
     <Compile Include="Providers\Recording\RecordingProviderWithTargetKey.cs" />
+    <Compile Include="Providers\Theory\TheoryProvider.cs" />
+    <Compile Include="Providers\Theory\TheoryTopicInfo.cs" />
     <Compile Include="Providers\Training\QuickRecorderTargetKey.cs" />
     <Compile Include="Providers\Dictionary\IDictionaryProvider.cs" />
     <Compile Include="Providers\Dictionary\IndexEntry.cs" />

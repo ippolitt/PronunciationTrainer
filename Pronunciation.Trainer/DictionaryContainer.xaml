@@ -34,7 +34,7 @@
             <Setter Property="Margin" Value="0,2,0,0"/>
         </Style>
     </UserControl.Resources>
-    <DockPanel Name="rootPanel">
+    <DockPanel Name="rootPanel" KeyboardNavigation.TabNavigation="Cycle">
         <local:AudioPanel DockPanel.Dock="Top" Height="32" x:Name="audioPanel" />
         <DockPanel DockPanel.Dock="Top" Height="32">
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" HorizontalAlignment="Left">
@@ -45,11 +45,11 @@
                         Margin="0,0,1,0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Clear [{0}]">
                             <Image Source="Resources/ClearSearch.png" Stretch="None" />
                         </Button>
-                        <TextBox Name="txtSearch" BorderThickness="0" TextChanged="txtSearch_TextChanged" KeyDown="txtSearch_KeyDown" PreviewKeyDown="txtSearch_PreviewKeyDown" />
+                        <TextBox Name="txtSearch" BorderThickness="0" TabIndex="10" TextChanged="txtSearch_TextChanged" KeyDown="txtSearch_KeyDown" PreviewKeyDown="txtSearch_PreviewKeyDown" />
                     </DockPanel>
                 </Border>
                 <TextBlock Name="textBlock2" Text="Filter by rank:" Margin="10,0,5,0" VerticalAlignment="Center" />
-                <controls:ComboBoxExt Height="23" Width="120" x:Name="cboRanks" DisableAltGestures="True" SelectionChanged="cboRanks_SelectionChanged" KeyDown="cboRanks_KeyDown"  Margin="0,0,5,0" />
+                <controls:ComboBoxExt Height="23" Width="120" TabIndex="20" x:Name="cboRanks" DisableAltGestures="True" SelectionChanged="cboRanks_SelectionChanged" KeyDown="cboRanks_KeyDown"  Margin="0,0,5,0" />
                 <TextBlock Name="textBlock3" Text="by category:" Margin="5,0,5,0" VerticalAlignment="Center" />
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" Width="170" Margin="10,0,0,0">
@@ -101,7 +101,7 @@
                     <Image Source="Resources/EditCategories.png" Style="{StaticResource ToolbarImage}" />
                 </Button>
             </StackPanel>
-            <controls:ComboBoxExt Height="23" Margin="0,0,0,0" x:Name="cboCategories" DisableAltGestures="True" SelectionChanged="cboCategories_SelectionChanged" KeyDown="cboCategories_KeyDown" />            
+            <controls:ComboBoxExt Height="23" Margin="0,0,0,0" TabIndex="30" x:Name="cboCategories" DisableAltGestures="True" SelectionChanged="cboCategories_SelectionChanged" KeyDown="cboCategories_KeyDown" />            
         </DockPanel>
         <StatusBar DockPanel.Dock="Bottom" Height="20" 
                    Background="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}, Path=Background}">
@@ -109,19 +109,19 @@
                 <TextBlock Name="lblSessionStats" Text="" />
             </StatusBarItem>
         </StatusBar>
-        <controls:SuggestionsList x:Name="lstSuggestions" DockPanel.Dock="Left" Width="150" Margin="0,5,0,0"
+        <controls:SuggestionsList x:Name="lstSuggestions" DockPanel.Dock="Left" Width="150" Margin="0,5,0,0" TabIndex="40"
             ItemContainerStyleSelector="{StaticResource suggestionsItemStyleSelector}" MouseLeftButtonUp="lstSuggestions_MouseLeftButtonUp" PreviewKeyDown="lstSuggestions_PreviewKeyDown"
             SelectionChanged="lstSuggestions_SelectionChanged" />
         <TabControl Name="tabsHistory" DockPanel.Dock="Right" Width="170" Margin="10,5,0,0" TabStripPlacement="Top" Focusable="False">
-            <controls:TabItemExt Header="Recent words" x:Name="tabRecent">
-                <controls:ListBoxExt x:Name="lstRecentWords" BorderThickness="0" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown" />
+            <controls:TabItemExt Header="Recent words" x:Name="tabRecent" IsTabStop="False">
+                <controls:ListBoxExt x:Name="lstRecentWords" TabIndex="50" BorderThickness="0" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown" />
             </controls:TabItemExt>
-            <controls:TabItemExt Header="Categories" x:Name="tabCategories">
+            <controls:TabItemExt Header="Categories" x:Name="tabCategories" IsTabStop="False">
                 <DataGrid Name="categoriesDataGrid" AutoGenerateColumns="False" EnableRowVirtualization="True" BorderThickness="0"
                           HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HeadersVisibility="None" GridLinesVisibility="None"
                           CanUserReorderColumns="False" CanUserAddRows="True" CanUserDeleteRows="True" Margin="0,3,0,0" Background="White"
                           CanUserResizeRows="False" IsReadOnly="False" SelectionMode="Single" SelectionUnit="Cell" 
-                          CellStyle="{StaticResource CategoryCell}" >
+                          CellStyle="{StaticResource CategoryCell}" IsTabStop="False" KeyboardNavigation.TabNavigation="None">
                     <DataGrid.Columns>
                         <DataGridTextColumn x:Name="displayNameColumn" Binding="{Binding Path=DisplayName, Mode=OneWay}" Width="*" CellStyle="{StaticResource CategoryNameCell}" />
                         <DataGridCheckBoxColumn x:Name="isAssignedColumn" Binding="{Binding Path=IsAssigned, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="30" CellStyle="{StaticResource IsAssignedCell}" />
@@ -134,7 +134,6 @@
                 </DataGrid>
             </controls:TabItemExt>
         </TabControl>        
-
-        <WebBrowser Name="browser" LoadCompleted="browser_LoadCompleted" />
+        <WebBrowser Name="browser" LoadCompleted="browser_LoadCompleted" Focusable="False" />
     </DockPanel>
 </controls:UserControlExt>
