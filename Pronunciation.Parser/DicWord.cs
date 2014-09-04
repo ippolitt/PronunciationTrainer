@@ -8,7 +8,9 @@ namespace Pronunciation.Parser
     class DicWord
     {
         public string Keyword;
-        public List<DicEntry> Entries;
+        public List<DicEntry> LPDEntries;
+        public LDOCEHtmlEntry LDOCEEntry;
+        public bool IsLDOCEEntry;
     }
 
     class DicEntry
@@ -24,7 +26,6 @@ namespace Pronunciation.Parser
         WordForm,
         Collocation
     }
-
 
     class ItemGroup
     {

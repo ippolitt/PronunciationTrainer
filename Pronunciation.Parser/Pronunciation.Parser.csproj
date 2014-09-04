@@ -47,7 +47,15 @@
     <Compile Include="ContentCollector.cs" />
     <Compile Include="DatabaseUploader.cs" />
     <Compile Include="DicElements.cs" />
+    <Compile Include="FileLoaderMock.cs" />
+    <Compile Include="IFileLoader.cs" />
+    <Compile Include="LDOCEEntry.cs" />
+    <Compile Include="LDOCEHtmlBuilder.cs" />
+    <Compile Include="LDOCEHtmlEntry.cs" />
+    <Compile Include="LDOCEParser.cs" />
+    <Compile Include="LDOCEProcessor.cs" />
     <Compile Include="RecordingsMigration.cs" />
+    <Compile Include="TagReader.cs" />
     <Compile Include="WordDescription.cs" />
     <Compile Include="DicWord.cs" />
     <Compile Include="FileLoader.cs" />

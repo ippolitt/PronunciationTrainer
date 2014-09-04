@@ -115,18 +115,18 @@ iframe
     font-size: 1em;
 }
 
-.pron, .pron_us
+.pron, .pron_us, .ldoce_pron, .ldoce_pron_us
 {
     font-weight: bold;
     color: blue;
     font-size: 1.2em;
 }
-.pron em, .pron_us em
+.pron em, .pron_us em, .ldoce_pron em, .ldoce_pron_us em
 {
     font-weight: normal;
     color: blue;
 }
-.pron_us:before, .pron_us_alt:before
+.pron_us:before, .pron_us_alt:before, .ldoce_pron_us:before
 {
     content: "AmE ";
     font-weight: bold;
@@ -146,7 +146,41 @@ iframe
     content: "]";
 }
 
-.stress_low:before
+.ldoce_fragment .ldoce_header:before
+{
+    content: "LDOCE";
+    font-weight: bold;
+    font-style:italic;
+    color: green;
+}
+.ldoce_content
+{
+    margin-left: 1em;
+    padding: 5px;
+}
+.ldoce_word_name
+{
+    font-weight: bold;
+    font-size: 1.2em;
+}
+.ldoce_pron_note
+{
+    font-weight: normal;
+    font-style: italic;
+    color: black;
+    font-size: 0.9em;
+}
+.ldoce_speech_part
+{
+    font-weight: normal;
+    font-style: italic;
+}
+.ldoce_entry_number
+{
+    font-weight: bold;
+}
+
+.stress_low:before, .ldoce_stress_low:before
 {
     content: "ˬ";
     font-weight: bold;
@@ -158,7 +192,7 @@ iframe
     font-weight: normal;
     color: green;
 }
-.stress_up:before
+.stress_up:before, .ldoce_stress_up:before
 {
     content: "ˆ";
     font-weight: bold;
@@ -168,7 +202,13 @@ iframe
 {
     content: "◂";
     font-weight: bold;
-    color: green;
+    color: blue;
+}
+.ldoce_stress_shift:before
+{
+    content: " ◂";
+    font-weight: bold;
+    color: blue;
 }
 
 .lang 

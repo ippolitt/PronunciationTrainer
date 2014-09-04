@@ -170,7 +170,7 @@ namespace Pronunciation.Trainer
             bool isSuccess = false;
             try
             {
-                _mainIndex.Build(_dictionaryProvider.GetWordsIndex(), true);
+                _mainIndex.Build(_dictionaryProvider.GetWordsIndex(AppSettings.Instance.DisplayLPDDataOnly), true);
                 isSuccess = true;
             }
             finally

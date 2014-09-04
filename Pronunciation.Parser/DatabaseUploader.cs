@@ -9,7 +9,7 @@ namespace Pronunciation.Parser
 {
     class DatabaseUploader : IDisposable
     {
-        private readonly FileLoader _fileLoader;
+        private readonly IFileLoader _fileLoader;
         private readonly string _connectionString;
         private readonly Dictionary<string, int> _soundKeysLookup = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
@@ -28,7 +28,7 @@ namespace Pronunciation.Parser
             get { return _dbStats; }
         }
 
-        public DatabaseUploader(string connectionString, FileLoader fileLoader)
+        public DatabaseUploader(string connectionString, IFileLoader fileLoader)
         {
             _connectionString = connectionString;
             _fileLoader = fileLoader;
@@ -67,7 +67,7 @@ namespace Pronunciation.Parser
             _connection.Dispose();
         }
 
-        public void InsertWord(WordDescription word, string htmlPage)
+        public void InsertWord(WordDescription word, bool isLDOCEWord, string htmlPage)
         {
             _wordPK++;
 
@@ -116,6 +116,10 @@ namespace Pronunciation.Parser
             if (!string.IsNullOrEmpty(word.SoundKeyUS))
             {
                 wordRecord["SoundIdUS"] = _soundKeysLookup[word.SoundKeyUS];
+            }
+            if (isLDOCEWord)
+            {
+                wordRecord["IsLDOCEWord"] = true;
             }
 
             // Word usage statistics

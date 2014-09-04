@@ -35,10 +35,10 @@ namespace Pronunciation.Core.Providers.Dictionary
             get { return File.Exists(_indexFilePath); }
         }
 
-        public List<IndexEntry> GetWordsIndex()
+        public List<IndexEntry> GetWordsIndex(bool lpdDataOnly)
         {
             if (IsWordsIndexCached)
-                return GetCachedWordsIndex();
+                return GetCachedWordsIndex(lpdDataOnly);
 
             var index = new List<IndexEntry>();
             using (SqlCeConnection conn = new SqlCeConnection(_lpdConnectionString))
@@ -50,7 +50,7 @@ namespace Pronunciation.Core.Providers.Dictionary
 
                 // Load words
                 cmd.CommandText =
-@"SELECT w.WordId, w.Keyword AS Text, w.UsageRank, s1.SoundKey AS SoundKeyUK, s2.SoundKey AS SoundKeyUS  
+@"SELECT w.WordId, w.Keyword AS Text, w.UsageRank, s1.SoundKey AS SoundKeyUK, s2.SoundKey AS SoundKeyUS, w.IsLDOCEWord  
 FROM Words w 
     LEFT JOIN Sounds s1 ON w.SoundIdUK = s1.SoundId
     LEFT JOIN Sounds s2 ON w.SoundIdUS = s2.SoundId";
@@ -58,7 +58,7 @@ FROM Words w
 
                 // Load collocations
                 cmd.CommandText =
-@"SELECT c.WordId, c.CollocationText AS Text, NULL AS UsageRank, s1.SoundKey AS SoundKeyUK, s2.SoundKey AS SoundKeyUS  
+@"SELECT c.WordId, c.CollocationText AS Text, NULL AS UsageRank, s1.SoundKey AS SoundKeyUK, s2.SoundKey AS SoundKeyUS, NULL AS IsLDOCEWord  
 FROM Collocations c 
     LEFT JOIN Sounds s1 ON c.SoundIdUK = s1.SoundId
     LEFT JOIN Sounds s2 ON c.SoundIdUS = s2.SoundId";
@@ -66,7 +66,7 @@ FROM Collocations c
             }
 
             CacheWordsIndex(index);
-            return index;
+            return lpdDataOnly ? index.Where(x => !x.IsLDOCEEntry).ToList() : index;
         }
 
         public ArticlePage PrepareArticlePage(string articleKey)
@@ -150,7 +150,8 @@ WHERE SoundKey = @soundKey", conn);
                         isCollocation,
                         reader["UsageRank"] as int?,
                         reader["SoundKeyUK"] as string,
-                        reader["SoundKeyUS"] as string));
+                        reader["SoundKeyUS"] as string,
+                        (reader["IsLDOCEWord"] as bool?) == true));
                 }
             }
         }
@@ -171,15 +172,15 @@ WHERE SoundKey = @soundKey", conn);
             var bld = new StringBuilder();
             foreach (var entry in index)
             {
-                bld.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}",
+                bld.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}",
                     entry.EntryText, entry.ArticleKey, entry.IsCollocation ? 1 : 0, entry.UsageRank,
-                    entry.SoundKeyUK, entry.SoundKeyUS));
+                    entry.SoundKeyUK, entry.SoundKeyUS, entry.IsLDOCEEntry ? 1 : 0));
             }
 
             File.WriteAllText(_indexFilePath, bld.ToString(), Encoding.UTF8);
         }
 
-        private List<IndexEntry> GetCachedWordsIndex()
+        private List<IndexEntry> GetCachedWordsIndex(bool lpdDataOnly)
         {
             var words = new List<IndexEntry>();
             using (var reader = new StreamReader(_indexFilePath, Encoding.UTF8))
@@ -187,15 +188,20 @@ WHERE SoundKey = @soundKey", conn);
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 6)
+                    if (data.Length != 7)
                         throw new InvalidOperationException("Index file is broken!");
+
+                    bool isLDOCEEntry = (data[6] == "1");
+                    if (lpdDataOnly && isLDOCEEntry)
+                        continue;
 
                     words.Add(new IndexEntry(data[1], 
                         data[0], 
                         data[2] == "1" ? true : false,
                         string.IsNullOrEmpty(data[3]) ? (int?)null : int.Parse(data[3]), 
                         data[4], 
-                        data[5]));
+                        data[5],
+                        isLDOCEEntry));
                 }
             }
 

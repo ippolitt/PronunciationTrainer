@@ -13,6 +13,7 @@ namespace Pronunciation.Core.Providers.Dictionary
         public int? UsageRank { get; private set; }
         public string SoundKeyUK { get; private set; }
         public string SoundKeyUS { get; private set; }
+        public bool IsLDOCEEntry { get; private set; }
 
         public override string ToString()
         {
@@ -20,7 +21,7 @@ namespace Pronunciation.Core.Providers.Dictionary
         }
 
         public IndexEntry(string articleKey, string entryText, bool isCollocation, int? usageRank, 
-            string soundKeyUK, string soundKeyUS)
+            string soundKeyUK, string soundKeyUS, bool isLDOCEEntry)
         {
             ArticleKey = articleKey;
             EntryText = entryText;
@@ -28,6 +29,7 @@ namespace Pronunciation.Core.Providers.Dictionary
             UsageRank = usageRank;
             SoundKeyUK = soundKeyUK;
             SoundKeyUS = soundKeyUS;
+            IsLDOCEEntry = isLDOCEEntry;
         }
     }
 }

@@ -78,7 +78,7 @@ namespace Pronunciation.Core.Providers.Dictionary
             get { return true; }
         }
 
-        public List<IndexEntry> GetWordsIndex()
+        public List<IndexEntry> GetWordsIndex(bool lpdDataOnly)
         {
             string indexFile = Path.Combine(_baseFolder, IndexFileName);
             if (!File.Exists(indexFile))
@@ -90,16 +90,21 @@ namespace Pronunciation.Core.Providers.Dictionary
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 6)
+                    if (data.Length != 7)
                         throw new InvalidOperationException("Index file is broken!");
+
+                    bool isLDOCEEntry = (data[6] == "1");
+                    if (lpdDataOnly && isLDOCEEntry)
+                        continue;
 
                     words.Add(new IndexEntry(
                         data[1], 
                         data[0], 
                         data[2] == "1" ? true : false,
                         string.IsNullOrEmpty(data[3]) ? (int?)null : int.Parse(data[3]), 
-                        data[3], 
-                        data[4]));
+                        data[4], 
+                        data[5],
+                        isLDOCEEntry));
                 }
             }
 

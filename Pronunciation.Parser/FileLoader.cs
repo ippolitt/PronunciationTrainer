@@ -6,51 +6,42 @@ using System.IO;
 
 namespace Pronunciation.Parser
 {
-    class FileLoader
+    class FileLoader : IFileLoader
     {
-        private string _sourceFolder;
+        private readonly string _sourceFolderLPD;
+        private readonly string _sourceFolderLDOCE;
+        private readonly Dictionary<string, string> _cache;
+        private readonly string _cacheFolder;
+        private readonly bool _useCacheOnly;
+        private readonly string _ldoceKeysPrefix;
 
-        private Dictionary<string, string> _cache;
-        private string _cacheFolder;
-        private bool _useCacheOnly;
+        private const string LDOCEFolderUK = "SoundsUK";
+        private const string LDOCEFolderUS = "SoundsUS";
+
         private string _currentCacheFile;
 
-        public FileLoader(string sourceFolder, string cacheFolder, bool useCacheOnly)
+        public FileLoader(string sourceFolderLPD, string sourceFolderLDOCE, string ldoceKeysPrefix, 
+            string cacheFolder, bool useCacheOnly)
         {
-            _sourceFolder = sourceFolder;
+            _sourceFolderLPD = sourceFolderLPD;
+            _sourceFolderLDOCE = sourceFolderLDOCE;
+            _ldoceKeysPrefix = ldoceKeysPrefix;
             _cacheFolder = cacheFolder;
             _useCacheOnly = useCacheOnly;
             _cache = new Dictionary<string, string>();
         }
 
-        public void SwitchCache(string newCacheKey)
+        public bool FlushCache()
         {
-            if (!string.IsNullOrEmpty(_currentCacheFile))
-            {
-                FlushCache(_currentCacheFile);
-            }
-
-            if (string.IsNullOrEmpty(newCacheKey))
-                return;
-
-            LoadCache(string.Format("{0}.txt", newCacheKey));
-        }
-
-        public bool FlushCache(string cacheFileName)
-        {
-            if (_useCacheOnly)
-            {
-                // No need to save the cache again over the same data
-                ClearCache();
+            if (_useCacheOnly || string.IsNullOrEmpty(_currentCacheFile))
                 return false;
-            }
 
             if (!Directory.Exists(_cacheFolder))
             {
                 Directory.CreateDirectory(_cacheFolder);
             }
 
-            using (var dest = new StreamWriter(Path.Combine(_cacheFolder, cacheFileName)))
+            using (var dest = new StreamWriter(Path.Combine(_cacheFolder, _currentCacheFile), false))
             {
                 foreach (var item in _cache.OrderBy(x => x.Key))
                 {
@@ -59,20 +50,21 @@ namespace Pronunciation.Parser
                 }
             }
 
-            ClearCache();
             return true;
         }
 
-        public bool LoadCache(string cacheFileName)
+        public bool LoadCache(string cacheKey)
         {
             ClearCache();
 
+            string cacheFileName = string.Format("{0}.txt", cacheKey);
             var filePath = Path.Combine(_cacheFolder, cacheFileName);
             if (!File.Exists(filePath))
             {
                 if (_useCacheOnly)
                     throw new ArgumentException();
 
+                _currentCacheFile = cacheFileName;
                 return false;
             }
 
@@ -93,51 +85,73 @@ namespace Pronunciation.Parser
             return true;
         }
 
-        private void ClearCache()
+        public void ClearCache()
         {
             _cache.Clear();
             _currentCacheFile = null;
         }
 
-        public string GetBase64Content(string fileName)
+        public string GetBase64Content(string fileKey)
         {
             string result;
-            if (_cache.TryGetValue(fileName, out result))
-            {
+            if (_cache.TryGetValue(fileKey, out result))
                 return result;
-            }
-            else
-            {
-                if (_useCacheOnly)
-                    throw new ArgumentException();
-            }
+            
+            if (_useCacheOnly)
+                throw new ArgumentException();
 
-            string sourceFile = BuildFilePath(fileName);
-            if (!File.Exists(sourceFile))
-            {
-                Console.WriteLine("\r\nMissing sound file '{0}'", fileName);
+            byte[] rawData = GetFileContent(fileKey);
+            if (rawData == null)
                 return null;
-                //throw new ArgumentException();
-            }
 
-            result = Convert.ToBase64String(File.ReadAllBytes(sourceFile));
-            _cache[fileName] = result;
+            result = Convert.ToBase64String(rawData);
+            _cache[fileKey] = result;
 
             return result;
         }
 
-        public byte[] GetRawData(string fileName)
+        public byte[] GetRawData(string fileKey)
         {
-            string base64 = GetBase64Content(fileName);
-            if (string.IsNullOrEmpty(base64))
+            string base64;
+            if (_cache.TryGetValue(fileKey, out base64))
+                return string.IsNullOrEmpty(base64) ? null : Convert.FromBase64String(base64);
+
+            if (_useCacheOnly)
+                throw new ArgumentException();
+
+            byte[] rawData = GetFileContent(fileKey);
+            if (rawData == null)
                 return null;
 
-            return Convert.FromBase64String(base64);
+            _cache[fileKey] = Convert.ToBase64String(rawData);
+            return rawData;
         }
 
-        private string BuildFilePath(string fileName)
+        private byte[] GetFileContent(string fileKey)
         {
-            return Path.Combine(_sourceFolder, string.Format("{0}.mp3", fileName));
+            string sourceFile;
+            if (fileKey.StartsWith(_ldoceKeysPrefix))
+            {
+                string fileName = string.Format("{0}.mp3", fileKey.Remove(0, _ldoceKeysPrefix.Length));
+                sourceFile = Path.Combine(_sourceFolderLDOCE, LDOCEFolderUK, fileName);
+                if (!File.Exists(sourceFile))
+                {
+                    sourceFile = Path.Combine(_sourceFolderLDOCE, LDOCEFolderUS, fileName);
+                }
+            }
+            else
+            {
+                sourceFile = Path.Combine(_sourceFolderLPD, string.Format("{0}.mp3", fileKey));
+            }
+
+            if (!File.Exists(sourceFile))
+            {
+                Console.WriteLine("\r\nMissing sound file '{0}'", fileKey);
+                return null;
+                //throw new ArgumentException();
+            }
+
+            return File.ReadAllBytes(sourceFile);
         }
     }
 }

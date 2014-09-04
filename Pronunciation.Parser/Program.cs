@@ -16,25 +16,34 @@ namespace Pronunciation.Parser
         private const string DataFolder = @"Data\";
         private const string AnalysisFolder = @"Analysis\";
 
+        private const string DataFolderLPD = DataFolder + @"LPD\";
+        private const string DataFolderLDOCE = DataFolder + @"LDOCE\";
+        private const string AnalysisFolderLPD = AnalysisFolder +  @"LPD\";
+        private const string AnalysisFolderLDOCE = AnalysisFolder + @"LDOCE\";
+
         // Used for generation
-        private const string SoundsFolder = DataFolder + "Sounds";
+        private const string SoundsFolderLPD = DataFolderLPD + "Sounds";
+        private const string SoundsFolderLDOCE = DataFolderLDOCE + "Sounds";
         private const string SoundsCacheFolder = DataFolder + "SoundsCache";
-        private const string HtmlSourceFile = DataFolder + "Results - Final.xml";
-        private const string TopWordsFile = DataFolder + "TopWords.txt";
+        private const string HtmlSourceFileNameLPD = "ResultsLPD.xml";
+        private const string HtmlSourceFileNameLDOCE = "ResultsLDOCE.txt";
+        private const string TopWordsFileName = "TopWords.txt";
 
         private const string TrainerFolder = @"D:\LEARN\English\Pronunciation\Trainer\";
-        private const string HtmlFolderDB = TrainerFolder + "LPD_DB";
-        private const string HtmlFolderFiles = TrainerFolder + "LPD_File";
+        private const string HtmlFolderDB = TrainerFolder + "LPD";
+        private const string HtmlFolderFiles = TrainerFolder + "LPD";
         private const string HtmlFolderIphone = TrainerFolder + "LPD_iPhone";
         private const string LPDConnectionString = "Data Source=" + TrainerFolder + @"Database\LPD.sdf;Max Database Size=4000;";
         private const string TrainerConnectionString = "Data Source=" + TrainerFolder + @"Database\PronunciationTrainer.sdf;Max Database Size=2000;";
 
         // Used for analysis
-        private const string SourceFile = DataFolder + "En-En-Longman_Pronunciation.dsl";
-        private const string NormalizedFile = AnalysisFolder + "Results_Normalize.txt";
-        private const string XmlFile = AnalysisFolder + "Results.xml";
-        private const string XmlLogFile = AnalysisFolder + "XmlConvert.log";
-        private const string HtmlLogFile = AnalysisFolder + "HtmlConvert.log";
+        private const string SourceFileNameLPD = "En-En-Longman_Pronunciation.dsl";
+        private const string SourceFileNameLDOCE = "En-En-Longman_DOCE5.dsl";
+        private const string NormalizedFileName = "Results_Normalize.txt";
+        private const string ResultsFileNameLPD = "Results.xml";
+        private const string ResultsFileNameLDOCE = "Results.txt";
+        private const string XmlLogFileName = "XmlConvert.log";
+        private const string HtmlLogFileName = "HtmlConvert.log";
 
         static void Main(string[] args)
         {
@@ -47,7 +56,7 @@ namespace Pronunciation.Parser
                 //TestUpload();
                 //MigrateRecordings();
                 //ImportCategories();
-                return;
+                //return;
 
                 var rootFolder = Path.GetFullPath(Path.Combine(
                     Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), RootFolderPath));
@@ -55,21 +64,32 @@ namespace Pronunciation.Parser
                 //var data = File.ReadAllBytes(Path.Combine(HtmlFolderPath, @"Recordings\j\jump.mp3"));
                 //var str = Convert.ToBase64String(data);
                 //File.WriteAllText(Path.Combine(RootFolderPath, "mp3.txt"), str);
-                //return;
 
                 //var b = new TopWordsBuilder();
-               // b.GroupWords();
-                
+                //b.GroupWords();
+
                 //CheckFiles();
-                //return;
 
-                //NormalizeLines(Path.Combine(rootFolder, SourceFile), Path.Combine(rootFolder, NormalizedFile));
+                //NormalizeLines(
+                //    Path.Combine(rootFolder, DataFolderLPD, SourceFileNameLPD),
+                //    Path.Combine(rootFolder, AnalysisFolderLPD, NormalizedFileName));
 
-                //var builder = new XmlBuilder(Path.Combine(rootFolder, XmlLogFile));
+                //NormalizeLines(
+                //    Path.Combine(rootFolder, DataFolderLDOCE, SourceFileNameLDOCE),
+                //    Path.Combine(rootFolder, AnalysisFolderLDOCE, NormalizedFileName));
+
+                //var builder = new XmlBuilder(Path.Combine(rootFolder, AnalysisFolderLPD, XmlLogFileName));
                 //builder.ConvertToXml(
-                //    Path.Combine(rootFolder, SourceFile),
-                //    Path.Combine(rootFolder, XmlFile),
+                //    Path.Combine(rootFolder, DataFolderLPD, SourceFileNameLPD),
+                //    Path.Combine(rootFolder, AnalysisFolderLPD, ResultsFileNameLPD),
                 //    true, false);
+
+                //LDOCEProcessor.ParseDictionary(
+                //    Path.Combine(rootFolder, DataFolderLDOCE, SourceFileNameLDOCE),
+                //    Path.Combine(rootFolder, AnalysisFolderLDOCE, ResultsFileNameLDOCE),
+                //    Path.Combine(rootFolder, AnalysisFolderLDOCE, XmlLogFileName));
+
+                //return;
 
                 bool isFakeMode = true;
                 var generationMode = HtmlBuilder.GenerationMode.Database;
@@ -83,18 +103,28 @@ namespace Pronunciation.Parser
                     ? HtmlFolderDB
                     : (generationMode == HtmlBuilder.GenerationMode.FileSystem ? HtmlFolderFiles : HtmlFolderIphone);
 
-                var fileLoader = new FileLoader(
-                    Path.Combine(rootFolder, SoundsFolder),
+                IFileLoader fileLoader = new FileLoader(
+                    Path.Combine(rootFolder, SoundsFolderLPD),
+                    Path.Combine(rootFolder, SoundsFolderLDOCE),
+                    LDOCEHtmlBuilder.AudioKeyPrefics,
                     Path.Combine(rootFolder, SoundsCacheFolder),
                     true);
+
+                //fileLoader = new FileLoaderMock();
+
+                var ldoceBuilder = new LDOCEHtmlBuilder(
+                    LDOCEProcessor.LoadParsedData(Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameLDOCE)),
+                    fileLoader);
+
                 var htmlBuilder = new HtmlBuilder(
                     generationMode,
                     LPDConnectionString,
-                    Path.Combine(rootFolder, HtmlLogFile),
+                    Path.Combine(rootFolder, AnalysisFolder, HtmlLogFileName),
                     fileLoader,
-                    Path.Combine(rootFolder, TopWordsFile));
+                    ldoceBuilder,
+                    Path.Combine(rootFolder, DataFolder, TopWordsFileName));
                 htmlBuilder.ConvertToHtml(
-                    Path.Combine(rootFolder, HtmlSourceFile),
+                    Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameLPD),
                     outputHtmlFolder,
                     -1,
                     isFakeMode);

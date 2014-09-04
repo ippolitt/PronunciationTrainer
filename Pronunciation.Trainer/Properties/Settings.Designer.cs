@@ -121,5 +121,17 @@ namespace Pronunciation.Trainer.Properties {
                 this["MaxAudioSamplesInWaveform"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DisplayLPDDataOnly {
+            get {
+                return ((bool)(this["DisplayLPDDataOnly"]));
+            }
+            set {
+                this["DisplayLPDDataOnly"] = value;
+            }
+        }
     }
 }

@@ -9,7 +9,7 @@ namespace Pronunciation.Core.Providers.Dictionary
     public interface IDictionaryProvider
     {
         bool IsWordsIndexCached { get; }
-        List<IndexEntry> GetWordsIndex();
+        List<IndexEntry> GetWordsIndex(bool lpdDataOnly);
         ArticlePage PrepareArticlePage(string articleKey);
         PageInfo PrepareGenericPage(Uri pageUrl);
         PlaybackData GetAudio(string soundKey);
