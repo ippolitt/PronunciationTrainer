@@ -10,7 +10,8 @@ namespace Pronunciation.Parser
         public string Text;
         public string SoundKeyUK;
         public string SoundKeyUS;
-        public List<SoundInfo> Sounds;
+        public string SoundIndexUK;
+        public string SoundIndexUS;
         public WordUsageInfo UsageInfo;
         public List<CollocationDescription> Collocations;
     }
@@ -20,5 +21,7 @@ namespace Pronunciation.Parser
         public string Text;
         public string SoundKeyUK;
         public string SoundKeyUS;
+        public string SoundIndexUK;
+        public string SoundIndexUS;
     }
 }

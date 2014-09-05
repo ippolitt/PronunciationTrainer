@@ -9,6 +9,8 @@ namespace Pronunciation.Parser
     {
         public string MainSoundUK { get; private set; }
         public string MainSoundUS { get; private set; }
+        public string MainSoundIndexUK { get; private set; }
+        public string MainSoundIndexUS { get; private set; }
         public List<SoundInfo> Sounds { get; private set; }
 
         public SoundCollector()
@@ -26,15 +28,16 @@ namespace Pronunciation.Parser
             get { return !string.IsNullOrEmpty(MainSoundUS); }
         }
 
-        public void RegisterSound(string soundKey, bool isUKSound)
+        public void RegisterSound(string soundKey, string soundIndex, bool isUKSound)
         {
-            Sounds.Add(new SoundInfo(soundKey, isUKSound));
+            Sounds.Add(new SoundInfo(soundKey, soundIndex, isUKSound));
 
             if (isUKSound)
             {
                 if (string.IsNullOrEmpty(MainSoundUK))
                 {
                     MainSoundUK = soundKey;
+                    MainSoundIndexUK = soundIndex;
                 }
             }
             else
@@ -42,6 +45,7 @@ namespace Pronunciation.Parser
                 if (string.IsNullOrEmpty(MainSoundUS))
                 {
                     MainSoundUS = soundKey;
+                    MainSoundIndexUS = soundIndex;
                 }
             }
         }

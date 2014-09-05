@@ -11,15 +11,12 @@ namespace Pronunciation.Parser
     {
         private readonly IFileLoader _fileLoader;
         private readonly string _connectionString;
-        private readonly Dictionary<string, int> _soundKeysLookup = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         private SqlCeResultSet _wordsSet;
-        private SqlCeResultSet _soundsSet;
         private SqlCeResultSet _collocationsSet;
         private SqlCeConnection _connection;
 
         private int _wordPK = 0;
-        private int _soundPK = 0;
         private int _collocationPK = 0;
         private StringBuilder _dbStats;
 
@@ -49,74 +46,31 @@ namespace Pronunciation.Parser
             cmdTable.CommandText = "Words";
             _wordsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable);
 
-            cmdTable.CommandText = "Sounds";
-            _soundsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable);
-
             cmdTable.CommandText = "Collocations";
             _collocationsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable);  
         }
 
         public void Dispose()
         {
-            _soundKeysLookup.Clear();
-
             _wordsSet.Dispose();
-            _soundsSet.Dispose();
             _collocationsSet.Dispose();
 
             _connection.Dispose();
         }
 
-        public void InsertWord(WordDescription word, bool isLDOCEWord, string htmlPage)
+        public void InsertWord(WordDescription word, bool isLDOCEWord, string htmlIndex)
         {
             _wordPK++;
-
-            // Sounds
-            if (word.Sounds != null)
-            {
-                foreach (var soundInfo in word.Sounds)
-                {
-                    var soundKey = soundInfo.SoundKey;
-                    if (_soundKeysLookup.ContainsKey(soundKey))
-                    {
-                        _dbStats.AppendFormat(
-                            "Sound key '{0}' is also used by the word '{1}'\r\n", 
-                            soundKey, word.Text);
-                        continue;
-                    }
-
-                    _soundPK++;
-                    _soundKeysLookup.Add(soundKey, _soundPK);
-
-                    var soundRecord = _soundsSet.CreateRecord();
-                    soundRecord["SoundId"] = _soundPK;
-                    soundRecord["SoundKey"] = soundKey;
-                    soundRecord["IsUKSound"] = soundInfo.IsUKSound;
-                    soundRecord["SourceWordId"] = _wordPK;
-
-                    byte[] rawData = _fileLoader.GetRawData(soundKey);
-                    if (rawData != null)
-                    {
-                        soundRecord["RawData"] = rawData;
-                    }
-
-                    _soundsSet.Insert(soundRecord);
-                }
-            }
 
             // Word
             var wordRecord = _wordsSet.CreateRecord();
             wordRecord["WordId"] = _wordPK;
             wordRecord["Keyword"] = word.Text;
-            wordRecord["HtmlPage"] = Encoding.UTF8.GetBytes(htmlPage);
-            if (!string.IsNullOrEmpty(word.SoundKeyUK))
-            {
-                wordRecord["SoundIdUK"] = _soundKeysLookup[word.SoundKeyUK];
-            }
-            if (!string.IsNullOrEmpty(word.SoundKeyUS))
-            {
-                wordRecord["SoundIdUS"] = _soundKeysLookup[word.SoundKeyUS];
-            }
+            wordRecord["HtmlIndex"] = htmlIndex;
+            wordRecord["SoundKeyUK"] = word.SoundKeyUK;
+            wordRecord["SoundKeyUS"] = word.SoundKeyUS;
+            wordRecord["SoundIndexUK"] = word.SoundIndexUK;
+            wordRecord["SoundIndexUS"] = word.SoundIndexUS;
             if (isLDOCEWord)
             {
                 wordRecord["IsLDOCEWord"] = true;
@@ -164,14 +118,10 @@ namespace Pronunciation.Parser
                     collocationRecord["CollocationId"] = _collocationPK;
                     collocationRecord["WordId"] = _wordPK;
                     collocationRecord["CollocationText"] = collocation.Text;
-                    if (!string.IsNullOrEmpty(collocation.SoundKeyUK))
-                    {
-                        collocationRecord["SoundIdUK"] = _soundKeysLookup[collocation.SoundKeyUK];
-                    }
-                    if (!string.IsNullOrEmpty(collocation.SoundKeyUS))
-                    {
-                        collocationRecord["SoundIdUS"] = _soundKeysLookup[collocation.SoundKeyUS];
-                    }
+                    collocationRecord["SoundKeyUK"] = collocation.SoundKeyUK;
+                    collocationRecord["SoundKeyUS"] = collocation.SoundKeyUS;
+                    collocationRecord["SoundIndexUK"] = collocation.SoundIndexUK;
+                    collocationRecord["SoundIndexUS"] = collocation.SoundIndexUS;
 
                     _collocationsSet.Insert(collocationRecord);
                 }

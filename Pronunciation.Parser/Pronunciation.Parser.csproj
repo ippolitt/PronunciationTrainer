@@ -46,8 +46,11 @@
   <ItemGroup>
     <Compile Include="ContentCollector.cs" />
     <Compile Include="DatabaseUploader.cs" />
+    <Compile Include="DATBuilderMock.cs" />
+    <Compile Include="DATFileBuilder.cs" />
     <Compile Include="DicElements.cs" />
     <Compile Include="FileLoaderMock.cs" />
+    <Compile Include="IDATFileBuilder.cs" />
     <Compile Include="IFileLoader.cs" />
     <Compile Include="LDOCEEntry.cs" />
     <Compile Include="LDOCEHtmlBuilder.cs" />

@@ -17,7 +17,7 @@ namespace Pronunciation.Core.Providers.Dictionary
         private readonly CallScriptMethodHandler _scriptMethodInvoker;
 
         private const string DictionaryFolderName = "Dic";
-        private const string IndexFileName = "IndexFS.txt";
+        private const string IndexFileName = "Index.txt";
         private const string GetAudioMethodName = "extGetAudioByKey";
 
         public delegate string CallScriptMethodHandler(string methodName, object[] methodArgs);

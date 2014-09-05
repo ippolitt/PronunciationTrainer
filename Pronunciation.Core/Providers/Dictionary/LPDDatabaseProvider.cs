@@ -9,36 +9,59 @@ using System.Web;
 
 using Pronunciation.Core.Providers.Recording;
 using Pronunciation.Core.Database;
+using Pronunciation.Core.Utility;
 
 namespace Pronunciation.Core.Providers.Dictionary
 {
     public class LPDDatabaseProvider : IDictionaryProvider
     {
+        private class DataIndex
+        {
+            public long Offset;
+            public long Length;
+
+            public static DataIndex Parse(string dataIndex)
+            {
+                string[] index = dataIndex.Split('|');
+                if (index.Length != 2)
+                    throw new ArgumentException("Invalid format of data index!");
+
+                return new DataIndex { Offset = long.Parse(index[0]), Length = long.Parse(index[1]) };
+            }
+        }
+
         private readonly string _baseFolder;
         private readonly string _lpdConnectionString;
         private readonly string _pageTemplate;
         private readonly string _indexFilePath;
+        private readonly DATFileReader _audioReader;
+        private readonly DATFileReader _htmlReader;
 
         private const string PageTemplateFileName = "PageTemplate.html";
-        private const string IndexFileName = "IndexDB.txt";
+        private const string IndexFileName = "Index.txt";
+        private const string AudioDATFileName = "audio.dat";
+        private const string HtmlDATFileName = "html.dat";
 
-        public LPDDatabaseProvider(string baseFolder, string lpdConnectionString) 
+        public LPDDatabaseProvider(string baseFolder, string databaseFolder, string lpdConnectionString) 
         {
             _baseFolder = baseFolder;
             _lpdConnectionString = lpdConnectionString;
-            _indexFilePath = Path.Combine(baseFolder, IndexFileName);
+            _indexFilePath = Path.Combine(databaseFolder, IndexFileName);
             _pageTemplate = File.ReadAllText(Path.Combine(baseFolder, PageTemplateFileName));
+            _audioReader = new DATFileReader(Path.Combine(databaseFolder, AudioDATFileName));
+            _htmlReader = new DATFileReader(Path.Combine(databaseFolder, HtmlDATFileName));
         }
 
         public bool IsWordsIndexCached
         {
-            get { return File.Exists(_indexFilePath); }
+            get { return true; } //File.Exists(_indexFilePath);
         }
 
         public List<IndexEntry> GetWordsIndex(bool lpdDataOnly)
         {
-            if (IsWordsIndexCached)
-                return GetCachedWordsIndex(lpdDataOnly);
+            // Turn off index file - now it's loaded very fast even without it
+            //if (IsWordsIndexCached)
+            //    return GetCachedWordsIndex(lpdDataOnly);
 
             var index = new List<IndexEntry>();
             using (SqlCeConnection conn = new SqlCeConnection(_lpdConnectionString))
@@ -49,54 +72,67 @@ namespace Pronunciation.Core.Providers.Dictionary
                 cmd.Connection = conn;
 
                 // Load words
+                var wordIndexes = new Dictionary<int, string>();
                 cmd.CommandText =
-@"SELECT w.WordId, w.Keyword AS Text, w.UsageRank, s1.SoundKey AS SoundKeyUK, s2.SoundKey AS SoundKeyUS, w.IsLDOCEWord  
-FROM Words w 
-    LEFT JOIN Sounds s1 ON w.SoundIdUK = s1.SoundId
-    LEFT JOIN Sounds s2 ON w.SoundIdUS = s2.SoundId";
-                AddIndexEntries(cmd, false, index);
+@"SELECT WordId, Keyword, HtmlIndex, UsageRank, SoundIndexUK, SoundIndexUS, IsLDOCEWord  
+FROM Words";
+                using (SqlCeDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string htmlIndex = reader["HtmlIndex"] as string;
+                        if (!string.IsNullOrEmpty(htmlIndex))
+                        {
+                            wordIndexes[(int)reader["WordId"]] = htmlIndex;
+                        }
+
+                        index.Add(new IndexEntry(
+                            htmlIndex,
+                            reader["Keyword"] as string,
+                            false,
+                            reader["UsageRank"] as int?,
+                            reader["SoundIndexUK"] as string,
+                            reader["SoundIndexUS"] as string,
+                            (reader["IsLDOCEWord"] as bool?) == true));
+                    }
+                }
 
                 // Load collocations
                 cmd.CommandText =
-@"SELECT c.WordId, c.CollocationText AS Text, NULL AS UsageRank, s1.SoundKey AS SoundKeyUK, s2.SoundKey AS SoundKeyUS, NULL AS IsLDOCEWord  
-FROM Collocations c 
-    LEFT JOIN Sounds s1 ON c.SoundIdUK = s1.SoundId
-    LEFT JOIN Sounds s2 ON c.SoundIdUS = s2.SoundId";
-                AddIndexEntries(cmd, true, index);
+@"SELECT WordId, CollocationText, SoundIndexUK, SoundIndexUS  
+FROM Collocations";
+                using (SqlCeDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string htmlIndex;
+                        wordIndexes.TryGetValue((int)reader["WordId"], out htmlIndex);
+
+                        index.Add(new IndexEntry(
+                            htmlIndex,
+                            reader["CollocationText"] as string,
+                            true,
+                            null,
+                            reader["SoundIndexUK"] as string,
+                            reader["SoundIndexUS"] as string,
+                            false));
+                    }
+                }
             }
 
-            CacheWordsIndex(index);
+            //CacheWordsIndex(index);
             return lpdDataOnly ? index.Where(x => !x.IsLDOCEEntry).ToList() : index;
         }
 
         public ArticlePage PrepareArticlePage(string articleKey)
         {
-            string pageBody = null;
-            string keyword = null;
-            using (SqlCeConnection conn = new SqlCeConnection(_lpdConnectionString))
-            {
-                conn.Open();
+            if (string.IsNullOrEmpty(articleKey))
+                throw new ArgumentNullException();
 
-                SqlCeCommand cmd = new SqlCeCommand(
-@"SELECT Keyword, HtmlPage
-FROM Words
-WHERE WordId = @wordId", conn);
-                cmd.Parameters.AddWithValue("@wordId", int.Parse(articleKey));
+            var index = DataIndex.Parse(articleKey);
+            var data = _htmlReader.GetData(index.Offset, index.Length);
 
-                using (var reader = cmd.ExecuteReader())
-                {
-                    if (!reader.Read())
-                    {
-                        throw new ArgumentException(string.Format(
-                            "Dictionary article with Id={0} doesn't exist!", articleKey));
-                    }
-
-                    keyword = reader["Keyword"] as string;
-                    pageBody = Encoding.UTF8.GetString(reader["HtmlPage"] as byte[]);
-                }
-            }
-
-            return new ArticlePage(articleKey, BuildPageHtml(keyword, pageBody));
+            return new ArticlePage(articleKey, BuildPageHtml(articleKey, Encoding.UTF8.GetString(data)));
         }
 
         // May be called if a page contains a hyperlink to some external resource
@@ -110,50 +146,13 @@ WHERE WordId = @wordId", conn);
             if (string.IsNullOrEmpty(soundKey))
                 return null;
 
-            using (SqlCeConnection conn = new SqlCeConnection(_lpdConnectionString))
-            {
-                conn.Open();
-
-                SqlCeCommand cmd = new SqlCeCommand(
-@"SELECT RawData
-FROM Sounds
-WHERE SoundKey = @soundKey", conn);
-                cmd.Parameters.AddWithValue("@soundKey", soundKey);
-
-                using (var reader = cmd.ExecuteReader())
-                {
-                    if (!reader.Read())
-                    {
-                        throw new ArgumentException(string.Format(
-                            "Audio with key='{0}' doesn't exist!", soundKey));
-                    }
-
-                    return new PlaybackData(reader["RawData"] as byte[]);
-                }
-            }
+            var index = DataIndex.Parse(soundKey);
+            return new PlaybackData(_audioReader.GetData(index.Offset, index.Length));
         }
 
         public PlaybackData GetAudioFromScriptData(string scriptData)
         {
             throw new NotSupportedException();
-        }
-
-        private void AddIndexEntries(SqlCeCommand command, bool isCollocation, List<IndexEntry> index)
-        {
-            using (SqlCeDataReader reader = command.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    index.Add(new IndexEntry(
-                        ((int)reader["WordId"]).ToString(),
-                        reader["Text"] as string,
-                        isCollocation,
-                        reader["UsageRank"] as int?,
-                        reader["SoundKeyUK"] as string,
-                        reader["SoundKeyUS"] as string,
-                        (reader["IsLDOCEWord"] as bool?) == true));
-                }
-            }
         }
 
         private string BuildPageHtml(string title, string pageBody)

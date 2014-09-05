@@ -83,6 +83,8 @@ namespace Pronunciation.Parser
         private IFileLoader _fileLoader;
         private readonly LDOCEHtmlBuilder _ldoce;
         private readonly DatabaseUploader _dbUploader;
+        private IDATFileBuilder _audioDATBuilder;
+        private IDATFileBuilder _htmlDATBuilder;
         private readonly string _logFile;
         private readonly string _binFolder;
         private readonly GenerationMode _generationMode;
@@ -198,13 +200,15 @@ namespace Pronunciation.Parser
                 .ToLower().Split(new []{ ',', ' '}));
         }
 
-        public HtmlBuilder(GenerationMode generationMode, string connectionString, string logFile, IFileLoader fileLoader,
-            LDOCEHtmlBuilder ldoce, string wordUsageFile)
+        public HtmlBuilder(GenerationMode generationMode, string connectionString, IDATFileBuilder audioDATBuilder,
+            IDATFileBuilder htmlDATBuilder, IFileLoader fileLoader, LDOCEHtmlBuilder ldoce, string wordUsageFile, string logFile)
             : this(generationMode)
         {
             _logFile = logFile;
             _fileLoader = fileLoader;
             _ldoce = ldoce;
+            _audioDATBuilder = audioDATBuilder;
+            _htmlDATBuilder = htmlDATBuilder;
             if (IsDatabaseMode)
             {
                 _dbUploader = new DatabaseUploader(connectionString, fileLoader);
@@ -279,8 +283,13 @@ namespace Pronunciation.Parser
         {
             var keywords = new List<string>();
             IFileLoader fileLoader = _fileLoader;
+            IDATFileBuilder audioBuilder = _audioDATBuilder;
+            IDATFileBuilder htmlBuilder = _htmlDATBuilder;
+            
             // We use mock instead of the actual file loader to speed up HTML generation inside "AddCollocations" method
             _fileLoader = new FileLoaderMock();
+            _audioDATBuilder = new DATBuilderMock();
+            _htmlDATBuilder = new DATBuilderMock();
             try
             {
                 foreach (var word in words)
@@ -296,6 +305,8 @@ namespace Pronunciation.Parser
             finally
             {
                 _fileLoader = fileLoader;
+                _audioDATBuilder = audioBuilder;
+                _htmlDATBuilder = htmlBuilder;
             }
 
             var extraEntries = _ldoce.GetExtraEntries(keywords);
@@ -358,7 +369,10 @@ namespace Pronunciation.Parser
                         WordDescription description = GenerateHtml(word, pageBuilder, soundStats);
                         if (!isFakeMode)
                         {
-                            _dbUploader.InsertWord(description, word.IsLDOCEEntry, pageBuilder.ToString());
+                            var htmlIndex = _htmlDATBuilder.AppendEntity(
+                                description.Text, 
+                                Encoding.UTF8.GetBytes(pageBuilder.ToString()));
+                            _dbUploader.InsertWord(description, word.IsLDOCEEntry, htmlIndex.BuildKey());
                         }
 
                         letterWords++;
@@ -377,6 +391,8 @@ namespace Pronunciation.Parser
             finally
             {
                  _dbUploader.Dispose();
+                 _htmlDATBuilder.Flush();
+                 _audioDATBuilder.Flush();
             }
 
             _fileLoader.FlushCache();
@@ -518,7 +534,6 @@ namespace Pronunciation.Parser
             var wordDescription = new WordDescription 
             { 
                 Text = word.Keyword,
-                Sounds = new List<SoundInfo>(),
                 UsageInfo = _usageBuilder.GetUsage(word.Keyword)
             };
 
@@ -534,7 +549,7 @@ namespace Pronunciation.Parser
             {
                 if (word.LPDEntries == null)
                 {
-                    ldoceHtml = _ldoce.GeneratePageHtml(word.LDOCEEntry, IsDatabaseMode, wordDescription, out wordAudio);
+                    ldoceHtml = _ldoce.GeneratePageHtml(word.LDOCEEntry, wordDescription, out wordAudio);
                 }
                 else
                 {
@@ -613,7 +628,6 @@ namespace Pronunciation.Parser
                 // Parse main data
                 var entrySoundCollector = new SoundCollector();
                 ParseResult entryResult = ParseItemXml(entry.RawMainData, true, null, entrySoundCollector);
-                wordDescription.Sounds.AddRange(entrySoundCollector.Sounds);
 
                 // If word entry has exactly two sounds (UK & US) then these sounds are considered as entry audio 
                 if (entrySoundCollector.HasUKSound && entrySoundCollector.HasUSSound
@@ -624,6 +638,8 @@ namespace Pronunciation.Parser
                     {
                         wordDescription.SoundKeyUK = entrySoundCollector.MainSoundUK;
                         wordDescription.SoundKeyUS = entrySoundCollector.MainSoundUS;
+                        wordDescription.SoundIndexUK = entrySoundCollector.MainSoundIndexUK;
+                        wordDescription.SoundIndexUS = entrySoundCollector.MainSoundIndexUS;
                         isWordAudioSet = true;
                     }
                 }
@@ -730,8 +746,6 @@ namespace Pronunciation.Parser
 
                             var itemSoundCollector = new SoundCollector();
                             ParseResult itemResult = ParseItemXml(item.RawData, false, contentCollector, itemSoundCollector);
-                            wordDescription.Sounds.AddRange(itemSoundCollector.Sounds);
-
                             if (itemGroup.GroupType == ItemType.Collocation)
                             {
                                 var contentItems = ParseCollocationsContent(contentCollector.GetContent());
@@ -746,7 +760,9 @@ namespace Pronunciation.Parser
                                     {
                                         Text = x,
                                         SoundKeyUK = itemSoundCollector.MainSoundUK,
-                                        SoundKeyUS = itemSoundCollector.MainSoundUS
+                                        SoundKeyUS = itemSoundCollector.MainSoundUS,
+                                        SoundIndexUK = itemSoundCollector.MainSoundIndexUK,
+                                        SoundIndexUS = itemSoundCollector.MainSoundIndexUS
                                     }));
                                 }
                             }
@@ -1079,9 +1095,12 @@ namespace Pronunciation.Parser
                         : (extractSounds ? CaptionBigUS : CaptionSmallUS);
 
                     string fileKey = Path.GetFileNameWithoutExtension(data);
+                    string soundIndex = null;
                     if (IsDatabaseMode)
                     {
-                        result = string.Format(info.AdditionalData, fileKey, lang);
+                        byte[] audioData = _fileLoader.GetRawData(fileKey);
+                        soundIndex = _audioDATBuilder.AppendEntity(fileKey, audioData).BuildKey();
+                        result = string.Format(info.AdditionalData, soundIndex, lang);
                     }
                     else
                     {
@@ -1091,7 +1110,7 @@ namespace Pronunciation.Parser
 
                     if (soundCollector != null)
                     {
-                        soundCollector.RegisterSound(fileKey, info.ReplacementType == ReplacementType.ReplaceSoundUK);
+                        soundCollector.RegisterSound(fileKey, soundIndex, info.ReplacementType == ReplacementType.ReplaceSoundUK);
                     }
                     break;
 

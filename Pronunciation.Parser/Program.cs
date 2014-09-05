@@ -33,8 +33,8 @@ namespace Pronunciation.Parser
         private const string HtmlFolderDB = TrainerFolder + "LPD";
         private const string HtmlFolderFiles = TrainerFolder + "LPD";
         private const string HtmlFolderIphone = TrainerFolder + "LPD_iPhone";
-        private const string LPDConnectionString = "Data Source=" + TrainerFolder + @"Database\LPD.sdf;Max Database Size=4000;";
-        private const string TrainerConnectionString = "Data Source=" + TrainerFolder + @"Database\PronunciationTrainer.sdf;Max Database Size=2000;";
+        private const string DATFolder = TrainerFolder + "Database";
+        private const string ConnectionString = "Data Source=" + TrainerFolder + @"Database\PronunciationTrainer.sdf;Max Database Size=2000;";
 
         // Used for analysis
         private const string SourceFileNameLPD = "En-En-Longman_Pronunciation.dsl";
@@ -91,12 +91,19 @@ namespace Pronunciation.Parser
 
                 //return;
 
-                bool isFakeMode = true;
+                bool isFakeMode = false;
                 var generationMode = HtmlBuilder.GenerationMode.Database;
 
-                if (generationMode == HtmlBuilder.GenerationMode.Database && !isFakeMode)
+                DATFileBuilder audioDATBuilder = null;
+                DATFileBuilder htmlDATBuilder = null;
+                if (generationMode == HtmlBuilder.GenerationMode.Database)
                 {
-                    CleanDatabase();
+                    if (!isFakeMode)
+                    {
+                        CleanDatabase();
+                    }
+                    audioDATBuilder = new DATFileBuilder(Path.Combine(DATFolder, "audio_auto.dat"));
+                    htmlDATBuilder = new DATFileBuilder(Path.Combine(DATFolder, "html_auto.dat"));
                 }
 
                 string outputHtmlFolder = generationMode == HtmlBuilder.GenerationMode.Database
@@ -113,16 +120,21 @@ namespace Pronunciation.Parser
                 //fileLoader = new FileLoaderMock();
 
                 var ldoceBuilder = new LDOCEHtmlBuilder(
+                    generationMode,
                     LDOCEProcessor.LoadParsedData(Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameLDOCE)),
-                    fileLoader);
+                    fileLoader, 
+                    audioDATBuilder);
 
                 var htmlBuilder = new HtmlBuilder(
                     generationMode,
-                    LPDConnectionString,
-                    Path.Combine(rootFolder, AnalysisFolder, HtmlLogFileName),
+                    ConnectionString,
+                    audioDATBuilder,
+                    htmlDATBuilder,
                     fileLoader,
                     ldoceBuilder,
-                    Path.Combine(rootFolder, DataFolder, TopWordsFileName));
+                    Path.Combine(rootFolder, DataFolder, TopWordsFileName),
+                    Path.Combine(rootFolder, AnalysisFolder, HtmlLogFileName));
+
                 htmlBuilder.ConvertToHtml(
                     Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameLPD),
                     outputHtmlFolder,
@@ -220,7 +232,7 @@ namespace Pronunciation.Parser
 
         private static void CleanDatabase()
         {
-            using (SqlCeConnection conn = new SqlCeConnection(LPDConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(ConnectionString))
             {
                 conn.Open();
 
@@ -232,15 +244,12 @@ namespace Pronunciation.Parser
 
                 cmd.CommandText = "Delete Words";
                 cmd.ExecuteNonQuery();
-
-                cmd.CommandText = "Delete Sounds";
-                cmd.ExecuteNonQuery();
             }
         }
 
         private static void UploadFiles()
         {
-            using (SqlCeConnection conn = new SqlCeConnection(LPDConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(ConnectionString))
             {
                 conn.Open();
 
@@ -268,7 +277,7 @@ namespace Pronunciation.Parser
 
         private static void UploadFilesBulk()
         {
-            using (SqlCeConnection conn = new SqlCeConnection(LPDConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(ConnectionString))
             {
                 conn.Open();
 
@@ -292,7 +301,7 @@ namespace Pronunciation.Parser
 
         private static void TestUpload()
         {
-            using (SqlCeConnection conn = new SqlCeConnection(LPDConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(ConnectionString))
             {
                 conn.Open();
                // SqlCeCommand cmd = new SqlCeCommand(
@@ -329,7 +338,7 @@ namespace Pronunciation.Parser
             var baseFolder = @"D:\LEARN\English\Pronunciation\Trainer\Recordings\LPD";
             var files = Directory.GetFiles(baseFolder, "*.mp3", SearchOption.AllDirectories);
 
-            using (SqlCeConnection conn = new SqlCeConnection(LPDConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(ConnectionString))
             {
                 conn.Open();
 
@@ -369,7 +378,7 @@ namespace Pronunciation.Parser
             byte[] audio2 = File.ReadAllBytes(@"D:\temp\1.2.mp3");
 
             //byte[] data = new byte[] { 23, 45, 67 };
-            using (SqlCeConnection conn = new SqlCeConnection(TrainerConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(ConnectionString))
             {
                 conn.Open();
 
@@ -409,7 +418,7 @@ namespace Pronunciation.Parser
 
         private static void MigrateRecordingsToDB()
         {
-            using (SqlCeConnection conn = new SqlCeConnection(TrainerConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(ConnectionString))
             {
                 conn.Open();
 
@@ -420,7 +429,7 @@ namespace Pronunciation.Parser
 
         private static void StoreLargeData()
         {
-            using (SqlCeConnection conn = new SqlCeConnection(TrainerConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(ConnectionString))
             {
                 conn.Open();
                // return;
@@ -448,7 +457,7 @@ namespace Pronunciation.Parser
                 words.Add(line.Split('\t')[0]);
             }
 
-            using (SqlCeConnection conn = new SqlCeConnection(TrainerConnectionString))
+            using (SqlCeConnection conn = new SqlCeConnection(ConnectionString))
             {
                 conn.Open();
                 // return;

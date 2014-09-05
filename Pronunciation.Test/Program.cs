@@ -8,6 +8,7 @@ using Pronunciation.Core.Audio;
 using System.Diagnostics;
 using System.Data.SqlServerCe;
 using System.Data;
+using Pronunciation.Core.Utility;
 
 namespace Pronunciation.Test
 {
@@ -29,7 +30,9 @@ namespace Pronunciation.Test
                 //MigrateExerciseDurations();
                 //MigrateRecordingDurations();
 //                bool gg = string.Equals(null, null);
-                string str = "sec".Substring(1, 0);
+                //string str = "sec".Substring(1, 0);
+                //TestBigFile();
+                TestLoadingData();
                 return;
 
                 bool? rr = false;
@@ -57,6 +60,49 @@ namespace Pronunciation.Test
                 Console.WriteLine("Finished");
                 Console.ReadLine();
             }
+        }
+
+        private static void TestLoadingData()
+        {
+            DATFileReader reader = new DATFileReader(@"D:\LEARN\English\Pronunciation\Trainer\Database\audio_auto.dat");
+            var data = reader.GetData(174466, 4854);
+
+            Mp3Player player = new Mp3Player();
+            player.PlayRawData(data);
+        }
+
+        private static void TestBigFile()
+        {
+            byte[] data = new byte[] { 34, 126, 45 };
+            using (var stream = new FileStream(@"D:\Temp\Sample.txt", FileMode.Append, FileAccess.Write, FileShare.Read))
+            {
+                if (stream.Position == 0)
+                {
+                    stream.WriteByte(1);
+                }
+
+                long offset = stream.Position;
+                stream.Write(data, 0, data.Length);
+                long length = stream.Position - offset;
+                stream.WriteByte(1);
+            }
+
+            //4000, FileOptions.SequentialScan
+            var filePath = @"D:\WORK\NET\PronunciationTrainer\Data\LPD\Sounds.zip";
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                var buffer = new byte[10000];
+                var signature = new byte[2];
+                stream.Seek(500000000, SeekOrigin.Begin);
+                stream.Read(signature, 0, signature.Length);
+                int ss = stream.Read(buffer, 0, buffer.Length);
+                stream.Read(signature, 0, signature.Length);
+                long after = stream.Position;
+            }
+            watch.Stop();
+            Console.WriteLine(watch.ElapsedTicks);
         }
 
         public static string ToTimeString(TimeSpan ts)

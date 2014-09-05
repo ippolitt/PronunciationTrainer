@@ -144,6 +144,7 @@
     <Compile Include="Threading\CancellationTokenExt.cs" />
     <Compile Include="Threading\CancellationTokenSourceExt.cs" />
     <Compile Include="Threading\CancellationTokenState.cs" />
+    <Compile Include="Utility\DATFileReader.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">

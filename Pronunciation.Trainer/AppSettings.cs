@@ -90,16 +90,13 @@ namespace Pronunciation.Trainer
 
         public class ConnectionStrings
         {
-            private const string LPDConnectionKey = "LPD";
-            private const string TrainerConnectionKey = "Trainer";
+            private const string DBConnectionKey = "Trainer";
 
-            public string LPD { get; private set; }
             public string Trainer { get; private set; }
 
             public ConnectionStrings()
             {
-                LPD = ConfigurationManager.ConnectionStrings[LPDConnectionKey].ConnectionString;
-                Trainer = ConfigurationManager.ConnectionStrings[TrainerConnectionKey].ConnectionString;
+                Trainer = ConfigurationManager.ConnectionStrings[DBConnectionKey].ConnectionString;
             }
         }
 
