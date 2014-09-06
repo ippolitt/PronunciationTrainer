@@ -60,8 +60,11 @@ namespace Pronunciation.Trainer
         private class CurrentPageInfo
         {
             public PageInfo Page;
-            public string WordName;
             public IndexEntry WordIndex;
+            public int? WordId
+            {
+                get { return WordIndex == null ? null : WordIndex.WordId; }
+            }
         }
 
         private IDictionaryProvider _dictionaryProvider;
@@ -108,8 +111,8 @@ namespace Pronunciation.Trainer
             _dictionaryProvider = new LPDDatabaseProvider(AppSettings.Instance.Folders.Dictionary, 
                 AppSettings.Instance.Folders.Database, AppSettings.Instance.Connections.Trainer);
 
-            _audioContext = new DictionaryAudioContext(_dictionaryProvider, _mainIndex,
-                AppSettings.Instance.Recorders.LPD, new AppSettingsBasedRecordingPolicy());
+            _audioContext = new DictionaryAudioContext(_dictionaryProvider, AppSettings.Instance.Recorders.LPD, 
+                new AppSettingsBasedRecordingPolicy());
             audioPanel.AttachContext(_audioContext);
             audioPanel.RecordingCompleted += AudioPanel_RecordingCompleted;
 
@@ -171,7 +174,7 @@ namespace Pronunciation.Trainer
             bool isSuccess = false;
             try
             {
-                _mainIndex.Build(_dictionaryProvider.GetWordsIndex(AppSettings.Instance.DisplayLPDDataOnly), true);
+                _mainIndex.Build(_dictionaryProvider.GetWordsIndex(AppSettings.Instance.DisplayLPDDataOnly));
                 isSuccess = true;
             }
             finally
@@ -197,9 +200,9 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void StatsCollector_SessionStatisticsChanged(int viewevPagesCount, int recordedWordsCount)
+        private void StatsCollector_SessionStatisticsChanged(int viewevPagesCount, int recordedAudiosCount)
         {
-            lblSessionStats.Text = string.Format(StatisticsTemplate, viewevPagesCount, recordedWordsCount);
+            lblSessionStats.Text = string.Format(StatisticsTemplate, viewevPagesCount, recordedAudiosCount);
         }
 
         public void NavigateWordFromHyperlink(string wordName)
@@ -270,7 +273,6 @@ namespace Pronunciation.Trainer
 
                     if (_currentPage.WordIndex != null)
                     {
-                        _currentPage.WordName = _currentPage.WordIndex.EntryText;
                         if (sourceAction == NavigationSource.HistoryNavigation)
                         {
                             // Synchronize history list with the current word if we navigated from history
@@ -288,7 +290,7 @@ namespace Pronunciation.Trainer
 
                 RefreshAudioContext(sourceIndex ?? _currentPage.WordIndex);
                 RefreshHistoryNavigationState();
-                RefreshCategoriesState(_currentPage.WordName);
+                RefreshCategoriesState(_currentPage.WordId);
             }
             catch (Exception ex)
             {
@@ -302,13 +304,13 @@ namespace Pronunciation.Trainer
         private void AudioPanel_RecordingCompleted(string recordedFilePath, bool isTemporaryFile)
         {
             _audioContext.RegisterRecordedAudio(recordedFilePath, DateTime.Now);
-            _statsCollector.RegisterRecordedWord(_audioContext.CurrentSoundName);
+            _statsCollector.RegisterRecordedAudio(_audioContext.CurrentSoundKey);
         }
 
         private void RefreshAudioContext(IndexEntry index)
         {
-            _audioContext.RefreshContext(index,
-                AppSettings.Instance.StartupMode == StartupPlayMode.British,
+            _audioContext.RefreshContext(
+                AppSettings.Instance.StartupMode == StartupPlayMode.British ? index.SoundKeyUK : index.SoundKeyUS,
                 AppSettings.Instance.StartupMode != StartupPlayMode.None);
         }
 
@@ -340,9 +342,9 @@ namespace Pronunciation.Trainer
             _commandForward.UpdateState(_history.CanGoForward);
         }
 
-        private void RefreshCategoriesState(string wordName)
+        private void RefreshCategoriesState(int? wordId)
         {
-            if (string.IsNullOrEmpty(wordName))
+            if (wordId == null)
             {
                 _categoryTracker.ResetWord();
 
@@ -351,8 +353,8 @@ namespace Pronunciation.Trainer
             }
             else
             {
-                WordCategoryInfo info = _categoryManager.GetWordCategories(_currentPage.WordName);
-                _categoryTracker.RegisterWord(_currentPage.WordName, info == null ? null : info.Categories);
+                WordCategoryInfo info = _categoryManager.GetWordCategories(wordId.Value);
+                _categoryTracker.RegisterWord(wordId.Value, info == null ? null : info.Categories);
 
                 _commandFavorites.UpdateState(true);
                 categoriesDataGrid.IsEnabled = true;
@@ -396,17 +398,17 @@ namespace Pronunciation.Trainer
 
         private void SetFavorite()
         {
-            if (_currentPage == null || string.IsNullOrEmpty(_currentPage.WordName))
+            if (_currentPage == null || _currentPage.WordId == null)
                 return;
 
             if (btnFavorites.IsStateOn)
             {
-                _categoryManager.RemoveFromFavorites(_currentPage.WordName);
+                _categoryManager.RemoveFromFavorites(_currentPage.WordId.Value);
                 btnFavorites.IsStateOn = false;
             }
             else
             {
-                _categoryManager.AddToFavorites(_currentPage.WordName);
+                _categoryManager.AddToFavorites(_currentPage.WordId.Value);
                 btnFavorites.IsStateOn = true;
             }
         }
@@ -458,7 +460,7 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void ProcessWordCategoriesChanged(string wordName, Guid[] addedCategoryIds, Guid[] removedCategoryIds)
+        private void ProcessWordCategoriesChanged(int wordId, Guid[] addedCategoryIds, Guid[] removedCategoryIds)
         {
             var category = cboCategories.SelectedItem as DictionaryCategoryListItem;
             if (category == null || category.IsServiceItem)
@@ -518,7 +520,7 @@ namespace Pronunciation.Trainer
                 }
 
                 _searchIndex = new DictionaryIndex();
-                _searchIndex.Build(query, false);
+                _searchIndex.Build(query);
             }
         }
 

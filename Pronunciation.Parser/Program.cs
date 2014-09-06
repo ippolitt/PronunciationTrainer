@@ -56,6 +56,7 @@ namespace Pronunciation.Parser
                 //TestUpload();
                 //MigrateRecordings();
                 //ImportCategories();
+                //TestWordsUpdate();
                 //return;
 
                 var rootFolder = Path.GetFullPath(Path.Combine(
@@ -92,6 +93,7 @@ namespace Pronunciation.Parser
                 //return;
 
                 bool isFakeMode = false;
+                bool deleteExtraWords = true;
                 var generationMode = HtmlBuilder.GenerationMode.Database;
 
                 DATFileBuilder audioDATBuilder = null;
@@ -139,7 +141,8 @@ namespace Pronunciation.Parser
                     Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameLPD),
                     outputHtmlFolder,
                     -1,
-                    isFakeMode);
+                    isFakeMode,
+                    deleteExtraWords);
 
                 //var topBuilder = new TopWordsBuilder();
                 //topBuilder.MergeTopWords();
@@ -239,10 +242,10 @@ namespace Pronunciation.Parser
                 SqlCeCommand cmd = new SqlCeCommand();
                 cmd.Connection = conn;
 
-                cmd.CommandText = "Delete Collocations";
+                cmd.CommandText = "Delete DictionarySound";
                 cmd.ExecuteNonQuery();
 
-                cmd.CommandText = "Delete Words";
+                cmd.CommandText = "Delete DictionaryCollocation";
                 cmd.ExecuteNonQuery();
             }
         }
@@ -474,6 +477,53 @@ VALUES(@id, '8c3d00db-4787-48a5-b807-9d5fd0246e51', @word)", conn);
                     parmWord.Value = word;
                     cmd.ExecuteNonQuery();
                 }
+            }
+        }
+
+        private static void TestWordsUpdate()
+        {
+            using (var connection = new SqlCeConnection(ConnectionString))
+            {
+                connection.Open();
+
+                SqlCeCommand cmdTable = new SqlCeCommand()
+                {
+                    Connection = connection,
+                    CommandType = CommandType.TableDirect
+                };
+
+                cmdTable.CommandText = "Words";
+                var wordsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable | ResultSetOptions.Scrollable);
+
+                Dictionary<string, WordIdInfo> wordIdMap = new Dictionary<string,WordIdInfo>();
+                int position = 0;
+                while (wordsSet.Read())
+                {
+                    wordIdMap.Add((string)wordsSet["Keyword"], new WordIdInfo((int)wordsSet["WordId"], position));
+                    position++;
+                }
+
+                foreach(var info in wordIdMap.Values)
+                {
+                    bool isFound = wordsSet.ReadAbsolute(info.RecordPosition);
+                    wordsSet.ReadAbsolute(33300);
+                    if (!isFound)
+                    {
+                    }
+                }
+            }
+        }
+
+        private class WordIdInfo
+        {
+            public int WordId;
+            public bool IsUsed;
+            public int RecordPosition;
+
+            public WordIdInfo(int wordId, int recordPosition)
+            {
+                WordId = wordId;
+                RecordPosition = recordPosition;
             }
         }
     }

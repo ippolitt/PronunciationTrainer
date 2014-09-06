@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Data.Entity;
 using Pronunciation.Core.Database;
 using Pronunciation.Trainer.Views;
 
@@ -12,12 +13,12 @@ namespace Pronunciation.Trainer.Dictionary
         private class CategoriesCache
         {
             // So far we cache only categories for the latest word
-            private string _latestWordName;
+            private int _latestWordId;
             private WordCategoriesCollection _categories;
 
-            public void RegisterCategories(string wordName, WordCategoriesCollection categories)
+            public void RegisterCategories(int wordId, WordCategoriesCollection categories)
             {
-                _latestWordName = wordName;
+                _latestWordId = wordId;
                 if (_categories != null)
                 {
                     _categories.Dispose();
@@ -25,9 +26,9 @@ namespace Pronunciation.Trainer.Dictionary
                 _categories = categories;
             }
 
-            public bool GetCategories(string wordName, out WordCategoriesCollection categories)
+            public bool GetCategories(int wordId, out WordCategoriesCollection categories)
             {
-                if (_latestWordName == wordName)
+                if (_latestWordId == wordId)
                 {
                     categories = _categories;
                     return true;
@@ -51,50 +52,43 @@ namespace Pronunciation.Trainer.Dictionary
             _cache = new CategoriesCache();
         }
 
-        public bool IsInFavorites(string wordName)
+        public bool IsInFavorites(int wordId)
         {
-            if (string.IsNullOrEmpty(wordName))
-                return false;
-
-            var categories = LoadCategories(wordName);
+            var categories = LoadCategories(wordId);
             return categories.ContainsCategory(FavoritesCategoryId);
         }
 
-        public void AddToFavorites(string wordName)
+        public void AddToFavorites(int wordId)
         {
-            AddCategory(wordName, FavoritesCategoryId);
+            AddCategory(wordId, FavoritesCategoryId);
         }
 
-        public void RemoveFromFavorites(string wordName)
+        public void RemoveFromFavorites(int wordId)
         {
-            RemoveCategory(wordName, FavoritesCategoryId);
+            RemoveCategory(wordId, FavoritesCategoryId);
         }
 
-        public void AddCategory(string wordName, Guid categoryId)
+        public void AddCategory(int wordId, Guid categoryId)
         {
-            var categories = LoadCategories(wordName);
+            var categories = LoadCategories(wordId);
             if (categories.ContainsCategory(categoryId))
                 return;
 
             categories.AddCategories(new[] { categoryId });
         }
 
-        public void RemoveCategory(string wordName, Guid categoryId)
+        public void RemoveCategory(int wordId, Guid categoryId)
         {
-            var categories = LoadCategories(wordName);
+            var categories = LoadCategories(wordId);
             if (categories == null || !categories.ContainsCategory(categoryId))
                 return;
 
             categories.RemoveCategories(new[] { categoryId });
         }
 
-        public WordCategoryInfo GetWordCategories(string wordName)
+        public WordCategoryInfo GetWordCategories(int wordId)
         {
-            if (string.IsNullOrEmpty(wordName))
-                return null;
-
-            var categories = LoadCategories(wordName);
-            var categoryIds = categories.GetCategoryIds();
+            var categoryIds = LoadCategories(wordId).GetCategoryIds();
             if (categoryIds != null && categoryIds.Length > 0 && categoryIds.Contains(FavoritesCategoryId))
             {
                 return new WordCategoryInfo(true, categoryIds.Where(x => x != FavoritesCategoryId).ToArray());
@@ -118,25 +112,24 @@ namespace Pronunciation.Trainer.Dictionary
 
         public HashSet<string> GetCategoryWords(Guid categoryId)
         {
-            return new HashSet<string>(_dbContext.DictionaryCategoryMembers.AsNoTracking()
+            var category = _dbContext.DictionaryCategories.AsNoTracking()
                 .Where(x => x.CategoryId == categoryId)
-                .Select(x => x.WordName));
+                .Include(x => x.DictionaryWords)
+                .Single();
+            return new HashSet<string>(category.DictionaryWords.Select(x => x.Keyword));
         }
 
-        private WordCategoriesCollection LoadCategories(string wordName)
+        private WordCategoriesCollection LoadCategories(int wordId)
         {
-            if (string.IsNullOrEmpty(wordName))
-                throw new ArgumentNullException();
-
             WordCategoriesCollection categories;
-            if (!_cache.GetCategories(wordName, out categories))
+            if (!_cache.GetCategories(wordId, out categories))
             {
-                categories = new WordCategoriesCollection(wordName);
+                categories = new WordCategoriesCollection(wordId);
                 if (_changeHandler != null)
                 {
                     categories.WordCategoriesChanged += _changeHandler;
                 }
-                _cache.RegisterCategories(wordName, categories);
+                _cache.RegisterCategories(wordId, categories);
             }
 
             return categories;

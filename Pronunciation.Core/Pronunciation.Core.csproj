@@ -85,6 +85,8 @@
     <Compile Include="Database\AudioTargetType.cs" />
     <Compile Include="Database\Book.cs" />
     <Compile Include="Database\DbExtensions.cs" />
+    <Compile Include="Database\DictionaryCollocation.cs" />
+    <Compile Include="Database\DictionaryWord.cs" />
     <Compile Include="Database\Entities.cs" />
     <Compile Include="Database\Exercise.cs" />
     <Compile Include="Database\ExerciseAudio.cs" />
@@ -103,7 +105,6 @@
     <Compile Include="Database\Topic.cs" />
     <Compile Include="Database\TopicExt.cs" />
     <Compile Include="Database\DictionaryCategory.cs" />
-    <Compile Include="Database\DictionaryCategoryMember.cs" />
     <Compile Include="KeyTextPair.cs" />
     <Compile Include="Contexts\IAudioContext.cs" />
     <Compile Include="Contexts\PlaybackData.cs" />
@@ -117,6 +118,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="Providers\Dictionary\ArticleInfo.cs" />
+    <Compile Include="Providers\Dictionary\DictionarySoundInfo.cs" />
     <Compile Include="Providers\Dictionary\LPDTargetKey.cs" />
     <Compile Include="Providers\Exercise\ExerciseTargetKey.cs" />
     <Compile Include="Providers\Recording\RecordedAudioListItem.cs" />

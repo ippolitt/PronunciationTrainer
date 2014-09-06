@@ -10,10 +10,9 @@ namespace Pronunciation.Trainer.Dictionary
     {
         private IndexEntry[] _entries;
         private TokenizedIndexEntry[] _tokens;
-        private Dictionary<string, IndexEntry> _soundKeys;
         private bool _isInitialized;
 
-        public void Build(IEnumerable<IndexEntry> entries, bool indexSoundKeys)
+        public void Build(IEnumerable<IndexEntry> entries)
         {
             _isInitialized = false;
             if (entries == null)
@@ -24,9 +23,6 @@ namespace Pronunciation.Trainer.Dictionary
 
             // Build index for token-based match (split a phrase into words, each word can be searched using StartsWith)
             _tokens = BuildTokensIndex(_entries);
-
-            // Build index for sound keys
-            _soundKeys = indexSoundKeys ? PopulateSoundKeys(_entries) : null;
 
             _isInitialized = true;
         }
@@ -55,17 +51,6 @@ namespace Pronunciation.Trainer.Dictionary
                 return null;
 
             return _entries.FirstOrDefault(x => !x.IsCollocation && x.ArticleKey == pageKey);
-        }
-
-        public IndexEntry GetEntryBySoundKey(string soundKey)
-        {
-            if (!_isInitialized || _soundKeys == null)
-                return null;
-
-            IndexEntry entry;
-            _soundKeys.TryGetValue(soundKey, out entry);
-
-            return entry;
         }
 
         public IndexEntry GetEntryByPosition(int entryPosition)
@@ -179,24 +164,6 @@ namespace Pronunciation.Trainer.Dictionary
             }
 
             return tokens.OrderBy(x => x.Rank).ThenBy(x => x.Entry.EntryText).ToArray();
-        }
-
-        private static Dictionary<string, IndexEntry> PopulateSoundKeys(IndexEntry[] entries)
-        {
-            var soundKeys = new Dictionary<string, IndexEntry>(StringComparer.OrdinalIgnoreCase);
-            foreach (IndexEntry entry in entries)
-            {
-                if (!string.IsNullOrEmpty(entry.SoundKeyUK))
-                {
-                    soundKeys[entry.SoundKeyUK] = entry;
-                }
-                if (!string.IsNullOrEmpty(entry.SoundKeyUS))
-                {
-                    soundKeys[entry.SoundKeyUS] = entry;
-                }
-            }
-
-            return soundKeys;
         }
 
         private class TokenizedIndexEntry

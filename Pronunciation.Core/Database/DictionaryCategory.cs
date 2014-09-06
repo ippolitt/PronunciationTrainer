@@ -16,7 +16,7 @@ namespace Pronunciation.Core.Database
     {
         public DictionaryCategory()
         {
-            this.DictionaryCategoryMembers = new HashSet<DictionaryCategoryMember>();
+            this.DictionaryWords = new HashSet<DictionaryWord>();
         }
 
         public System.Guid CategoryId { get; set; }
@@ -24,6 +24,6 @@ namespace Pronunciation.Core.Database
         public string Description { get; set; }
         public Nullable<bool> IsSystemCategory { get; set; }
 
-        public virtual ICollection<DictionaryCategoryMember> DictionaryCategoryMembers { get; set; }
+        public virtual ICollection<DictionaryWord> DictionaryWords { get; set; }
     }
 }

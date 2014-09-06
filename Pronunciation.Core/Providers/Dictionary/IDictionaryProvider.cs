@@ -12,7 +12,7 @@ namespace Pronunciation.Core.Providers.Dictionary
         List<IndexEntry> GetWordsIndex(bool lpdDataOnly);
         ArticlePage PrepareArticlePage(string articleKey);
         PageInfo PrepareGenericPage(Uri pageUrl);
-        PlaybackData GetAudio(string soundKey);
-        PlaybackData GetAudioFromScriptData(string scriptData);
+        DictionarySoundInfo GetAudio(string soundKey);
+        DictionarySoundInfo GetAudioFromScriptData(string soundKey, string scriptData);
     }
 }

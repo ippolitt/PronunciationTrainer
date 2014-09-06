@@ -24,6 +24,6 @@
         public DbSet<ExerciseAudio> ExerciseAudios { get; set; }
         public DbSet<Training> Trainings { get; set; }
         public DbSet<DictionaryCategory> DictionaryCategories { get; set; }
-        public DbSet<DictionaryCategoryMember> DictionaryCategoryMembers { get; set; }
+        public DbSet<DictionaryWord> DictionaryWords { get; set; }
     }
 }

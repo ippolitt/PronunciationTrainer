@@ -9,15 +9,24 @@ namespace Pronunciation.Parser
 {
     class DatabaseUploader : IDisposable
     {
-        private readonly IFileLoader _fileLoader;
+        private class WordIdInfo
+        {
+            public int WordId;
+            public bool IsUsed;
+            public int RecordPosition;
+        }
+
         private readonly string _connectionString;
+        private HashSet<string> _soundKeys;
+        private Dictionary<string, WordIdInfo> _wordIdMap;
 
         private SqlCeResultSet _wordsSet;
+        private SqlCeResultSet _soundsSet;
         private SqlCeResultSet _collocationsSet;
         private SqlCeConnection _connection;
 
-        private int _wordPK = 0;
-        private int _collocationPK = 0;
+        private int _maxWordId;
+        private int _collocationId;
         private StringBuilder _dbStats;
 
         public StringBuilder DbStats
@@ -25,15 +34,15 @@ namespace Pronunciation.Parser
             get { return _dbStats; }
         }
 
-        public DatabaseUploader(string connectionString, IFileLoader fileLoader)
+        public DatabaseUploader(string connectionString)
         {
             _connectionString = connectionString;
-            _fileLoader = fileLoader;
         }
 
         public void Open()
         {
             _dbStats = new StringBuilder();
+            _soundKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             _connection = new SqlCeConnection(_connectionString);
             _connection.Open();
 
@@ -43,34 +52,79 @@ namespace Pronunciation.Parser
                 CommandType = CommandType.TableDirect
             };
 
-            cmdTable.CommandText = "Words";
-            _wordsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable);
+            cmdTable.CommandText = "DictionaryWord";
+            _wordsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable | ResultSetOptions.Scrollable);
 
-            cmdTable.CommandText = "Collocations";
-            _collocationsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable);  
+            cmdTable.CommandText = "DictionaryCollocation";
+            _collocationsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable);
+
+            cmdTable.CommandText = "DictionarySound";
+            _soundsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable);
         }
 
-        public void Dispose()
+        public void StoreWord(WordDescription word, bool isLDOCEWord, string htmlIndex)
         {
-            _wordsSet.Dispose();
-            _collocationsSet.Dispose();
+            if (_wordIdMap == null)
+            {
+                _wordIdMap = BuildWordIdMap();
+            }
 
-            _connection.Dispose();
-        }
+            // Sounds
+            if (word.Sounds != null)
+            {
+                foreach (var soundInfo in word.Sounds)
+                {
+                    var soundKey = soundInfo.SoundKey;
+                    if (!_soundKeys.Add(soundKey))
+                    {
+                        _dbStats.AppendFormat(
+                            "Sound key '{0}' is also used by the word '{1}'\r\n",
+                            soundKey, word.Text);
+                        continue;
+                    }
 
-        public void InsertWord(WordDescription word, bool isLDOCEWord, string htmlIndex)
-        {
-            _wordPK++;
+                    var soundRecord = _soundsSet.CreateRecord();
+                    soundRecord["SoundKey"] = soundKey;
+                    soundRecord["IsUKSound"] = soundInfo.IsUKSound;
+                    soundRecord["SoundIndex"] = soundInfo.SoundIndex;
+                    soundRecord["SoundText"] = soundInfo.SoundText;
+
+                    _soundsSet.Insert(soundRecord);
+                }
+            }
 
             // Word
-            var wordRecord = _wordsSet.CreateRecord();
-            wordRecord["WordId"] = _wordPK;
-            wordRecord["Keyword"] = word.Text;
+            SqlCeUpdatableRecord wordInsertRecord = null;
+            DataRecordWrapper wordRecord;
+            WordIdInfo wordInfo;
+            int currentWordId;
+            bool isUpdate = _wordIdMap.TryGetValue(word.Text, out wordInfo);
+            if (isUpdate)
+            {
+                if (wordInfo.IsUsed)
+                    throw new ArgumentException("The same word matched several times!");
+
+                if (!_wordsSet.ReadAbsolute(wordInfo.RecordPosition))
+                    throw new IndexOutOfRangeException("Failed to locate word record!");
+
+                wordInfo.IsUsed = true;
+                currentWordId = wordInfo.WordId;
+                wordRecord = new DataRecordWrapper(_wordsSet); 
+            }
+            else
+            {
+                _maxWordId++;
+                currentWordId = _maxWordId;
+
+                wordInsertRecord = _wordsSet.CreateRecord();
+                wordRecord = new DataRecordWrapper(wordInsertRecord);
+                wordRecord["WordId"] = currentWordId;
+                wordRecord["Keyword"] = word.Text;
+            }
+
             wordRecord["HtmlIndex"] = htmlIndex;
             wordRecord["SoundKeyUK"] = word.SoundKeyUK;
             wordRecord["SoundKeyUS"] = word.SoundKeyUS;
-            wordRecord["SoundIndexUK"] = word.SoundIndexUK;
-            wordRecord["SoundIndexUS"] = word.SoundIndexUS;
             if (isLDOCEWord)
             {
                 wordRecord["IsLDOCEWord"] = true;
@@ -105,27 +159,102 @@ namespace Pronunciation.Parser
                 }
             }
 
-            _wordsSet.Insert(wordRecord);
+            if (isUpdate)
+            {
+                _wordsSet.Update();
+            }
+            else
+            {
+                _wordsSet.Insert(wordInsertRecord);
+                _wordIdMap.Add(word.Text, new WordIdInfo { WordId = currentWordId, RecordPosition = _wordIdMap.Count, IsUsed = true });
+            }
 
             // Collocations
             if (word.Collocations != null)
             {
                 foreach (var collocation in word.Collocations)
                 {
-                    _collocationPK++;
+                    _collocationId++;
 
                     var collocationRecord = _collocationsSet.CreateRecord();
-                    collocationRecord["CollocationId"] = _collocationPK;
-                    collocationRecord["WordId"] = _wordPK;
+                    collocationRecord["CollocationId"] = _collocationId;
+                    collocationRecord["WordId"] = currentWordId;
                     collocationRecord["CollocationText"] = collocation.Text;
                     collocationRecord["SoundKeyUK"] = collocation.SoundKeyUK;
                     collocationRecord["SoundKeyUS"] = collocation.SoundKeyUS;
-                    collocationRecord["SoundIndexUK"] = collocation.SoundIndexUK;
-                    collocationRecord["SoundIndexUS"] = collocation.SoundIndexUS;
 
                     _collocationsSet.Insert(collocationRecord);
                 }
             }
+        }
+
+        private Dictionary<string, WordIdInfo> BuildWordIdMap()
+        {
+            var wordIdMap = new Dictionary<string, WordIdInfo>();
+            int position = 0;
+            bool isRecord = _wordsSet.ReadFirst();
+            while (isRecord)
+            {
+                var wordId = (int)_wordsSet["WordId"];
+                if (wordId > _maxWordId)
+                {
+                    _maxWordId = wordId;
+                }
+                wordIdMap.Add((string)_wordsSet["Keyword"], new WordIdInfo { WordId = wordId, RecordPosition = position });
+                position++;
+
+                isRecord = _wordsSet.Read();
+            }
+
+            return wordIdMap;
+        }
+
+        public int DeleteExtraWords()
+        {
+            if (_wordIdMap == null || _wordIdMap.Count == 0)
+                return 0;
+
+            int deleteCount = 0;
+            var idsToDelete = new HashSet<int>(_wordIdMap.Values.Where(x => !x.IsUsed).Select(x => x.WordId));
+            bool isRecord = _wordsSet.ReadFirst();
+            while (isRecord)
+            {
+                if (idsToDelete.Contains((int)_wordsSet["WordId"]))
+                {
+                    var keyword = (string)_wordsSet["Keyword"];
+                    try
+                    {
+                        _wordsSet.Delete();
+                        deleteCount++;
+                        _dbStats.AppendFormat("Deleted extra word '{0}'\r\n", keyword);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("\r\nFAILED to delete extra word: " + ex.ToString());
+                        _dbStats.AppendFormat("FAILED to delete extra word '{0}': {1}\r\n", keyword, ex);
+                    }
+                }
+
+                isRecord = _wordsSet.Read();
+            }
+
+            // The map doesn't have a sense anymore because all indexes have changed
+            _wordIdMap = null;
+            _dbStats.AppendFormat("Totally deleted '{0}' extra words\r\n", deleteCount);
+
+            return deleteCount;
+        }
+
+        public void Dispose()
+        {
+            _soundKeys = null;
+            _wordIdMap = null;
+
+            _wordsSet.Dispose();
+            _collocationsSet.Dispose();
+            _soundsSet.Dispose();
+
+            _connection.Dispose();
         }
     }
 }

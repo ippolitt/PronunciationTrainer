@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="ContentCollector.cs" />
     <Compile Include="DatabaseUploader.cs" />
+    <Compile Include="DataRecordWrapper.cs" />
     <Compile Include="DATBuilderMock.cs" />
     <Compile Include="DATFileBuilder.cs" />
     <Compile Include="DicElements.cs" />

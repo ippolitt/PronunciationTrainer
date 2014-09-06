@@ -8,15 +8,15 @@ namespace Pronunciation.Trainer.Dictionary
     public class SessionStatisticsCollector
     {
         private readonly HashSet<string> _pages;
-        private readonly HashSet<string> _words;
+        private readonly HashSet<string> _audios;
 
-        public delegate void SessionStatisticsChangedDelegate(int viewevPagesCount, int recordedWordsCount);
+        public delegate void SessionStatisticsChangedDelegate(int viewevPagesCount, int recordedAudiosCount);
         public event SessionStatisticsChangedDelegate SessionStatisticsChanged;
 
         public SessionStatisticsCollector()
         {
             _pages = new HashSet<string>();
-            _words = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            _audios = new HashSet<string>();
         }
 
         public void RegisterViewedPage(string pageKey)
@@ -27,19 +27,19 @@ namespace Pronunciation.Trainer.Dictionary
             bool isAdded = _pages.Add(pageKey);
             if (SessionStatisticsChanged != null)
             {
-                SessionStatisticsChanged(ViewevPagesCount, RecordedWordsCount);
+                SessionStatisticsChanged(ViewevPagesCount, RecordedAudiosCount);
             }
         }
 
-        public void RegisterRecordedWord(string wordName)
+        public void RegisterRecordedAudio(string audioKey)
         {
-            if (string.IsNullOrEmpty(wordName))
+            if (string.IsNullOrEmpty(audioKey))
                 return;
 
-            bool isAdded = _words.Add(wordName);
+            bool isAdded = _audios.Add(audioKey);
             if (SessionStatisticsChanged != null)
             {
-                SessionStatisticsChanged(ViewevPagesCount, RecordedWordsCount);
+                SessionStatisticsChanged(ViewevPagesCount, RecordedAudiosCount);
             }
         }
 
@@ -48,9 +48,9 @@ namespace Pronunciation.Trainer.Dictionary
             get { return _pages.Count; }
         }
 
-        public int RecordedWordsCount
+        public int RecordedAudiosCount
         {
-            get { return _words.Count; }
+            get { return _audios.Count; }
         }
     }
 }

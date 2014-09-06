@@ -7,6 +7,7 @@ namespace Pronunciation.Core.Providers.Dictionary
 {
     public class IndexEntry
     {
+        public int? WordId { get; private set; }
         public string ArticleKey { get; private set; }
         public string EntryText { get; private set; }
         public bool IsCollocation { get; private set; }
@@ -21,7 +22,7 @@ namespace Pronunciation.Core.Providers.Dictionary
         }
 
         public IndexEntry(string articleKey, string entryText, bool isCollocation, int? usageRank, 
-            string soundKeyUK, string soundKeyUS, bool isLDOCEEntry)
+            string soundKeyUK, string soundKeyUS, bool isLDOCEEntry, int? wordId)
         {
             ArticleKey = articleKey;
             EntryText = entryText;
@@ -30,6 +31,7 @@ namespace Pronunciation.Core.Providers.Dictionary
             SoundKeyUK = soundKeyUK;
             SoundKeyUS = soundKeyUS;
             IsLDOCEEntry = isLDOCEEntry;
+            WordId = wordId;
         }
     }
 }

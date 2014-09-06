@@ -58,19 +58,29 @@ namespace Pronunciation.Core.Providers.Dictionary
             }
         }
 
-        public PlaybackData GetAudio(string soundKey)
+        public DictionarySoundInfo GetAudio(string soundKey)
         {
+            if (string.IsNullOrEmpty(soundKey))
+                return null;
+
             var base64Audio = _scriptMethodInvoker(GetAudioMethodName, new object[] { soundKey });
             if (string.IsNullOrEmpty(base64Audio))
                 return null;
 
-            return new PlaybackData(Convert.FromBase64String(base64Audio));
+            return new DictionarySoundInfo(
+                new PlaybackData(Convert.FromBase64String(base64Audio)), 
+                IsUKAudio(soundKey));
         }
 
-        public PlaybackData GetAudioFromScriptData(string scriptData)
+        public DictionarySoundInfo GetAudioFromScriptData(string soundKey, string scriptData)
         {
+            if (string.IsNullOrEmpty(soundKey) || string.IsNullOrEmpty(scriptData))
+                return null;
+
             // The script should pass us base64 encoded mp3 file
-            return string.IsNullOrEmpty(scriptData) ? null : new PlaybackData(Convert.FromBase64String(scriptData));
+            return new DictionarySoundInfo(
+                new PlaybackData(Convert.FromBase64String(scriptData)), 
+                IsUKAudio(soundKey));
         }
 
         public bool IsWordsIndexCached 
@@ -104,7 +114,8 @@ namespace Pronunciation.Core.Providers.Dictionary
                         string.IsNullOrEmpty(data[3]) ? (int?)null : int.Parse(data[3]), 
                         data[4], 
                         data[5],
-                        isLDOCEEntry));
+                        isLDOCEEntry,
+                        null));
                 }
             }
 
@@ -122,6 +133,11 @@ namespace Pronunciation.Core.Providers.Dictionary
         private string BuildSubfolderName(string fileName)
         {
             return fileName.Substring(0, 1);
+        }
+
+        private bool IsUKAudio(string soundKey)
+        {
+            return soundKey.StartsWith("uk_") || soundKey.StartsWith("bre_") || soundKey.Contains("_bre_");
         }
     }
 }

@@ -12,10 +12,12 @@ namespace Pronunciation.Parser
         public string MainSoundIndexUK { get; private set; }
         public string MainSoundIndexUS { get; private set; }
         public List<SoundInfo> Sounds { get; private set; }
+        public string SoundText { get; private set; }
 
-        public SoundCollector()
+        public SoundCollector(string soundText)
         {
             Sounds = new List<SoundInfo>();
+            SoundText = soundText;
         }
 
         public bool HasUKSound
@@ -30,7 +32,7 @@ namespace Pronunciation.Parser
 
         public void RegisterSound(string soundKey, string soundIndex, bool isUKSound)
         {
-            Sounds.Add(new SoundInfo(soundKey, soundIndex, isUKSound));
+            Sounds.Add(new SoundInfo(soundKey, soundIndex, SoundText, isUKSound));
 
             if (isUKSound)
             {
@@ -48,6 +50,12 @@ namespace Pronunciation.Parser
                     MainSoundIndexUS = soundIndex;
                 }
             }
+        }
+
+        public void RegisterSoundText(string soundText)
+        {
+            Sounds.ForEach(x => x.SoundText = soundText);
+            SoundText = soundText;
         }
     }
 }

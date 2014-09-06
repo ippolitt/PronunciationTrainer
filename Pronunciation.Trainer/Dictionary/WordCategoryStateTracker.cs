@@ -14,7 +14,7 @@ namespace Pronunciation.Trainer.Dictionary
         private readonly List<WordCategoryListItem> _categories;
         private readonly CategoryManager _categoryManager;
         private readonly IgnoreEventsRegion _ignoreEvents = new IgnoreEventsRegion();
-        private string _currentWord;
+        private int? _currentWordId;
 
         public WordCategoryStateTracker(CategoryManager categoryManager)
         {
@@ -54,12 +54,12 @@ namespace Pronunciation.Trainer.Dictionary
             return new ObservableCollection<WordCategoryListItem>(_categories);
         }
 
-        public void RegisterWord(string wordName, IEnumerable<Guid> categoryIds)
+        public void RegisterWord(int wordId, IEnumerable<Guid> categoryIds)
         {
-            _currentWord = wordName;
+            _currentWordId = wordId;
             using (var region = _ignoreEvents.Start())
             {
-                if (wordName == null || categoryIds == null)
+                if (categoryIds == null)
                 {
                     _categories.ForEach(x => x.IsAssigned = false);
                 }
@@ -73,12 +73,16 @@ namespace Pronunciation.Trainer.Dictionary
 
         public void ResetWord()
         {
-            RegisterWord(null, null);
+            _currentWordId = null;
+            using (var region = _ignoreEvents.Start())
+            {
+                _categories.ForEach(x => x.IsAssigned = false);
+            }
         }
 
         private void WordCategory_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (string.IsNullOrEmpty(_currentWord) || _ignoreEvents.IsActive)
+            if (_currentWordId == null || _ignoreEvents.IsActive)
                 return;
 
             if ((sender is WordCategoryListItem) && e.PropertyName == WordCategoryListItem.IsAssignedPropertyName)
@@ -86,11 +90,11 @@ namespace Pronunciation.Trainer.Dictionary
                 var item = (WordCategoryListItem)sender;
                 if (item.IsAssigned)
                 {
-                    _categoryManager.AddCategory(_currentWord, item.CategoryId);
+                    _categoryManager.AddCategory(_currentWordId.Value, item.CategoryId);
                 }
                 else
                 {
-                    _categoryManager.RemoveCategory(_currentWord, item.CategoryId);
+                    _categoryManager.RemoveCategory(_currentWordId.Value, item.CategoryId);
                 }
             }
         }

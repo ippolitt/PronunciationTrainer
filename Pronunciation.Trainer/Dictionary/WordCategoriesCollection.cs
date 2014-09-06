@@ -2,50 +2,52 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Data.Entity;
 using Pronunciation.Core.Database;
 
 namespace Pronunciation.Trainer.Dictionary
 {
     public class WordCategoriesCollection : IDisposable
     {
-        public delegate void WordCategoriesChangedDelegate(string wordName, Guid[] addedCategoryIds, Guid[] removedCategoryIds);
+        public delegate void WordCategoriesChangedDelegate(int wordId, Guid[] addedCategoryIds, Guid[] removedCategoryIds);
         public event WordCategoriesChangedDelegate WordCategoriesChanged; 
 
-        private readonly List<DictionaryCategoryMember> _items;
-        private readonly string _wordName;
+        private readonly DictionaryWord _word;
+        private readonly List<DictionaryCategory> _categories;
         private Entities _dbContext;
 
-        public WordCategoriesCollection(string wordName)
+        public WordCategoriesCollection(int wordId)
         {
-            _wordName = wordName;
             _dbContext = new Entities();
-            _items = _dbContext.DictionaryCategoryMembers.Where(x => x.WordName == wordName).ToList();
+            _word = _dbContext.DictionaryWords
+                .Where(x => x.WordId == wordId)
+                .Include(x => x.DictionaryCategories)
+                .Single();
 
-            // Remove items that don't match by case (database search is case-insensitive)
-            _items.RemoveAll(x => x.WordName != wordName);
+            _categories = _word.DictionaryCategories.ToList();
         }
 
         public bool ContainsCategory(Guid categoryId)
         {
-            return _items.Any(x => x.CategoryId == categoryId);
+            return _categories.Any(x => x.CategoryId == categoryId);
         }
 
         public Guid[] GetCategoryIds()
         {
-            return _items.Select(x => x.CategoryId).ToArray();
+            return _categories.Select(x => x.CategoryId).ToArray(); 
         }
 
         public int RemoveCategories(IEnumerable<Guid> categoryIds)
         {
-            if (_items.Count <= 0 || categoryIds == null)
+            if (_categories.Count <= 0 || categoryIds == null)
                 return 0;
 
             var distinctIds = new HashSet<Guid>(categoryIds);
-            DictionaryCategoryMember[] itemsToRemove = _items.Where(x => distinctIds.Contains(x.CategoryId)).ToArray();
+            var itemsToRemove = _categories.Where(x => distinctIds.Contains(x.CategoryId)).ToArray();
             foreach (var item in itemsToRemove)
             {
-                _dbContext.DictionaryCategoryMembers.Remove(item);
-                _items.Remove(item);
+                _word.DictionaryCategories.Remove(item);
+                _categories.Remove(item);
             }
 
             if (itemsToRemove.Length > 0)
@@ -53,7 +55,7 @@ namespace Pronunciation.Trainer.Dictionary
                 _dbContext.SaveChanges();
                 if (WordCategoriesChanged != null)
                 {
-                    WordCategoriesChanged(_wordName, null, itemsToRemove.Select(x => x.CategoryId).ToArray());
+                    WordCategoriesChanged(_word.WordId, null, itemsToRemove.Select(x => x.CategoryId).ToArray());
                 }
             }
 
@@ -65,16 +67,15 @@ namespace Pronunciation.Trainer.Dictionary
             if (categoryIds == null)
                 return 0;
 
-            Guid[] categoriesToAdd = categoryIds.Distinct().Where(x => _items.All(y => y.CategoryId != x)).ToArray();
+            Guid[] categoriesToAdd = categoryIds.Distinct().Where(x => _categories.All(y => y.CategoryId != x)).ToArray();
             foreach (Guid categoryId in categoriesToAdd)
             {
-                DictionaryCategoryMember item = _dbContext.DictionaryCategoryMembers.Create();
-                item.MembershipId = Guid.NewGuid();
-                item.WordName = _wordName;
-                item.CategoryId = categoryId;
+                var category = new DictionaryCategory { CategoryId = categoryId };
+                _word.DictionaryCategories.Add(category);
+                _categories.Add(category);
 
-                _dbContext.DictionaryCategoryMembers.Add(item);
-                _items.Add(item);
+                // This is required to avoid dbContext adding this category to the database
+                _dbContext.DictionaryCategories.Attach(category);
             }
 
             if (categoriesToAdd.Length > 0)
@@ -82,7 +83,7 @@ namespace Pronunciation.Trainer.Dictionary
                 _dbContext.SaveChanges();
                 if (WordCategoriesChanged != null)
                 {
-                    WordCategoriesChanged(_wordName, categoriesToAdd, null);
+                    WordCategoriesChanged(_word.WordId, categoriesToAdd, null);
                 }
             }
 

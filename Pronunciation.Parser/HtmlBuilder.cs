@@ -211,7 +211,7 @@ namespace Pronunciation.Parser
             _htmlDATBuilder = htmlDATBuilder;
             if (IsDatabaseMode)
             {
-                _dbUploader = new DatabaseUploader(connectionString, fileLoader);
+                _dbUploader = new DatabaseUploader(connectionString);
             }
             _usageBuilder = new WordUsageBuilder(wordUsageFile);
             _ranks = PrepareRanks(_usageBuilder.GetRanks());
@@ -247,7 +247,7 @@ namespace Pronunciation.Parser
             });
         }
 
-        public void ConvertToHtml(string sourceXml, string htmlFolder, int maxWords, bool isFakeMode)
+        public void ConvertToHtml(string sourceXml, string htmlFolder, int maxWords, bool isFakeMode, bool deleteExtraWords)
         {
             File.AppendAllText(_logFile, string.Format("********* Starting conversion {0} ***********\r\n\r\n", DateTime.Now));
 
@@ -261,7 +261,7 @@ namespace Pronunciation.Parser
             var soundStats = new StringBuilder();
             if (IsDatabaseMode)
             {
-                GenerateInDatabase(words, soundStats, maxWords, isFakeMode);
+                GenerateInDatabase(words, soundStats, maxWords, isFakeMode, deleteExtraWords);
             }
             else
             {
@@ -334,7 +334,7 @@ namespace Pronunciation.Parser
             return collocationsCount;
         }
 
-        private void GenerateInDatabase(List<DicWord> words, StringBuilder soundStats, int maxWords, bool isFakeMode)
+        private void GenerateInDatabase(List<DicWord> words, StringBuilder soundStats, int maxWords, bool isFakeMode, bool deleteExtraWords)
         {
             int wordsCount = 0;
             int letterWords = 0;
@@ -372,7 +372,7 @@ namespace Pronunciation.Parser
                             var htmlIndex = _htmlDATBuilder.AppendEntity(
                                 description.Text, 
                                 Encoding.UTF8.GetBytes(pageBuilder.ToString()));
-                            _dbUploader.InsertWord(description, word.IsLDOCEEntry, htmlIndex.BuildKey());
+                            _dbUploader.StoreWord(description, word.IsLDOCEEntry, htmlIndex.BuildKey());
                         }
 
                         letterWords++;
@@ -383,6 +383,15 @@ namespace Pronunciation.Parser
                         break;
                 }
 
+                Console.WriteLine(" ({0}) words.", letterWords);
+                Console.WriteLine("Total: {0} words", wordsCount);
+
+                if (!isFakeMode && deleteExtraWords)
+                {
+                    int deleteCount = _dbUploader.DeleteExtraWords();
+                    Console.WriteLine("Deleted '{0}' extra words", deleteCount);
+                }
+
                 if (_dbUploader.DbStats != null)
                 {
                     File.AppendAllText(_logFile, "\r\nDatabase upload stats:\r\n" + _dbUploader.DbStats.ToString());
@@ -390,16 +399,13 @@ namespace Pronunciation.Parser
             }
             finally
             {
-                 _dbUploader.Dispose();
-                 _htmlDATBuilder.Flush();
-                 _audioDATBuilder.Flush();
+                _dbUploader.Dispose();
+                _htmlDATBuilder.Flush();
+                _audioDATBuilder.Flush();
             }
 
             _fileLoader.FlushCache();
             _fileLoader.ClearCache();
-
-            Console.WriteLine(" ({0}) words.", letterWords);
-            Console.WriteLine("Total: {0} words", wordsCount);
         }
 
         private void GenerateInFileSystem(List<DicWord> words, string rootFolder, StringBuilder soundStats, int maxWords, bool isFakeMode)
@@ -626,8 +632,9 @@ namespace Pronunciation.Parser
                 ordinal++;
 
                 // Parse main data
-                var entrySoundCollector = new SoundCollector();
+                var entrySoundCollector = new SoundCollector(keyword);
                 ParseResult entryResult = ParseItemXml(entry.RawMainData, true, null, entrySoundCollector);
+                wordDescription.Sounds.AddRange(entrySoundCollector.Sounds);
 
                 // If word entry has exactly two sounds (UK & US) then these sounds are considered as entry audio 
                 if (entrySoundCollector.HasUKSound && entrySoundCollector.HasUSSound
@@ -638,8 +645,6 @@ namespace Pronunciation.Parser
                     {
                         wordDescription.SoundKeyUK = entrySoundCollector.MainSoundUK;
                         wordDescription.SoundKeyUS = entrySoundCollector.MainSoundUS;
-                        wordDescription.SoundIndexUK = entrySoundCollector.MainSoundIndexUK;
-                        wordDescription.SoundIndexUS = entrySoundCollector.MainSoundIndexUS;
                         isWordAudioSet = true;
                     }
                 }
@@ -744,12 +749,12 @@ namespace Pronunciation.Parser
                                 contentCollector = new ContentCollector(XmlElementStrong, true);
                             }
 
-                            var itemSoundCollector = new SoundCollector();
+                            var itemSoundCollector = new SoundCollector(null);
                             ParseResult itemResult = ParseItemXml(item.RawData, false, contentCollector, itemSoundCollector);
                             if (itemGroup.GroupType == ItemType.Collocation)
                             {
                                 var contentItems = ParseCollocationsContent(contentCollector.GetContent());
-                                if (contentItems != null)
+                                if (contentItems != null && contentItems.Length > 0)
                                 {
                                     if (wordDescription.Collocations == null)
                                     {
@@ -760,12 +765,13 @@ namespace Pronunciation.Parser
                                     {
                                         Text = x,
                                         SoundKeyUK = itemSoundCollector.MainSoundUK,
-                                        SoundKeyUS = itemSoundCollector.MainSoundUS,
-                                        SoundIndexUK = itemSoundCollector.MainSoundIndexUK,
-                                        SoundIndexUS = itemSoundCollector.MainSoundIndexUS
+                                        SoundKeyUS = itemSoundCollector.MainSoundUS
                                     }));
+
+                                    itemSoundCollector.RegisterSoundText(contentItems[0]);
                                 }
                             }
+                            wordDescription.Sounds.AddRange(itemSoundCollector.Sounds);
 
                             if (itemGroup.GroupType == ItemType.WordForm)
                             {
@@ -1100,7 +1106,7 @@ namespace Pronunciation.Parser
                     {
                         byte[] audioData = _fileLoader.GetRawData(fileKey);
                         soundIndex = _audioDATBuilder.AppendEntity(fileKey, audioData).BuildKey();
-                        result = string.Format(info.AdditionalData, soundIndex, lang);
+                        result = string.Format(info.AdditionalData, fileKey, lang);
                     }
                     else
                     {
