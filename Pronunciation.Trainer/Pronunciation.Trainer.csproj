@@ -81,6 +81,7 @@
     <Compile Include="Controls\ISuggestionItemInfo.cs" />
     <Compile Include="Controls\OnOffButton.cs" />
     <Compile Include="Dictionary\DictionaryIndex.cs" />
+    <Compile Include="Dictionary\DictionaryInitializer.cs" />
     <Compile Include="Dictionary\IndexEntryImitation.cs" />
     <Compile Include="Dictionary\IndexPositionTracker.cs" />
     <Compile Include="Controls\SuggestionsList.cs" />

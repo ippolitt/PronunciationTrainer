@@ -29,6 +29,11 @@ namespace Pronunciation.Core.Providers.Dictionary
             _scriptMethodInvoker = scriptMethodInvoker;
         }
 
+        public void WarmUp()
+        {
+            // Do nothing
+        }
+
         public ArticlePage PrepareArticlePage(string articleKey)
         {
             Uri fileUrl = BuildWordPath(articleKey);

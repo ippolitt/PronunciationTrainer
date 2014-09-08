@@ -1,13 +1,15 @@
 ﻿Top:
-- Waveforms: why right margin is so big?
+- First load of the HTML page takes too long (on computer startup).
 - Delete a word from category with DEL (not Backspace, remove Backspace also from Recordings list) 
+- Add total statistics (recorded N words over Y days). Move statistics from status bar to a dedicated tab.
 - Add ability to add notes for a word
-- Add total statistics (recorded N words over Y days)
 - Add ability to rewind player by 1/3 seconds (should be configurable)
+- Lazy load categories (only if tab is visible)
 - Somehow mark the entries from LDOCE in UI
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 LDOCE import:
 	- Optimize reimport: if we only change HTML then there's no need to rebuild Audio.dat 
+	- Analyze words that present in LPD but miss in LDOCE
 	- ? DB mode: don't import sounds that have "_lpd_" inside and can be matched to the existing LPD sound. Remap them instead.
 	- Check if [.stress_shift] style is ever applied in LPD entries
 	- Backup new LPD database and PronunciationTrainer
@@ -25,8 +27,7 @@ LDOCE import:
 	- Before removing the FakeEntity (for Exercise and Training) ensure they are not loaded into dbcontext
 - Performance:
 	- If we switch to using int32 instead of string as Words/Collocations reference to Sounds it reduces RAM by 4MB. Problems: can't easily cleanup Sounds table on reimport (foreign key)
-	- Reduce startup time
-	- First click on Exercise takes too long. Should we warm-up the connection somehow?
+	- Before deploying DB it should be warmed-up (load some pages etc)
 	- Profile memory: when Exercise tab is first loaded etc.
 	- If we assign all index entries for LPD it eats + 6 MB (slowly, in background)
 	- Why it eats so much memory? Elaborate (try working without DB)
@@ -54,7 +55,11 @@ LDOCE import:
 	- Play any word in the dictionary when I double click on it
 	- Add ability to add any word in the exercise to dictionary favorites
 	- Add a setting "Active book" to avoid displaying exercises from other books
+	- Add auto lists: words with notes, trouble words (many attempts to rccord at a time)
 - Usability improvements
+	- when I click on a category checkbox it takes too long (maybe save it asynchronously? make categories collection thread safe) Also check grid settings - remove fading
+	- Display wveforms even during playback
+	- Improve tab headers: add tooltips and icons
 	- Add special and phonetic symbols explanations (both for LPD and LDOCE)
 	- Improve category dialog: add with hot key, delete with DEL
 	- Rename Trainings to Readings or Dialogs
@@ -68,6 +73,7 @@ LDOCE import:
 	- Review logic for building TOP words - why it's 1200 instead of 1000?
 	- Don't show message box if dictionary is missing - show error inside the tab (for those who don't want to use dictionary)
 - Code improvements:
+	- Add a handling to MessageHelper when message needs to be shown from a background thread
 	- Add logic to check if it's an updated version and call some migration logic (MUST be done before deployment!)
 	- Think how a new changes to the database will be deployed (consider that all audio/html index will be broken)
 	- Use stack panel in AudioPanel (read first what is better: Grid or stack panel)

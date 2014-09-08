@@ -16,6 +16,18 @@ namespace Pronunciation.Core.Utility
             _sourceFile = sourceFile;
         }
 
+        public void WarmUp()
+        {
+            // No errors on warmup (e.g. we may work without sounds)
+            if (!File.Exists(_sourceFile))
+                return;
+
+            using (var stream = new FileStream(_sourceFile, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                stream.ReadByte();
+            }
+        }
+
         public byte[] GetData(long offset, long length)
         {
             if (length <= 0)
@@ -24,7 +36,7 @@ namespace Pronunciation.Core.Utility
             if (offset <= 0)
                 throw new ArgumentException("Can't load data: the offset must be greater then zero!");
 
-            using (var stream = new FileStream(_sourceFile, FileMode.Open, FileAccess.Read))
+            using (var stream = new FileStream(_sourceFile, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 var buffer = new byte[length];
                 stream.Seek(offset - 1, SeekOrigin.Begin);

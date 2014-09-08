@@ -10,6 +10,7 @@ namespace Pronunciation.Trainer.Utility
     {
         private static BindingErrorTraceListener _listener;
         private StringBuilder _builder = new StringBuilder();
+        private const int MaxMessageLength = 500;
         
         private BindingErrorTraceListener()
         { 
@@ -55,7 +56,9 @@ namespace Pronunciation.Trainer.Utility
             var final = _builder.ToString();
             _builder.Length = 0;
 
-            throw new InvalidOperationException(final);
+            throw new InvalidOperationException(final.Length <= MaxMessageLength 
+                ? final 
+                : final.Substring(0, MaxMessageLength) + "...");
         }
   }
 }

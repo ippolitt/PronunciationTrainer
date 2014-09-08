@@ -124,7 +124,7 @@
                           CellStyle="{StaticResource CategoryCell}" IsTabStop="False" KeyboardNavigation.TabNavigation="None">
                     <DataGrid.Columns>
                         <DataGridTextColumn x:Name="displayNameColumn" Binding="{Binding Path=DisplayName, Mode=OneWay}" Width="*" CellStyle="{StaticResource CategoryNameCell}" />
-                        <DataGridCheckBoxColumn x:Name="isAssignedColumn" Binding="{Binding Path=IsAssigned, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="30" CellStyle="{StaticResource IsAssignedCell}" />
+                        <DataGridCheckBoxColumn x:Name="isAssignedColumn" Binding="{Binding Path=IsAssigned, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=true}" Width="30" CellStyle="{StaticResource IsAssignedCell}" />
                     </DataGrid.Columns>
                     <DataGrid.Resources>
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="White"/>

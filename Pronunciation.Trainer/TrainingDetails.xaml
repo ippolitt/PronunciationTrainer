@@ -35,7 +35,7 @@
 
             <TextBlock Grid.Row="0" Grid.Column="3" Margin="0,0,5,0" VerticalAlignment="Center" HorizontalAlignment="Right" Text="Category:"/>
             <TextBox Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="3" Name="txtCategory" Margin="0,3,0,2" TabIndex="20"
-                Text="{Binding Path=Category, Mode=OneWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" />
+                Text="{Binding Path=Category, Mode=TwoWay, ValidatesOnExceptions=true, NotifyOnValidationError=true}" />
 
             <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Reference audio:" />
             <TextBox Grid.Row="1" Grid.Column="1" Margin="0,3,0,2" IsTabStop="False" Name="txtReferenceAudio" IsReadOnly="True"

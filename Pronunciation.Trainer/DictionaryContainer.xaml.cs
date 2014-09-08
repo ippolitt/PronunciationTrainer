@@ -31,6 +31,7 @@ using Pronunciation.Trainer.Database;
 using System.ComponentModel;
 using Pronunciation.Trainer.Views;
 using System.Media;
+using System.Threading.Tasks;
 
 namespace Pronunciation.Trainer
 {
@@ -75,6 +76,7 @@ namespace Pronunciation.Trainer
         private CurrentPageInfo _currentPage;
         private DictionaryIndex _mainIndex;
         private DictionaryIndex _searchIndex;
+        private DictionaryInitializer _dictionaryLoader;
         private CategoryManager _categoryManager;
         private WordCategoryStateTracker _categoryTracker;
         private SessionStatisticsCollector _statsCollector;
@@ -110,6 +112,7 @@ namespace Pronunciation.Trainer
             //_dictionaryProvider = new LPDFileSystemProvider(AppSettings.Instance.Folders.Dictionary, CallScriptMethod);
             _dictionaryProvider = new LPDDatabaseProvider(AppSettings.Instance.Folders.Dictionary, 
                 AppSettings.Instance.Folders.Database, AppSettings.Instance.Connections.Trainer);
+            _dictionaryLoader = new DictionaryInitializer(_mainIndex, _dictionaryProvider);
 
             _audioContext = new DictionaryAudioContext(_dictionaryProvider, AppSettings.Instance.Recorders.LPD, 
                 new AppSettingsBasedRecordingPolicy());
@@ -162,30 +165,11 @@ namespace Pronunciation.Trainer
                 PopulateCategories();
                 cboCategories.SelectedIndex = 0;
                 categoriesDataGrid.IsEnabled = false;
+
+                lstSuggestions.AttachItemsSource(new[] { GetHintSuggestion() });
             }
 
-            SplashScreen splash = null;
-            if (!_dictionaryProvider.IsWordsIndexCached)
-            {
-                splash = new SplashScreen("Resources/BuildingIndex.png");
-                splash.Show(false, true);
-            }
-
-            bool isSuccess = false;
-            try
-            {
-                _mainIndex.Build(_dictionaryProvider.GetWordsIndex(AppSettings.Instance.DisplayLPDDataOnly));
-                isSuccess = true;
-            }
-            finally
-            {
-                if (splash != null)
-                {
-                    splash.Close(TimeSpan.FromSeconds(isSuccess ? 1 : 0));
-                }
-            }
-
-            lstSuggestions.AttachItemsSource(new[] { GetHintSuggestion() });
+            _dictionaryLoader.InitializeAsync();
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -435,8 +419,7 @@ namespace Pronunciation.Trainer
             if (_ignoreEvents.IsActive)
                 return;
 
-            ActivateFilter();
-            RefreshSuggestions(true);
+            RefreshSuggestions(true, true);
         }
 
         private void cboCategories_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -444,8 +427,7 @@ namespace Pronunciation.Trainer
             if (_ignoreEvents.IsActive)
                 return;
 
-            ActivateFilter();
-            RefreshSuggestions(true);
+            RefreshSuggestions(true, true);
         }
 
         private void txtSearch_TextChanged(object sender, TextChangedEventArgs e)
@@ -453,8 +435,8 @@ namespace Pronunciation.Trainer
             if (_ignoreEvents.IsActive)
                 return;
 
-            bool hasSuggestions = RefreshSuggestions(true);
-            if (!hasSuggestions && ControlsHelper.HasTextBecomeLonger(e))
+            bool? hasSuggestions = RefreshSuggestions(false, true);
+            if (hasSuggestions == false && ControlsHelper.HasTextBecomeLonger(e))
             {
                 SystemSounds.Beep.Play();
             }
@@ -472,10 +454,9 @@ namespace Pronunciation.Trainer
             {
                 int initialPosition = lstSuggestions.SelectedIndex;
                 bool restoreFocus = lstSuggestions.IsKeyboardFocusWithin;
-                
-                ActivateFilter();
-                bool hasSuggestions = RefreshSuggestions(false);
-                if (hasSuggestions)
+
+                bool? hasSuggestions = RefreshSuggestions(true, false);
+                if (hasSuggestions == true)
                 {
                     if (initialPosition <= 0)
                     {
@@ -524,8 +505,20 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private bool RefreshSuggestions(bool selectFirstItem)
+        private bool? RefreshSuggestions(bool activateFilter, bool selectFirstItem)
         {
+            if (!_dictionaryLoader.IsInitialized)
+            {
+                lstSuggestions.AttachItemsSource(new[] { GetSearchingSuggestion() });
+                _dictionaryLoader.ExecuteOnInitialized(() => RefreshSuggestions(activateFilter, selectFirstItem));
+                return null;
+            }
+
+            if (activateFilter)
+            {
+                ActivateFilter();
+            }
+
             string searchText = txtSearch.Text;
             bool isFilterActive = !ReferenceEquals(_searchIndex, _mainIndex);
             if (isFilterActive)
@@ -615,6 +608,11 @@ namespace Pronunciation.Trainer
         private IndexEntryImitation GetNoMatchSuggestion()
         {
             return new IndexEntryImitation("No matching results");
+        }
+
+        private IndexEntryImitation GetSearchingSuggestion()
+        {
+            return new IndexEntryImitation("Searching...");
         }
 
         private void txtSearch_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -741,7 +739,7 @@ namespace Pronunciation.Trainer
             }
             else
             {
-                if (!string.IsNullOrEmpty(txtSearch.Text))
+                if (_dictionaryLoader.IsInitialized && !string.IsNullOrEmpty(txtSearch.Text))
                 {
                     MessageHelper.ShowInfo(
                         string.Format("Dictionary article for word '{0}' doesn't exist!", txtSearch.Text),

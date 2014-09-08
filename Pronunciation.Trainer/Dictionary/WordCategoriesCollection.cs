@@ -70,12 +70,22 @@ namespace Pronunciation.Trainer.Dictionary
             Guid[] categoriesToAdd = categoryIds.Distinct().Where(x => _categories.All(y => y.CategoryId != x)).ToArray();
             foreach (Guid categoryId in categoriesToAdd)
             {
-                var category = new DictionaryCategory { CategoryId = categoryId };
+                // This is required to avoid dbContext adding this category to the database
+                DictionaryCategory category;
+                var entry = _dbContext.ChangeTracker.Entries<DictionaryCategory>()
+                    .FirstOrDefault(e => e.Entity.CategoryId == categoryId);
+                if (entry == null)
+                {
+                    category = new DictionaryCategory { CategoryId = categoryId };
+                    _dbContext.DictionaryCategories.Attach(category);
+                }
+                else
+                {
+                    category = entry.Entity;
+                }
+
                 _word.DictionaryCategories.Add(category);
                 _categories.Add(category);
-
-                // This is required to avoid dbContext adding this category to the database
-                _dbContext.DictionaryCategories.Attach(category);
             }
 
             if (categoriesToAdd.Length > 0)

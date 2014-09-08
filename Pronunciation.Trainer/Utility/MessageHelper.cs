@@ -127,9 +127,15 @@ namespace Pronunciation.Trainer.Utility
                 if (result.ValidationErrors == null)
                     continue;
 
+                bool isFirst = true;
                 foreach (DbValidationError error in result.ValidationErrors)
                 {
-                    messages.AppendFormat("{0}\r\n", error.ErrorMessage);
+                    if (!isFirst)
+                    {
+                        messages.AppendLine();
+                        isFirst = false;
+                    }
+                    messages.Append(error.ErrorMessage);
                 }
             }
 

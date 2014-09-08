@@ -52,6 +52,12 @@ namespace Pronunciation.Core.Providers.Dictionary
             _htmlReader = new DATFileReader(Path.Combine(databaseFolder, HtmlDATFileName));
         }
 
+        public void WarmUp()
+        {
+            _htmlReader.WarmUp();
+            _audioReader.WarmUp();
+        }
+
         public bool IsWordsIndexCached
         {
             get { return true; } //File.Exists(_indexFilePath);

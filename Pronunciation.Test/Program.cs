@@ -32,10 +32,11 @@ namespace Pronunciation.Test
 //                bool gg = string.Equals(null, null);
                 //string str = "sec".Substring(1, 0);
                 //TestBigFile();
-                TestLoadingData();
-                return;
+                //TestLoadingData();
 
-                bool? rr = false;
+
+
+                bool? rr = null;
 
                 if (rr == false)
                 {
