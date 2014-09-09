@@ -118,6 +118,8 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="Providers\Dictionary\ArticleInfo.cs" />
+    <Compile Include="Providers\Categories\CategoryProvider.cs" />
+    <Compile Include="Providers\Categories\DictionaryCategoryListItem.cs" />
     <Compile Include="Providers\Dictionary\DictionarySoundInfo.cs" />
     <Compile Include="Providers\Dictionary\LPDTargetKey.cs" />
     <Compile Include="Providers\Exercise\ExerciseTargetKey.cs" />
@@ -147,6 +149,7 @@
     <Compile Include="Threading\CancellationTokenSourceExt.cs" />
     <Compile Include="Threading\CancellationTokenState.cs" />
     <Compile Include="Utility\DATFileReader.cs" />
+    <Compile Include="Utility\Logger.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">

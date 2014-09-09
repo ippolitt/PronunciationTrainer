@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Collections;
 
-namespace Pronunciation.Trainer.Views
+namespace Pronunciation.Core.Providers.Categories
 {
     public class DictionaryCategoryListItem : IComparable<DictionaryCategoryListItem>
     {

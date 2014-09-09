@@ -1,10 +1,11 @@
 ﻿Top:
-- First load of the HTML page takes too long (on computer startup).
+- Try giving more memory to video adapter
 - Delete a word from category with DEL (not Backspace, remove Backspace also from Recordings list) 
 - Add total statistics (recorded N words over Y days). Move statistics from status bar to a dedicated tab.
 - Add ability to add notes for a word
 - Add ability to rewind player by 1/3 seconds (should be configurable)
 - Lazy load categories (only if tab is visible)
+- Remove some logging
 - Somehow mark the entries from LDOCE in UI
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 LDOCE import:
@@ -26,6 +27,7 @@ LDOCE import:
 	- There are no tags in my exported mp3 files
 	- Before removing the FakeEntity (for Exercise and Training) ensure they are not loaded into dbcontext
 - Performance:
+	- Get rid of entity framework - create own datalayer
 	- If we switch to using int32 instead of string as Words/Collocations reference to Sounds it reduces RAM by 4MB. Problems: can't easily cleanup Sounds table on reimport (foreign key)
 	- Before deploying DB it should be warmed-up (load some pages etc)
 	- Profile memory: when Exercise tab is first loaded etc.
@@ -33,13 +35,13 @@ LDOCE import:
 	- Why it eats so much memory? Elaborate (try working without DB)
 	- Why it eats so much memory when saving large audio files? (50 mb file and 400mb eats the application)
 	- Test InMemory recorder - how much memory does it eats for long recordings? Should we flush to disk?
-	- Reduce startup time
 	- Optimize IsAudioExists calls (AudioPanel currently makes it twice)
 	- Cache latest audio files in providers (especially, LPD)
 	- Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
 	- Think of another DB engine (SQLLite?). Test it with big databases and storing image/binary/ntext data.  
 	- Use other control instead of WebBrowser (see http://stackoverflow.com/questions/18119125/options-for-embedding-chromium-instead-of-ie-webbrowser-control-with-wpf-c)
 - New functionality:
+	- Add ability to pause the recording
 	- Import spelling-to-sound from LPD
 	- During import add a flag "several pronunciations/meanings". Then use this flag for autolist "several pronunciations"
 	- Add ability to search by wildcards (e.g. select a certain problematic syllable - lrt - and practice many words with it)
@@ -57,7 +59,6 @@ LDOCE import:
 	- Add a setting "Active book" to avoid displaying exercises from other books
 	- Add auto lists: words with notes, trouble words (many attempts to rccord at a time)
 - Usability improvements
-	- when I click on a category checkbox it takes too long (maybe save it asynchronously? make categories collection thread safe) Also check grid settings - remove fading
 	- Display wveforms even during playback
 	- Improve tab headers: add tooltips and icons
 	- Add special and phonetic symbols explanations (both for LPD and LDOCE)

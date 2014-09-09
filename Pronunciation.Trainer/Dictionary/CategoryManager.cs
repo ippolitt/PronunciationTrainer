@@ -5,6 +5,7 @@ using System.Text;
 using System.Data.Entity;
 using Pronunciation.Core.Database;
 using Pronunciation.Trainer.Views;
+using Pronunciation.Core.Providers.Categories;
 
 namespace Pronunciation.Trainer.Dictionary
 {
@@ -19,10 +20,6 @@ namespace Pronunciation.Trainer.Dictionary
             public void RegisterCategories(int wordId, WordCategoriesCollection categories)
             {
                 _latestWordId = wordId;
-                if (_categories != null)
-                {
-                    _categories.Dispose();
-                }
                 _categories = categories;
             }
 
@@ -39,16 +36,17 @@ namespace Pronunciation.Trainer.Dictionary
             }
         }
 
-        private readonly Entities _dbContext;
         private readonly WordCategoriesCollection.WordCategoriesChangedDelegate _changeHandler;
+        private readonly CategoryProvider _provider;
         private CategoriesCache _cache;
 
         private static readonly Guid FavoritesCategoryId = new Guid("b6eb1ab5-d0c7-487f-88fa-6e642e680ba1");
 
-        public CategoryManager(WordCategoriesCollection.WordCategoriesChangedDelegate changeHandler)
+        public CategoryManager(string connectionString, 
+            WordCategoriesCollection.WordCategoriesChangedDelegate changeHandler)
         {
             _changeHandler = changeHandler;
-            _dbContext = new Entities();
+            _provider = new CategoryProvider(connectionString);
             _cache = new CategoriesCache();
         }
 
@@ -88,35 +86,23 @@ namespace Pronunciation.Trainer.Dictionary
 
         public WordCategoryInfo GetWordCategories(int wordId)
         {
-            var categoryIds = LoadCategories(wordId).GetCategoryIds();
-            if (categoryIds != null && categoryIds.Length > 0 && categoryIds.Contains(FavoritesCategoryId))
-            {
-                return new WordCategoryInfo(true, categoryIds.Where(x => x != FavoritesCategoryId).ToArray());
-            }
-            else
-            {
-                return new WordCategoryInfo(false, categoryIds);
-            }
+            var categories = LoadCategories(wordId);
+            if (categories == null || categories.CategoryIds == null || categories.CategoryIds.Count == 0)
+                return new WordCategoryInfo(false, null);
+
+            return new WordCategoryInfo(
+                categories.CategoryIds.Contains(FavoritesCategoryId),
+                categories.CategoryIds.Where(x => x != FavoritesCategoryId).ToArray());
         }
 
         public DictionaryCategoryListItem[] GetAllCategories()
         {
-            return _dbContext.DictionaryCategories.AsNoTracking()
-                .Select(x => new DictionaryCategoryListItem
-                {
-                    CategoryId = x.CategoryId,
-                    DisplayName = x.DisplayName,
-                    IsSystemCategory = x.IsSystemCategory
-                }).ToArray();
+            return _provider.GetCategories();
         }
 
-        public HashSet<string> GetCategoryWords(Guid categoryId)
+        public int[] GetCategoryWordIds(Guid categoryId)
         {
-            var category = _dbContext.DictionaryCategories.AsNoTracking()
-                .Where(x => x.CategoryId == categoryId)
-                .Include(x => x.DictionaryWords)
-                .Single();
-            return new HashSet<string>(category.DictionaryWords.Select(x => x.Keyword));
+            return _provider.GetCategoryWordIds(categoryId);
         }
 
         private WordCategoriesCollection LoadCategories(int wordId)
@@ -124,7 +110,7 @@ namespace Pronunciation.Trainer.Dictionary
             WordCategoriesCollection categories;
             if (!_cache.GetCategories(wordId, out categories))
             {
-                categories = new WordCategoriesCollection(wordId);
+                categories = new WordCategoriesCollection(wordId, _provider);
                 if (_changeHandler != null)
                 {
                     categories.WordCategoriesChanged += _changeHandler;

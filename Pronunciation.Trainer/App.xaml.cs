@@ -8,6 +8,7 @@ using System.Windows.Threading;
 using System.Windows.Markup;
 using System.Globalization;
 using Pronunciation.Trainer.Utility;
+using Pronunciation.Core.Utility;
 
 namespace Pronunciation.Trainer
 {
@@ -41,6 +42,9 @@ namespace Pronunciation.Trainer
                 new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
 
             BindingErrorTraceListener.SetTrace();
+
+            Logger.Initialize(AppSettings.Instance.Files.Log);
+            Logger.Info("\r\n\r\n*** Application started. ***");
         }
 
         private void Application_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

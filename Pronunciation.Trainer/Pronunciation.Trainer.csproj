@@ -153,7 +153,6 @@
       <DependentUpon>SettingsPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\UserControlExt.cs" />
-    <Compile Include="Views\DictionaryCategoryListItem.cs" />
     <Compile Include="Views\WordCategoryListItem.cs" />
     <Compile Include="WaveForm.xaml.cs">
       <DependentUpon>WaveForm.xaml</DependentUpon>

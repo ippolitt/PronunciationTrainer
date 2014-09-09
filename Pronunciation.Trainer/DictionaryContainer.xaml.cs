@@ -32,6 +32,8 @@ using System.ComponentModel;
 using Pronunciation.Trainer.Views;
 using System.Media;
 using System.Threading.Tasks;
+using Pronunciation.Core.Utility;
+using Pronunciation.Core.Providers.Categories;
 
 namespace Pronunciation.Trainer
 {
@@ -81,6 +83,8 @@ namespace Pronunciation.Trainer
         private WordCategoryStateTracker _categoryTracker;
         private SessionStatisticsCollector _statsCollector;
         private readonly IgnoreEventsRegion _ignoreEvents = new IgnoreEventsRegion();
+        private bool _isFirstPageLoad = true;
+        private bool _isFirstCategoriesLoad = true;
 
         private ExecuteActionCommand _commandBack;
         private ExecuteActionCommand _commandForward;
@@ -104,7 +108,7 @@ namespace Pronunciation.Trainer
             _mainIndex = new DictionaryIndex();
             _searchIndex = _mainIndex;
 
-            _categoryManager = new CategoryManager(ProcessWordCategoriesChanged);
+            _categoryManager = new CategoryManager(AppSettings.Instance.Connections.Trainer, ProcessWordCategoriesChanged);
             _categoryTracker = new WordCategoryStateTracker(_categoryManager);
             _statsCollector = new SessionStatisticsCollector();
             _statsCollector.SessionStatisticsChanged += StatsCollector_SessionStatisticsChanged;
@@ -162,7 +166,10 @@ namespace Pronunciation.Trainer
                 PopulateRanks();
                 cboRanks.SelectedIndex = 0;
 
+                Logger.Info("Loading categories...");
                 PopulateCategories();
+                Logger.Info("Categories loaded.");
+
                 cboCategories.SelectedIndex = 0;
                 categoriesDataGrid.IsEnabled = false;
 
@@ -271,10 +278,24 @@ namespace Pronunciation.Trainer
                 }
 
                 _commandSyncPage.UpdateState(_currentPage.WordIndex != null);
-
-                RefreshAudioContext(sourceIndex ?? _currentPage.WordIndex);
                 RefreshHistoryNavigationState();
+
+                if (_isFirstPageLoad)
+                {
+                    Logger.Info("Page load completed. Refreshing audio context...");
+                }
+                RefreshAudioContext(sourceIndex ?? _currentPage.WordIndex);
+
+                if (_isFirstPageLoad)
+                {
+                    Logger.Info("Audio context refreshed. Refreshing categories state...");
+                }
                 RefreshCategoriesState(_currentPage.WordId);
+
+                if (_isFirstPageLoad)
+                {
+                    Logger.Info("Categories state refreshed.");
+                }
             }
             catch (Exception ex)
             {
@@ -282,6 +303,10 @@ namespace Pronunciation.Trainer
 
                 // For some reason errors in this event are not caught by the handlers in App.cs
                 MessageHelper.ShowError(ex);
+            }
+            finally
+            {
+                _isFirstPageLoad = false;
             }
         }
 
@@ -427,7 +452,18 @@ namespace Pronunciation.Trainer
             if (_ignoreEvents.IsActive)
                 return;
 
+            if (_isFirstCategoriesLoad)
+            {
+                Logger.Info("Loading category words...");
+            }
+
             RefreshSuggestions(true, true);
+
+            if (_isFirstCategoriesLoad)
+            {
+                Logger.Info("Category words loaded.");
+                _isFirstCategoriesLoad = false;
+            }
         }
 
         private void txtSearch_TextChanged(object sender, TextChangedEventArgs e)
@@ -488,10 +524,10 @@ namespace Pronunciation.Trainer
                 var query = isRank ? _mainIndex.Entries.Where(x => x.UsageRank == rank.Rank) : _mainIndex.Entries;
                 if (isCategory)
                 {
-                    HashSet<string> categoryWords = _categoryManager.GetCategoryWords(category.CategoryId);
+                    var categoryWords = new HashSet<int>(_categoryManager.GetCategoryWordIds(category.CategoryId));
                     if (categoryWords != null && categoryWords.Count > 0)
                     {
-                        query = query.Where(x => categoryWords.Contains(x.EntryText));
+                        query = query.Where(x => x.WordId != null && categoryWords.Contains(x.WordId.Value));
                     }
                     else
                     {
@@ -509,7 +545,7 @@ namespace Pronunciation.Trainer
         {
             if (!_dictionaryLoader.IsInitialized)
             {
-                lstSuggestions.AttachItemsSource(new[] { GetSearchingSuggestion() });
+                lstSuggestions.AttachItemsSource(new[] { GetInitializingSuggestion() });
                 _dictionaryLoader.ExecuteOnInitialized(() => RefreshSuggestions(activateFilter, selectFirstItem));
                 return null;
             }
@@ -610,9 +646,9 @@ namespace Pronunciation.Trainer
             return new IndexEntryImitation("No matching results");
         }
 
-        private IndexEntryImitation GetSearchingSuggestion()
+        private IndexEntryImitation GetInitializingSuggestion()
         {
-            return new IndexEntryImitation("Searching...");
+            return new IndexEntryImitation("Initializing...");
         }
 
         private void txtSearch_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -770,7 +806,17 @@ namespace Pronunciation.Trainer
 
         private void NavigateWord(IndexEntry sourceIndex, NavigationSource sourceAction)
         {
+            if (_isFirstPageLoad)
+            {
+                Logger.Info("Preparing article page...");
+            }
+
             ArticlePage article = _dictionaryProvider.PrepareArticlePage(sourceIndex.ArticleKey);
+
+            if (_isFirstPageLoad)
+            {
+                Logger.Info("Article page prepared. Navigating...");
+            }
             NavigatePage(article, sourceIndex, sourceAction, true);
         }
 

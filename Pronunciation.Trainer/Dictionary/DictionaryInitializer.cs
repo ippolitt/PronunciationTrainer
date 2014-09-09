@@ -5,6 +5,7 @@ using System.Text;
 using Pronunciation.Core.Providers.Dictionary;
 using Pronunciation.Core.Actions;
 using System.Threading.Tasks;
+using Pronunciation.Core.Utility;
 
 namespace Pronunciation.Trainer.Dictionary
 {
@@ -59,8 +60,12 @@ namespace Pronunciation.Trainer.Dictionary
 
         private void BuildIndex()
         {
+            Logger.Info("Build index started...");
+
             List<IndexEntry> data = _provider.GetWordsIndex(AppSettings.Instance.DisplayLPDDataOnly);
             _index.Build(data);
+
+            Logger.Info("Build index completed.");
         }
 
         private void BuildIndexCompleted(ActionResult result)

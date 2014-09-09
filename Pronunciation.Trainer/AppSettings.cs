@@ -50,6 +50,7 @@ namespace Pronunciation.Trainer
         public float ReferenceDataVolume { get; set; }
 
         public AppFolders Folders { get; private set; }
+        public AppFiles Files { get; private set; }
         public ConnectionStrings Connections { get; private set; }
         public RecordingProviders Recorders { get; private set; }
 
@@ -74,6 +75,7 @@ namespace Pronunciation.Trainer
             DisplayLPDDataOnly = Settings.Default.DisplayLPDDataOnly;
 
             Folders = new AppFolders(Settings.Default.BaseFolder);
+            Files = new AppFiles(Folders);
             Connections = new ConnectionStrings();
             Recorders = new RecordingProviders(Connections.Trainer, Folders.Recordings, Folders.Temp);
         }
@@ -111,6 +113,7 @@ namespace Pronunciation.Trainer
             private const string DatabaseFolderName = "Database";
             private const string TheoryFolderName = "Theory";
             private const string TempFolderName = "Temp";
+            private const string LogsFolderName = "Logs";
 
             public AppFolders(string baseFolder)
             {
@@ -155,6 +158,28 @@ namespace Pronunciation.Trainer
             public string Theory
             {
                 get { return Path.Combine(_baseFolder, TheoryFolderName); }
+            }
+
+            public string Logs
+            {
+                get { return Path.Combine(_baseFolder, LogsFolderName); }
+            }
+        }
+
+        public class AppFiles
+        {
+            private readonly AppFolders _folders;
+
+            private const string LogFileName = "Trainer.log";
+
+            public AppFiles(AppFolders folders)
+            {
+                _folders = folders;
+            }
+
+            public string Log
+            {
+                get { return Path.Combine(_folders.Logs, LogFileName); }
             }
         }
 

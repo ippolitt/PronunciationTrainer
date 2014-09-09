@@ -6,6 +6,7 @@ using Pronunciation.Trainer.Views;
 using Pronunciation.Trainer.Utility;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
+using Pronunciation.Core.Providers.Categories;
 
 namespace Pronunciation.Trainer.Dictionary
 {
