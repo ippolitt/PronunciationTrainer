@@ -95,7 +95,8 @@ namespace Pronunciation.Trainer.Dictionary
             {
                 mainQuery = mainQuery.Take(maxItems);
             }
-            var entries = mainQuery.OrderBy(x => x.EntryText, new SearchTextComparer(searchText)).ToList();
+            var comparer = new IndexEntryComparer(searchText);
+            var entries = mainQuery.OrderBy(x => x, comparer).ToList();
 
             // Add token based matches
             if (!isExactMatch && (entries.Count < maxItems || maxItems < 0))
@@ -173,33 +174,46 @@ namespace Pronunciation.Trainer.Dictionary
             public IndexEntry Entry;
         }
 
-        private class SearchTextComparer : IComparer<string>
+        private class IndexEntryComparer : IComparer<IndexEntry>
         {
             private readonly string _searchText;
 
-            public SearchTextComparer(string searchText)
+            public IndexEntryComparer(string searchText)
             {
                 _searchText = searchText;
             }
 
-            public int Compare(string x, string y)
+            public int Compare(IndexEntry x, IndexEntry y)
             {
-                int result = string.Compare(x, y);
-                if (result != 0 && x != null && y != null)
+                int result;
+                if (x != null && y != null)
                 {
-                    // Check if they differ only by case and ensure that case-sensitive match with the search text 
-                    // is higher than case-insensitive one. So if search text is "A", then we display: "A, a" 
-                    if (string.Equals(x, y, StringComparison.OrdinalIgnoreCase))
+                    result = string.Compare(x.EntryText, y.EntryText);
+                    if (result == 0)
                     {
-                        if (x.StartsWith(_searchText))
+                        // Ensure that word goes before collocation with the same name
+                        result = (x.IsCollocation == y.IsCollocation) ? 0 : (x.IsCollocation ? 1 : -1);
+                    }
+                    else
+                    {
+                        // Check if they differ only by case and ensure that case-sensitive match with the search text 
+                        // is higher than case-insensitive one. So if search text is "A", then we display: "A, a" 
+                        if (string.Equals(x.EntryText, y.EntryText, StringComparison.OrdinalIgnoreCase))
                         {
-                            result = -1;
-                        }
-                        else if (y.StartsWith(_searchText))
-                        {
-                            result = 1;
+                            if (x.EntryText.StartsWith(_searchText))
+                            {
+                                result = -1;
+                            }
+                            else if (y.EntryText.StartsWith(_searchText))
+                            {
+                                result = 1;
+                            }
                         }
                     }
+                }
+                else
+                {
+                    result = (x == null && y == null) ? 0 : (x == null ? -1 : 1);
                 }
 
                 return result;

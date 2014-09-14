@@ -12,7 +12,7 @@ namespace Pronunciation.Trainer.Dictionary
         private const string ImmitationEntryKey = "@";
 
         public IndexEntryImitation(string entryText)
-            : base(ImmitationEntryKey, entryText, false, null, null, null, false, null)
+            : base(ImmitationEntryKey, entryText, false, null, null, null, null, null)
         {
         }
 

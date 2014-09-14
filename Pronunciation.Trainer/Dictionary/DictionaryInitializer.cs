@@ -62,16 +62,25 @@ namespace Pronunciation.Trainer.Dictionary
         {
             Logger.Info("Build index started...");
 
-            List<IndexEntry> data = _provider.GetWordsIndex(AppSettings.Instance.DisplayLPDDataOnly);
+            List<IndexEntry> data = _provider.GetWordsIndex(AppSettings.Instance.ActiveDictionaryIds);
             _index.Build(data);
 
             Logger.Info("Build index completed.");
+        }
+
+        private void Warmup()
+        {
+            Logger.Info("Warming up...");
+            _provider.WarmUp();
+            Logger.Info("Warmup completed.");
         }
 
         private void BuildIndexCompleted(ActionResult result)
         {
             if (result.Error != null)
                 throw result.Error;
+
+            Task.Factory.StartNew(Warmup);
 
             Action action = null;
             lock (_syncLock)
@@ -85,8 +94,6 @@ namespace Pronunciation.Trainer.Dictionary
             {
                 action();
             }
-
-            Task.Factory.StartNew(_provider.WarmUp);
         }
     }
 }

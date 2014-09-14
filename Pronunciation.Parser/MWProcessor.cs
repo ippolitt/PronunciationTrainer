@@ -6,11 +6,11 @@ using System.IO;
 
 namespace Pronunciation.Parser
 {
-    class LDOCEProcessor
+    class MWProcessor
     {
         public static void ParseDictionary(string dictionaryFile, string outputFile, string logFile)
         {
-            var parser = new LDOCEParser(logFile);
+            var parser = new MWParser(logFile);
             var entries = parser.Parse(dictionaryFile);
 
             var bld = new StringBuilder();
@@ -23,12 +23,10 @@ namespace Pronunciation.Parser
                     bld.Append(string.Join("\t",
                         entry.Keyword, 
                         number,
+                        item.ItemNumber,
                         PreparePartsOfSpeech(item.PartsOfSpeech),
-                        item.ItemStressedText,
-                        GetTranscriptionUK(item.Transcription),
-                        GetTranscriptionUS(item.Transcription),
-                        item.SoundFileUK,
-                        item.SoundFileUS));
+                        item.Transcription,
+                        PrepareSoundFiles(item.SoundFiles)));
                     bld.AppendLine();
                 }
             }
@@ -36,34 +34,32 @@ namespace Pronunciation.Parser
             File.WriteAllText(outputFile, bld.ToString(), Encoding.UTF8);
         }
 
-        public static LDOCEHtmlEntry[] LoadParsedData(string sourceFile)
+        public static MWHtmlEntry[] LoadParsedData(string sourceFile)
         {
-            var entries = new Dictionary<string, LDOCEHtmlEntry>();
+            var entries = new Dictionary<string, MWHtmlEntry>();
             using (var reader = new StreamReader(sourceFile, Encoding.UTF8))
             {
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 8)
-                        throw new InvalidOperationException("Source LDOCE file is broken!");
+                    if (data.Length != 6)
+                        throw new InvalidOperationException("Source MW file is broken!");
 
                     string keyword = data[0];
-                    LDOCEHtmlEntry entry;
+                    MWHtmlEntry entry;
                     if (!entries.TryGetValue(keyword, out entry))
                     {
-                        entry = new LDOCEHtmlEntry { Keyword = keyword, Items = new List<LDOCEHtmlEntity>() };
+                        entry = new MWHtmlEntry { Keyword = keyword, Items = new List<MWHtmlEntryEntity>() };
                         entries.Add(keyword, entry);
                     }
 
-                    entry.Items.Add(new LDOCEHtmlEntity 
-                    { 
+                    entry.Items.Add(new MWHtmlEntryEntity 
+                    {
+                        DisplayName = keyword,
                         Number = int.Parse(data[1]),
-                        PartsOfSpeech = data[2],
-                        DisplayName = data[3],
-                        TranscriptionUK = data[4],
-                        TranscriptionUS = data[5],
-                        SoundFileUK = data[6],
-                        SoundFileUS = data[7]
+                        PartsOfSpeech = data[3],
+                        Transcription = data[4],
+                        SoundFiles = ParseSoundFiles(data[5])
                     });
                 }
             }
@@ -76,21 +72,21 @@ namespace Pronunciation.Parser
             return partsOfSpeech == null ? null : string.Join(", ", partsOfSpeech.Distinct().OrderBy(x => x));
         }
 
-        private static string GetTranscriptionUK(string transcription)
+        private static string PrepareSoundFiles(IEnumerable<string> soundFiles)
         {
-            if (string.IsNullOrEmpty(transcription))
-                return null;
-
-            return Trim(transcription.Split('$')[0]);
+            // Do not sort sounds because they order often corresponds to the transcriptions order (see "dog")
+            return soundFiles == null ? null : string.Join(", ", soundFiles);
         }
 
-        private static string GetTranscriptionUS(string transcription)
+        private static string[] ParseSoundFiles(string soundFiles)
         {
-            if (string.IsNullOrEmpty(transcription))
+            if (string.IsNullOrEmpty(soundFiles))
                 return null;
 
-            var parts = transcription.Split('$');
-            return parts.Length > 1 ? Trim(parts[1]) : null;
+            return soundFiles.Split(',')
+                .Select(x => Trim(x))
+                .Where(x => !string.IsNullOrEmpty(x))
+                .ToArray();
         }
 
         private static string Trim(string text)

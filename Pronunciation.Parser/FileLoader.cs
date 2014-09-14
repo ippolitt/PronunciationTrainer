@@ -10,22 +10,22 @@ namespace Pronunciation.Parser
     {
         private readonly string _sourceFolderLPD;
         private readonly string _sourceFolderLDOCE;
+        private readonly string _sourceFolderMW;
         private readonly Dictionary<string, string> _cache;
         private readonly string _cacheFolder;
         private readonly bool _useCacheOnly;
-        private readonly string _ldoceKeysPrefix;
 
         private const string LDOCEFolderUK = "SoundsUK";
         private const string LDOCEFolderUS = "SoundsUS";
 
         private string _currentCacheFile;
 
-        public FileLoader(string sourceFolderLPD, string sourceFolderLDOCE, string ldoceKeysPrefix, 
+        public FileLoader(string sourceFolderLPD, string sourceFolderLDOCE, string sourceFolderMW, 
             string cacheFolder, bool useCacheOnly)
         {
             _sourceFolderLPD = sourceFolderLPD;
             _sourceFolderLDOCE = sourceFolderLDOCE;
-            _ldoceKeysPrefix = ldoceKeysPrefix;
+            _sourceFolderMW = sourceFolderMW;
             _cacheFolder = cacheFolder;
             _useCacheOnly = useCacheOnly;
             _cache = new Dictionary<string, string>();
@@ -130,14 +130,19 @@ namespace Pronunciation.Parser
         private byte[] GetFileContent(string fileKey)
         {
             string sourceFile;
-            if (fileKey.StartsWith(_ldoceKeysPrefix))
+            if (fileKey.StartsWith(SoundManager.LDOCE_SoundKeyPrefix))
             {
-                string fileName = string.Format("{0}.mp3", fileKey.Remove(0, _ldoceKeysPrefix.Length));
+                string fileName = string.Format("{0}.mp3", fileKey.Remove(0, SoundManager.LDOCE_SoundKeyPrefix.Length));
                 sourceFile = Path.Combine(_sourceFolderLDOCE, LDOCEFolderUK, fileName);
                 if (!File.Exists(sourceFile))
                 {
                     sourceFile = Path.Combine(_sourceFolderLDOCE, LDOCEFolderUS, fileName);
                 }
+            }
+            else if (fileKey.StartsWith(SoundManager.MW_SoundKeyPrefix))
+            {
+                sourceFile = Path.Combine(_sourceFolderMW, string.Format("{0}.mp3", 
+                    fileKey.Remove(0, SoundManager.MW_SoundKeyPrefix.Length)));
             }
             else
             {

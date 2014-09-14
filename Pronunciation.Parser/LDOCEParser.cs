@@ -14,9 +14,10 @@ namespace Pronunciation.Parser
 
         public const string TranscriptionNoteOpenTag = "<note>";
         public const string TranscriptionNoteCloseTag = "</note>";
-
         public const string TranscriptionItalicOpenTag = "<i>";
         public const string TranscriptionItalicCloseTag = "</i>";
+        public const string TranscriptionSeparatorOpenTag = "<sp>";
+        public const string TranscriptionSeparatorCloseTag = "</sp>";
 
         public LDOCEParser(string logFile)
         {
@@ -333,7 +334,8 @@ namespace Pronunciation.Parser
                 .Replace("[i][c gray]", TranscriptionNoteOpenTag)
                 .Replace("[/c][/i]", TranscriptionNoteCloseTag)
                 .Replace("[i]", TranscriptionItalicOpenTag)
-                .Replace("[/i]", TranscriptionItalicCloseTag);
+                .Replace("[/i]", TranscriptionItalicCloseTag)
+                .Replace(",", string.Format("{0},{1}", TranscriptionSeparatorOpenTag, TranscriptionSeparatorCloseTag));
         }
     }
 }

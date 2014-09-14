@@ -10,6 +10,7 @@ namespace Pronunciation.Core.Utility
     {
         private static string _logFile;
         private const string ErrorHeader = "ERROR";
+        private readonly static object _syncLock = new object();
 
         public static void Initialize(string logFile)
         {
@@ -47,8 +48,12 @@ namespace Pronunciation.Core.Utility
             if (string.IsNullOrEmpty(_logFile))
                 return;
 
-            File.AppendAllText(_logFile, string.Format("{0:yyyy-MM-dd HH-mm-ss.fff} {1}{2}", 
-                DateTime.Now, text, Environment.NewLine));
+            DateTime eventDate = DateTime.Now;
+            lock (_syncLock)
+            {
+                File.AppendAllText(_logFile, string.Format("{0:yyyy-MM-dd HH-mm-ss.fff} {1}{2}",
+                    eventDate, text, Environment.NewLine));
+            }
         }
     }
 }

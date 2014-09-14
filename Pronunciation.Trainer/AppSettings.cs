@@ -41,7 +41,7 @@ namespace Pronunciation.Trainer
         public int SampleRate { get; private set; }
         public int SkipRecordedAudioMs { get; private set; }
         public int MaxSamplesInWaveform { get; private set; }
-        public bool DisplayLPDDataOnly { get; private set; }
+        public int[] ActiveDictionaryIds { get; private set; }
 
         public StartupPlayMode StartupMode { get; set; }
         public RecordedPlayMode RecordedMode { get; set; }
@@ -72,7 +72,15 @@ namespace Pronunciation.Trainer
             HistoryMode = (RecordingHistoryMode)Settings.Default.RecordingHistoryMode;
             HistoryDays = Settings.Default.RecordingHistoryDays;
             MaxSamplesInWaveform = Settings.Default.MaxAudioSamplesInWaveform;
-            DisplayLPDDataOnly = Settings.Default.DisplayLPDDataOnly;
+
+            if (!string.IsNullOrEmpty(Settings.Default.ActiveDictionaryIds))
+            {
+                ActiveDictionaryIds = Settings.Default.ActiveDictionaryIds
+                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim())
+                    .Where(x => !string.IsNullOrEmpty(x))
+                    .Select(x => int.Parse(x)).ToArray();
+            }
 
             Folders = new AppFolders(Settings.Default.BaseFolder);
             Files = new AppFiles(Folders);

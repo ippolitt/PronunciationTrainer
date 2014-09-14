@@ -37,31 +37,6 @@ namespace Pronunciation.Parser
             }
         }
 
-        private class TagReplaceInfo
-        {
-            public string SourceTag;
-            public ReplacementType ReplacementType;
-            public string ReplacementTag;
-            public string AdditionalData;
-            public bool AllowChildTags;
-        }
-
-        private class CurrentTagInfo
-        {
-            public TagReplaceInfo ReplaceInfo;
-            public string Data;
-        }
-
-        private enum ReplacementType
-        {
-            LeaveOldTag,
-            ReplaceOldTag,
-            ReplaceImage,
-            ReplaceLink,
-            ReplaceSoundUK,
-            ReplaceSoundUS,
-        }
-
         private class ParseResult
         {
             public string HtmlData;
@@ -70,21 +45,14 @@ namespace Pronunciation.Parser
             public string SoundTextUS;
         }
 
-        private static Regex _htmlRegex = new Regex("<.*?>", RegexOptions.Compiled);
-        private static Regex _wordNameRegex = new Regex("[A-Za-z0-9 _'&+.-]", RegexOptions.Compiled);
-        private static Regex _firstLetterRegex = new Regex("[A-Za-z0-9]", RegexOptions.Compiled);
-
-        private readonly List<TagReplaceInfo> ReplaceMap = new List<TagReplaceInfo>();
-        private readonly List<string> _forbiddenNames = new List<string>();
-        private readonly Dictionary<char, string> _wordNameMap = new Dictionary<char, string>();
-
         private readonly WordUsageBuilder _usageBuilder;
         private readonly Dictionary<int, int> _ranks;
         private IFileLoader _fileLoader;
         private readonly LDOCEHtmlBuilder _ldoce;
+        private readonly MWHtmlBuilder _mw;
         private readonly DatabaseUploader _dbUploader;
-        private IDATFileBuilder _audioDATBuilder;
-        private IDATFileBuilder _htmlDATBuilder;
+        private readonly FileNameBuilder _nameBuilder;
+        private readonly XmlReplaceMap _replaceMap;
         private readonly string _logFile;
         private readonly string _binFolder;
         private readonly GenerationMode _generationMode;
@@ -102,8 +70,6 @@ namespace Pronunciation.Parser
         public const string CaptionSmallUK = "BrE";
         public const string CaptionSmallUS = "AmE";
 
-        private const string XmlElementStrong = "strong";
-
         private bool IsDatabaseMode
         {
             get { return _generationMode == GenerationMode.Database; }
@@ -119,102 +85,21 @@ namespace Pronunciation.Parser
             get { return _generationMode == GenerationMode.IPhone; }
         }
 
-        private HtmlBuilder(GenerationMode generationMode)
+        public HtmlBuilder(GenerationMode generationMode, DatabaseUploader dbUploader, IFileLoader fileLoader, 
+            LDOCEHtmlBuilder ldoce, MWHtmlBuilder mw, WordUsageBuilder usageBuilder, string logFile)
         {
             _generationMode = generationMode;
-            _binFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
-            AddMap(XmlElementStrong, ReplacementType.LeaveOldTag, null, null);
-            AddMap("em", ReplacementType.LeaveOldTag, null, null);
-            AddMap("sub", ReplacementType.LeaveOldTag, null, null);
-            AddMap("sup", ReplacementType.LeaveOldTag, null, null);
-
-            AddMap(XmlBuilder.ElementComment, ReplacementType.ReplaceOldTag, "div", "class=\"comment\"");
-            AddMap("pron", ReplacementType.ReplaceOldTag, "span", "class=\"pron\"");
-            AddMap("pron_us", ReplacementType.ReplaceOldTag, "span", "class=\"pron_us\"");
-            AddMap("pron_us_alt", ReplacementType.ReplaceOldTag, "span", "class=\"pron_us_alt\"");
-            AddMap("pron_other", ReplacementType.ReplaceOldTag, "span", "class=\"pron_other\"");
-            AddMap("sample", ReplacementType.ReplaceOldTag, "span", "class=\"sample\"");
-            AddMap("lang", ReplacementType.ReplaceOldTag, "span", "class=\"lang\"");
-            AddMap("stress_up", ReplacementType.ReplaceOldTag, "span", "class=\"stress_up\"", false);
-            AddMap("stress_low", ReplacementType.ReplaceOldTag, "span", "class=\"stress_low\"", false);
-            AddMap("stress_low_optional", ReplacementType.ReplaceOldTag, "span", "class=\"stress_low_optional\"", false);
-            AddMap("stress_shift", ReplacementType.ReplaceOldTag, "span", "class=\"stress_shift\"", false);
-
-            AddMap("pic", ReplacementType.ReplaceImage, "img", 
-                "<img class=\"poll_image\" src=\"{0}\" />", false);
-            AddMap("wlink", ReplacementType.ReplaceLink, "a", 
-                "<a class=\"word_link\" href=\"{0}\">{1}</a>", false);
-            if (IsDatabaseMode)
-            {
-                AddMap("sound_uk", ReplacementType.ReplaceSoundUK, "button",
-                    "<button type=\"button\" class=\"audio_button audio_uk\" data-src=\"{0}\">{1}</button>",
-                    false);
-                AddMap("sound_us", ReplacementType.ReplaceSoundUS, "button",
-                    "<button type=\"button\" class=\"audio_button audio_us\" data-src=\"{0}\">{1}</button>",
-                    false);
-            }
-            else
-            {
-                AddMap("sound_uk", ReplacementType.ReplaceSoundUK, "button",
-                    "<button type=\"button\" class=\"audio_button audio_uk\" data-src=\"{0}\" raw-data=\"{1}\">{2}</button>",
-                    false);
-                AddMap("sound_us", ReplacementType.ReplaceSoundUS, "button",
-                    "<button type=\"button\" class=\"audio_button audio_us\" data-src=\"{0}\" raw-data=\"{1}\">{2}</button>",
-                    false);
-            }
-
-            _wordNameMap.Add('/', "-");
-            _wordNameMap.Add('à', "a");
-            _wordNameMap.Add('á', "a");
-            _wordNameMap.Add('å', "a");
-            _wordNameMap.Add('â', "a");
-            _wordNameMap.Add('ä', "a");
-            _wordNameMap.Add('ã', "a");
-            _wordNameMap.Add('é', "e");
-            _wordNameMap.Add('è', "e");
-            _wordNameMap.Add('ë', "e");
-            _wordNameMap.Add('ê', "e");
-            _wordNameMap.Add('É', "E");
-            _wordNameMap.Add('Æ', "ae");
-            _wordNameMap.Add('ó', "o");
-            _wordNameMap.Add('ö', "o");
-            _wordNameMap.Add('ô', "o"); 
-            _wordNameMap.Add('ø', "o"); 
-            _wordNameMap.Add('Ó', "O");
-            _wordNameMap.Add('Ö', "O");
-            _wordNameMap.Add('ç', "c");
-            _wordNameMap.Add('č', "c");
-            _wordNameMap.Add('Č', "C");
-            _wordNameMap.Add('š', "s");
-            _wordNameMap.Add('ü', "u");
-            _wordNameMap.Add('û', "u");
-            _wordNameMap.Add('ů', "u"); 
-            _wordNameMap.Add('ñ', "n");
-            _wordNameMap.Add('í', "i");
-            _wordNameMap.Add('î', "i");
-
-            // These names are borbidden in Windows OS
-            _forbiddenNames.AddRange(
-                "CON, PRN, AUX, NUL, COM1, COM2, COM3, COM4, COM5, COM6, COM7, COM8, COM9, LPT1, LPT2, LPT3, LPT4, LPT5, LPT6, LPT7, LPT8, LPT9"
-                .ToLower().Split(new []{ ',', ' '}));
-        }
-
-        public HtmlBuilder(GenerationMode generationMode, string connectionString, IDATFileBuilder audioDATBuilder,
-            IDATFileBuilder htmlDATBuilder, IFileLoader fileLoader, LDOCEHtmlBuilder ldoce, string wordUsageFile, string logFile)
-            : this(generationMode)
-        {
             _logFile = logFile;
             _fileLoader = fileLoader;
             _ldoce = ldoce;
-            _audioDATBuilder = audioDATBuilder;
-            _htmlDATBuilder = htmlDATBuilder;
-            if (IsDatabaseMode)
-            {
-                _dbUploader = new DatabaseUploader(connectionString);
-            }
-            _usageBuilder = new WordUsageBuilder(wordUsageFile);
+            _mw = mw;
+            _dbUploader = dbUploader;
+            _usageBuilder = usageBuilder;
             _ranks = PrepareRanks(_usageBuilder.GetRanks());
+
+            _replaceMap = new XmlReplaceMap(generationMode == GenerationMode.Database);
+            _nameBuilder = new FileNameBuilder();
+            _binFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         }
 
         private Dictionary<int, int> PrepareRanks(int[] ranks)
@@ -230,32 +115,21 @@ namespace Pronunciation.Parser
             return rankText;
         }
 
-        private void AddMap(string sourceTag, ReplacementType replacementType, string replacementTag, string additionalData)
-        {
-            AddMap(sourceTag, replacementType, replacementTag, additionalData, true);
-        }
-        private void AddMap(string sourceTag, ReplacementType replacementType, string replacementTag, 
-            string additionalData, bool allowChildTags)
-        {
-            ReplaceMap.Add(new TagReplaceInfo 
-            { 
-                SourceTag = sourceTag,
-                ReplacementType = replacementType,
-                ReplacementTag = replacementTag,
-                AdditionalData = additionalData,
-                AllowChildTags = allowChildTags
-            });
-        }
-
         public void ConvertToHtml(string sourceXml, string htmlFolder, int maxWords, bool isFakeMode, bool deleteExtraWords)
         {
             File.AppendAllText(_logFile, string.Format("********* Starting conversion {0} ***********\r\n\r\n", DateTime.Now));
 
             List<DicWord> words = ParseFile(sourceXml);
-            if (_ldoce != null)
+            List<string> collocations = CollectCollocations(words);
+
+            EntriesMapper mapper = new EntriesMapper(words, collocations);
+            mapper.MatchEntries(_ldoce);
+            mapper.MatchEntries(_mw);
+            if (mapper.Stats != null)
             {
-                AddLDOCEEntries(words);
+                File.AppendAllText(_logFile, "\r\nExtra entries matching stats:\r\n" + mapper.Stats.ToString());
             }
+
             _usageBuilder.Initialize(words.Select(x => x.Keyword));
 
             var soundStats = new StringBuilder();
@@ -270,6 +144,11 @@ namespace Pronunciation.Parser
 
             File.AppendAllText(_logFile, "\r\nSound stats:\r\n" + soundStats.ToString());
 
+            if (_usageBuilder.Stats != null)
+            {
+                File.AppendAllText(_logFile, "\r\nWord usage stats:\r\n" + _usageBuilder.Stats.ToString());
+            }
+
             if (GenerateTopWordsList)
             {
                 GenerateTopList(htmlFolder);
@@ -279,38 +158,29 @@ namespace Pronunciation.Parser
             File.AppendAllText(_logFile, "Ended conversion.\r\n\r\n");
         }
 
-        private void AddLDOCEEntries(List<DicWord> words)
+        private List<string> CollectCollocations(List<DicWord> words)
         {
-            var keywords = new List<string>();
+            var collocations = new List<string>();
             IFileLoader fileLoader = _fileLoader;
-            IDATFileBuilder audioBuilder = _audioDATBuilder;
-            IDATFileBuilder htmlBuilder = _htmlDATBuilder;
             
             // We use mock instead of the actual file loader to speed up HTML generation inside "AddCollocations" method
             _fileLoader = new FileLoaderMock();
-            _audioDATBuilder = new DATBuilderMock();
-            _htmlDATBuilder = new DATBuilderMock();
             try
             {
                 foreach (var word in words)
                 {
-                    word.LDOCEEntry = _ldoce.GetEntry(word.Keyword);
-                    keywords.Add(word.Keyword);
                     foreach (DicEntry entry in word.LPDEntries)
                     {
-                        AddCollocations(entry, keywords);
+                        AddCollocations(entry, collocations);
                     }
                 }
             }
             finally
             {
                 _fileLoader = fileLoader;
-                _audioDATBuilder = audioBuilder;
-                _htmlDATBuilder = htmlBuilder;
             }
 
-            var extraEntries = _ldoce.GetExtraEntries(keywords);
-            words.AddRange(extraEntries.Select(x => new DicWord { Keyword = x.Keyword, LDOCEEntry = x, IsLDOCEEntry = true }));
+            return collocations;
         }
 
         private int AddCollocations(DicEntry entry, List<string> collocations)
@@ -321,7 +191,7 @@ namespace Pronunciation.Parser
             int collocationsCount = 0;
             foreach (var item in entry.AllItems.Where(x => x.ItemType == ItemType.Collocation))
             {
-                var contentCollector = new ContentCollector(XmlElementStrong, true);
+                var contentCollector = new ContentCollector(XmlReplaceMap.XmlElementStrong, true);
                 ParseItemXml(item.RawData, false, contentCollector, null);
                 string[] names = ParseCollocationsContent(contentCollector.GetContent());
                 if (names != null)
@@ -367,12 +237,10 @@ namespace Pronunciation.Parser
                     {
                         var pageBuilder = new StringBuilder();
                         WordDescription description = GenerateHtml(word, pageBuilder, soundStats);
+                        description.DictionaryId = word.DictionaryId;
                         if (!isFakeMode)
                         {
-                            var htmlIndex = _htmlDATBuilder.AppendEntity(
-                                description.Text, 
-                                Encoding.UTF8.GetBytes(pageBuilder.ToString()));
-                            _dbUploader.StoreWord(description, word.IsLDOCEEntry, htmlIndex.BuildKey());
+                            _dbUploader.StoreWord(description, pageBuilder.ToString());
                         }
 
                         letterWords++;
@@ -392,6 +260,7 @@ namespace Pronunciation.Parser
                     Console.WriteLine("Deleted '{0}' extra words", deleteCount);
                 }
 
+                _dbUploader.FinishUpload();
                 if (_dbUploader.DbStats != null)
                 {
                     File.AppendAllText(_logFile, "\r\nDatabase upload stats:\r\n" + _dbUploader.DbStats.ToString());
@@ -400,8 +269,6 @@ namespace Pronunciation.Parser
             finally
             {
                 _dbUploader.Dispose();
-                _htmlDATBuilder.Flush();
-                _audioDATBuilder.Flush();
             }
 
             _fileLoader.FlushCache();
@@ -460,7 +327,7 @@ namespace Pronunciation.Parser
                     int? usageRank = description.UsageInfo == null ? (int?)null : description.UsageInfo.CombinedRank;
                     indexBuilder.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}",
                         description.Text, group.Name, 0, usageRank,
-                        description.SoundKeyUK, description.SoundKeyUS, word.IsLDOCEEntry ? 1 : 0));
+                        description.SoundKeyUK, description.SoundKeyUS, word.DictionaryId));
 
                     if (description.Collocations != null)
                     {
@@ -468,7 +335,7 @@ namespace Pronunciation.Parser
                         {
                             indexBuilder.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}",
                                 collocation.Text, group.Name, 1, null,
-                                collocation.SoundKeyUK, collocation.SoundKeyUS, 0));
+                                collocation.SoundKeyUK, collocation.SoundKeyUS, null));
                         }
                     }
                 }
@@ -513,10 +380,10 @@ namespace Pronunciation.Parser
             var groups = new Dictionary<string, WordGroup>();
             foreach (var word in words)
             {
-                if (!word.IsLDOCEEntry && word.LPDEntries.Count <= 0)
+                if ((word.DictionaryId ?? 0) == 0  && word.LPDEntries.Count <= 0)
                     throw new ArgumentException();
 
-                string groupName = PrepareFileName(word.Keyword, nameStats);
+                string groupName = _nameBuilder.PrepareFileName(word.Keyword, nameStats);
                 WordGroup group;
                 if (!groups.TryGetValue(groupName, out group))
                 {
@@ -563,11 +430,24 @@ namespace Pronunciation.Parser
                 }
             }
 
+            string mwHtml = null;
+            if (word.MWEntry != null)
+            {
+                if (word.LPDEntries == null && word.LDOCEEntry == null)
+                {
+                    mwHtml = _mw.GeneratePageHtml(word.MWEntry, wordDescription, out wordAudio);
+                }
+                else
+                {
+                    mwHtml = _mw.GenerateFragmentHtml(word.MWEntry, wordDescription);
+                }
+            }
+
             pageBuilder.AppendFormat(
 @"  <div class=""word"">
     <span class=""word_name"">{0}</span>
 ",
-                word.Keyword);
+                word.Title);
 
             if (wordDescription.UsageInfo != null)
             {
@@ -586,10 +466,10 @@ namespace Pronunciation.Parser
             }
 
             pageBuilder.AppendFormat(
-@"{0}{1}
+@"{0}{1}{2}
 </div>  
 ",
-                lpdHtml, ldoceHtml);
+                lpdHtml, ldoceHtml, mwHtml);
 
             return wordDescription;
         }
@@ -625,6 +505,7 @@ namespace Pronunciation.Parser
         {
             wordAudio = null;
             var bld = new StringBuilder();
+            var titleBuilder = new SoundTitleBuilder(keyword, entries.Count);
             bool isWordAudioSet = false;
             int ordinal = 0;
             foreach (var entry in entries)
@@ -632,7 +513,7 @@ namespace Pronunciation.Parser
                 ordinal++;
 
                 // Parse main data
-                var entrySoundCollector = new SoundCollector(keyword);
+                var entrySoundCollector = new SoundCollector(titleBuilder, entry.EntryNumber);
                 ParseResult entryResult = ParseItemXml(entry.RawMainData, true, null, entrySoundCollector);
                 wordDescription.Sounds.AddRange(entrySoundCollector.Sounds);
 
@@ -746,10 +627,10 @@ namespace Pronunciation.Parser
                             ContentCollector contentCollector = null;
                             if (itemGroup.GroupType == ItemType.Collocation)
                             {
-                                contentCollector = new ContentCollector(XmlElementStrong, true);
+                                contentCollector = new ContentCollector(XmlReplaceMap.XmlElementStrong, true);
                             }
 
-                            var itemSoundCollector = new SoundCollector(null);
+                            var itemSoundCollector = new SoundCollector();
                             ParseResult itemResult = ParseItemXml(item.RawData, false, contentCollector, itemSoundCollector);
                             if (itemGroup.GroupType == ItemType.Collocation)
                             {
@@ -768,7 +649,7 @@ namespace Pronunciation.Parser
                                         SoundKeyUS = itemSoundCollector.MainSoundUS
                                     }));
 
-                                    itemSoundCollector.RegisterSoundText(contentItems[0]);
+                                    itemSoundCollector.SetMainSoundsTitle(contentItems[0]);
                                 }
                             }
                             wordDescription.Sounds.AddRange(itemSoundCollector.Sounds);
@@ -822,89 +703,10 @@ namespace Pronunciation.Parser
             }
             else
             {
-                var fileName = PrepareFileName(keyword, null);
+                var fileName = _nameBuilder.PrepareFileName(keyword, null);
                 return string.Format("{0}{1}{2}/{3}.html",
                     (isRootedSource ? null : RootPath), DicPath, fileName.Substring(0, 1), fileName);
             }
-        }
-
-        private string PrepareFileName(string keyword, StringBuilder stat)
-        {
-            var text = _htmlRegex.Replace(keyword, string.Empty).Replace("&amp;", "&");
-            // TODO: after migration to DB uncomment this code for generating html files ???
-            //if (text.EndsWith("..."))
-            //{
-            //    text = text.Remove(text.Length - 3);
-            //    if (stat != null)
-            //    {
-            //        stat.AppendFormat("Ignored '...' at the end of [{0}] word\r\n", keyword);
-            //    }
-            //}
-            //if (text.EndsWith("-"))
-            //{
-            //    text = text.Remove(text.Length - 1);
-            //    if (stat != null)
-            //    {
-            //        stat.AppendFormat("Ignored '-' at the end of [{0}] word\r\n", keyword);
-            //    }
-            //}
-
-            var bld = new StringBuilder();
-            Regex regex; 
-            foreach (var ch in text)
-            {
-                if (bld.Length == 0)
-                {
-                    regex = _firstLetterRegex;
-                }
-                else
-                {
-                    regex = _wordNameRegex;
-                }
-
-                if (regex.IsMatch(ch.ToString()))
-                {
-                    bld.Append(ch);
-                }
-                else
-                {
-                    string replacement;
-                    if (_wordNameMap.TryGetValue(ch, out replacement))
-                    {
-                        if (regex.IsMatch(replacement))
-                        {
-                            bld.Append(replacement);
-                        }
-                        else
-                        {
-                            if (stat != null)
-                            {
-                                stat.AppendFormat("Ignored [{0}] and replacement [{1}] in [{2}]\r\n", ch, replacement, keyword);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (stat != null)
-                        {
-                            stat.AppendFormat("Ignored [{0}] in [{1}]\r\n", ch, keyword);
-                        }
-                    }
-                }
-            }
-
-            var result = bld.ToString().ToLower();
-
-            if (_forbiddenNames.Contains(result))
-            {
-                if (stat != null)
-                {
-                    stat.AppendFormat("Using [_{0}] instead of [{0}] (forbidden OS name)\r\n", result);
-                }
-                return "_" + result;
-            }
-
-            return result;
         }
 
         private List<DicWord> ParseFile(string sourceXml)
@@ -959,7 +761,7 @@ namespace Pronunciation.Parser
                             if (activeNode != null && !activeNode.ReplaceInfo.AllowChildTags)
                                 throw new ArgumentException();
 
-                            var replace = ReplaceMap.Single(x => x.SourceTag == reader.Name);
+                            var replace = _replaceMap.GetReplaceInfo(reader.Name);
                             if (reader.IsEmptyElement)
                             {
                                 var replacement = PrepareText(replace, null, null, false);
@@ -1045,7 +847,11 @@ namespace Pronunciation.Parser
 
                             if (contentCollector != null)
                             {
-                                contentCollector.Append(reader.Value);
+                                if (!((reader.Value == "(" || reader.Value == ")") && activeNode != null 
+                                    && activeNode.ReplaceInfo.SourceTag == "sub"))
+                                {
+                                    contentCollector.Append(reader.Value);
+                                }
                             }
                             break;
 
@@ -1101,11 +907,8 @@ namespace Pronunciation.Parser
                         : (extractSounds ? CaptionBigUS : CaptionSmallUS);
 
                     string fileKey = Path.GetFileNameWithoutExtension(data);
-                    string soundIndex = null;
                     if (IsDatabaseMode)
                     {
-                        byte[] audioData = _fileLoader.GetRawData(fileKey);
-                        soundIndex = _audioDATBuilder.AppendEntity(fileKey, audioData).BuildKey();
                         result = string.Format(info.AdditionalData, fileKey, lang);
                     }
                     else
@@ -1116,7 +919,7 @@ namespace Pronunciation.Parser
 
                     if (soundCollector != null)
                     {
-                        soundCollector.RegisterSound(fileKey, soundIndex, info.ReplacementType == ReplacementType.ReplaceSoundUK);
+                        soundCollector.RegisterSound(fileKey, info.ReplacementType == ReplacementType.ReplaceSoundUK);
                     }
                     break;
 
@@ -1150,7 +953,7 @@ namespace Pronunciation.Parser
             var word = new DicWord();
 
             reader.ScrollToStartTag(XmlBuilder.ElementKeywordName);
-            word.Keyword = reader.ReadInnerXml(); // Some keywords contain HTML tags in them (e.g. H20)
+            word.Keyword = reader.ReadInnerXml();
 
             bool isFirstEntry = true;
             while (true)

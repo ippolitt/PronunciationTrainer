@@ -5,20 +5,18 @@ using System.Text;
 
 namespace Pronunciation.Parser
 {
-    public class LDOCEHtmlEntry : IExtraEntry
+    public class MWHtmlEntry : IExtraEntry
     {
         public string Keyword { get; set; }
-        public List<LDOCEHtmlEntity> Items { get; set; }
+        public List<MWHtmlEntryEntity> Items { get; set; }
     }
 
-    public class LDOCEHtmlEntity
+    public class MWHtmlEntryEntity
     {
         public int Number;
         public string DisplayName;
-        public string TranscriptionUK;
-        public string TranscriptionUS;
+        public string Transcription;
         public string PartsOfSpeech;
-        public string SoundFileUK;
-        public string SoundFileUS;
+        public string[] SoundFiles;
     }
 }

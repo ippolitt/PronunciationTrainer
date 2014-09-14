@@ -14,15 +14,15 @@ namespace Pronunciation.Core.Providers.Dictionary
         public int? UsageRank { get; private set; }
         public string SoundKeyUK { get; private set; }
         public string SoundKeyUS { get; private set; }
-        public bool IsLDOCEEntry { get; private set; }
+        public int? DictionaryId { get; private set; }
 
         public override string ToString()
         {
             return EntryText;
         }
 
-        public IndexEntry(string articleKey, string entryText, bool isCollocation, int? usageRank, 
-            string soundKeyUK, string soundKeyUS, bool isLDOCEEntry, int? wordId)
+        public IndexEntry(string articleKey, string entryText, bool isCollocation, int? usageRank,
+            string soundKeyUK, string soundKeyUS, int? dictionaryId, int? wordId)
         {
             ArticleKey = articleKey;
             EntryText = entryText;
@@ -30,7 +30,7 @@ namespace Pronunciation.Core.Providers.Dictionary
             UsageRank = usageRank;
             SoundKeyUK = soundKeyUK;
             SoundKeyUS = soundKeyUS;
-            IsLDOCEEntry = isLDOCEEntry;
+            DictionaryId = dictionaryId;
             WordId = wordId;
         }
     }

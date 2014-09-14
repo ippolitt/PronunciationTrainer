@@ -15,60 +15,46 @@ namespace Pronunciation.Core.Providers.Dictionary
 {
     public class LPDDatabaseProvider : IDictionaryProvider
     {
-        private class DataIndex
-        {
-            public long Offset;
-            public long Length;
-
-            public static DataIndex Parse(string dataIndex)
-            {
-                string[] index = dataIndex.Split('|');
-                if (index.Length != 2)
-                    throw new ArgumentException("Invalid format of data index!");
-
-                return new DataIndex { Offset = long.Parse(index[0]), Length = long.Parse(index[1]) };
-            }
-        }
-
         private readonly string _baseFolder;
         private readonly string _connectionString;
         private readonly string _pageTemplate;
         private readonly string _indexFilePath;
-        private readonly DATFileReader _audioReader;
-        private readonly DATFileReader _htmlReader;
+        private readonly DictionaryDATReader _datReader;
 
         private const string PageTemplateFileName = "PageTemplate.html";
         private const string IndexFileName = "Index.txt";
-        private const string AudioDATFileName = "audio.dat";
-        private const string HtmlDATFileName = "html.dat";
 
-        public LPDDatabaseProvider(string baseFolder, string databaseFolder, string connectionString) 
+        public LPDDatabaseProvider(string baseFolder, string databaseFolder, string connectionString)
         {
             _baseFolder = baseFolder;
             _connectionString = connectionString;
             _indexFilePath = Path.Combine(databaseFolder, IndexFileName);
             _pageTemplate = File.ReadAllText(Path.Combine(baseFolder, PageTemplateFileName));
-            _audioReader = new DATFileReader(Path.Combine(databaseFolder, AudioDATFileName));
-            _htmlReader = new DATFileReader(Path.Combine(databaseFolder, HtmlDATFileName));
+            _datReader = new DictionaryDATReader(databaseFolder);
         }
 
         public void WarmUp()
         {
-            _htmlReader.WarmUp();
-            _audioReader.WarmUp();
+            _datReader.WarmUp();
         }
 
-        public bool IsWordsIndexCached
+        public List<IndexEntry> GetWordsIndex(int[] dictionaryIds)
         {
-            get { return true; } //File.Exists(_indexFilePath);
+            if (File.Exists(_indexFilePath))
+                return GetCachedWordsIndex(dictionaryIds);
+
+            // We must laod and cache all data (even if we return a subset)
+            List<IndexEntry> index = LoadWordsIndex();
+            CacheWordsIndex(index);
+
+            if (dictionaryIds == null || dictionaryIds.Length <= 0)
+                return index;
+
+            return index.Where(x => dictionaryIds.Contains(x.DictionaryId ?? 0)).ToList();
         }
 
-        public List<IndexEntry> GetWordsIndex(bool lpdDataOnly)
+        private List<IndexEntry> LoadWordsIndex()
         {
-            // Turn off index file - now it's loaded very fast even without it
-            //if (IsWordsIndexCached)
-            //    return GetCachedWordsIndex(lpdDataOnly);
-
             var index = new List<IndexEntry>();
             using (SqlCeConnection conn = new SqlCeConnection(_connectionString))
             {
@@ -80,7 +66,7 @@ namespace Pronunciation.Core.Providers.Dictionary
                 // Load words
                 var wordIndexes = new Dictionary<int, string>();
                 cmd.CommandText =
-@"SELECT WordId, Keyword, HtmlIndex, UsageRank, SoundKeyUK, SoundKeyUS, IsLDOCEWord  
+@"SELECT WordId, Keyword, HtmlIndex, UsageRank, SoundKeyUK, SoundKeyUS, DictionaryId  
 FROM DictionaryWord";
                 using (SqlCeDataReader reader = cmd.ExecuteReader())
                 {
@@ -99,7 +85,7 @@ FROM DictionaryWord";
                             reader["UsageRank"] as int?,
                             reader["SoundKeyUK"] as string,
                             reader["SoundKeyUS"] as string,
-                            (reader["IsLDOCEWord"] as bool?) == true,
+                            reader["DictionaryId"] as int?,
                             (int)reader["WordId"]));
                     }
                 }
@@ -122,14 +108,13 @@ FROM DictionaryCollocation";
                             null,
                             reader["SoundKeyUK"] as string,
                             reader["SoundKeyUS"] as string,
-                            false,
+                            null,
                             null));
                     }
                 }
             }
 
-            //CacheWordsIndex(index);
-            return lpdDataOnly ? index.Where(x => !x.IsLDOCEEntry).ToList() : index;
+            return index;
         }
 
         public ArticlePage PrepareArticlePage(string articleKey)
@@ -137,9 +122,7 @@ FROM DictionaryCollocation";
             if (string.IsNullOrEmpty(articleKey))
                 throw new ArgumentNullException();
 
-            var index = DataIndex.Parse(articleKey);
-            var data = _htmlReader.GetData(index.Offset, index.Length);
-
+            var data = _datReader.GetHtmlData(articleKey);
             return new ArticlePage(articleKey, BuildPageHtml(articleKey, Encoding.UTF8.GetString(data)));
         }
 
@@ -157,12 +140,13 @@ FROM DictionaryCollocation";
             string soundIndex;
             string soundText;
             bool isUKAudio;
+            int? sourceFileId;
             using (SqlCeConnection conn = new SqlCeConnection(_connectionString))
             {
                 conn.Open();
 
                 SqlCeCommand cmd = new SqlCeCommand(
-@"SELECT IsUKSound, SoundIndex, SoundText
+@"SELECT IsUKSound, SoundIndex, SoundText, SourceFileId
 FROM DictionarySound
 WHERE SoundKey = @soundKey", conn);
                 cmd.Parameters.AddWithValue("@soundKey", soundKey);
@@ -178,12 +162,11 @@ WHERE SoundKey = @soundKey", conn);
                     isUKAudio = (bool)reader["IsUKSound"];
                     soundIndex = (string)reader["SoundIndex"];
                     soundText = reader["SoundText"] as string;
+                    sourceFileId = reader["SourceFileId"] as int?;
                 }
             }
 
-            var index = DataIndex.Parse(soundIndex);
-            var data = _audioReader.GetData(index.Offset, index.Length);
-
+            var data = _datReader.GetAudioData(sourceFileId, soundIndex);
             return new DictionarySoundInfo(new PlaybackData(data), isUKAudio, soundText);
         }
 
@@ -210,15 +193,16 @@ WHERE SoundKey = @soundKey", conn);
             {
                 bld.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}",
                     entry.EntryText, entry.ArticleKey, entry.IsCollocation ? 1 : 0, entry.UsageRank,
-                    entry.SoundKeyUK, entry.SoundKeyUS, entry.IsLDOCEEntry ? 1 : 0, entry.WordId));
+                    entry.SoundKeyUK, entry.SoundKeyUS, entry.DictionaryId, entry.WordId));
             }
 
             File.WriteAllText(_indexFilePath, bld.ToString(), Encoding.UTF8);
         }
 
-        private List<IndexEntry> GetCachedWordsIndex(bool lpdDataOnly)
+        private List<IndexEntry> GetCachedWordsIndex(int[] dictionaryIds)
         {
             var words = new List<IndexEntry>();
+            bool checkDictionaryId = dictionaryIds != null && dictionaryIds.Length > 0;
             using (var reader = new StreamReader(_indexFilePath, Encoding.UTF8))
             {
                 while (!reader.EndOfStream)
@@ -227,8 +211,8 @@ WHERE SoundKey = @soundKey", conn);
                     if (data.Length != 8)
                         throw new InvalidOperationException("Index file is broken!");
 
-                    bool isLDOCEEntry = (data[6] == "1");
-                    if (lpdDataOnly && isLDOCEEntry)
+                    int? dictionaryId = string.IsNullOrEmpty(data[6]) ? (int?)null : int.Parse(data[6]);
+                    if (checkDictionaryId && !dictionaryIds.Contains(dictionaryId ?? 0))
                         continue;
 
                     words.Add(new IndexEntry(data[1], 
@@ -237,7 +221,7 @@ WHERE SoundKey = @soundKey", conn);
                         string.IsNullOrEmpty(data[3]) ? (int?)null : int.Parse(data[3]), 
                         data[4], 
                         data[5],
-                        isLDOCEEntry,
+                        dictionaryId,
                         string.IsNullOrEmpty(data[7]) ? (int?)null : int.Parse(data[7])));
                 }
             }

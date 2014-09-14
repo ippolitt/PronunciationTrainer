@@ -20,7 +20,7 @@ namespace Pronunciation.Core.Database
         public string RankLongmanW { get; set; }
         public Nullable<int> RankMacmillan { get; set; }
         public Nullable<int> RankCOCA { get; set; }
-        public Nullable<bool> IsLDOCEWord { get; set; }
+        public Nullable<int> DictionaryId { get; set; }
         public string SoundKeyUK { get; set; }
         public string SoundKeyUS { get; set; }
         public string HtmlIndex { get; set; }

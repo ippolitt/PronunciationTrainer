@@ -10,31 +10,19 @@ namespace Pronunciation.Parser
     {
         private readonly Dictionary<string, LDOCEHtmlEntry> _entries;
         private readonly IFileLoader _fileLoader;
-        private readonly IDATFileBuilder _datBuilder;
         private readonly bool _isDatabaseMode;
-        public const string AudioKeyPrefics = "ldoce_";
 
         public LDOCEHtmlBuilder(HtmlBuilder.GenerationMode generationMode, LDOCEHtmlEntry[] entries,
-            IFileLoader fileLoader, IDATFileBuilder datBuilder)
+            IFileLoader fileLoader)
         {
             _isDatabaseMode = (generationMode == HtmlBuilder.GenerationMode.Database);
             _entries = entries.ToDictionary(x => x.Keyword);
             _fileLoader = fileLoader;
-            _datBuilder = datBuilder;
         }
 
-        public LDOCEHtmlEntry GetEntry(string keyword)
+        public IEnumerable<LDOCEHtmlEntry> GetEntries()
         {
-            LDOCEHtmlEntry entry;
-            _entries.TryGetValue(keyword, out entry);
-
-            return entry;
-        }
-
-        public IEnumerable<LDOCEHtmlEntry> GetExtraEntries(IEnumerable<string> existingKeywords)
-        {
-            var keywords = new HashSet<string>(existingKeywords);
-            return _entries.Where(x => !keywords.Contains(x.Key)).Select(x => x.Value);
+            return _entries.Values;
         }
 
         public string GenerateFragmentHtml(LDOCEHtmlEntry entry)
@@ -63,6 +51,7 @@ namespace Pronunciation.Parser
 ",
                 isFragment ? "ldoce_fragment" : "ldoce_page");
 
+            var textBuilder = new SoundTitleBuilder(entry.Keyword, entry.Items.Count);
             bool isMainAudioSet = false;
             bool addNumber = entry.Items.Count > 1;
             foreach (var item in entry.Items)
@@ -80,12 +69,12 @@ namespace Pronunciation.Parser
                     bld.AppendFormat(
 @"<span class=""ldoce_entry_number""><sup>{0}</sup></span>",
                         item.Number);
-                }
 
-                if (!string.IsNullOrEmpty(item.PartsOfSpeech))
-                {
-                    bld.AppendFormat(
+                    if (!string.IsNullOrEmpty(item.PartsOfSpeech))
+                    {
+                        bld.AppendFormat(
 @" <span class=""ldoce_speech_part"">{0}</span>", item.PartsOfSpeech);
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(item.TranscriptionUK))
@@ -142,15 +131,13 @@ namespace Pronunciation.Parser
 
                         if (hasUKAudio)
                         {
-                            byte[] audioData = _fileLoader.GetRawData(soundKeyUK);
-                            var soundIndex = _datBuilder.AppendEntity(soundKeyUK, audioData);
-                            wordDescription.Sounds.Add(new SoundInfo(soundKeyUK, soundIndex.BuildKey(), entry.Keyword, true));
+                            wordDescription.Sounds.Add(new SoundInfo(soundKeyUK, 
+                                textBuilder.GetSoundTitle(soundKeyUK, item.Number.ToString()), true));
                         }
                         if (hasUSAudio)
                         {
-                            byte[] audioData = _fileLoader.GetRawData(soundKeyUS);
-                            var soundIndex = _datBuilder.AppendEntity(soundKeyUS, audioData);
-                            wordDescription.Sounds.Add(new SoundInfo(soundKeyUS, soundIndex.BuildKey(), entry.Keyword, false));
+                            wordDescription.Sounds.Add(new SoundInfo(soundKeyUS, 
+                                textBuilder.GetSoundTitle(soundKeyUS, item.Number.ToString()), false));
                         }
                     }
                 }
@@ -207,6 +194,8 @@ namespace Pronunciation.Parser
                 .Replace(LDOCEParser.TranscriptionNoteCloseTag, "</span>")
                 .Replace(LDOCEParser.TranscriptionItalicOpenTag, "<em>")
                 .Replace(LDOCEParser.TranscriptionItalicCloseTag, "</em>")
+                .Replace(LDOCEParser.TranscriptionSeparatorOpenTag, "<span class=\"ldoce_pron_separator\">")
+                .Replace(LDOCEParser.TranscriptionSeparatorCloseTag, "</span>")
                 .Replace("◂", "<span class=\"ldoce_stress_shift\"></span>");
         }
 
@@ -215,7 +204,7 @@ namespace Pronunciation.Parser
             if (string.IsNullOrEmpty(audioFile))
                 return null;
 
-            return AudioKeyPrefics + Path.GetFileNameWithoutExtension(audioFile);
+            return SoundManager.LDOCE_SoundKeyPrefix + Path.GetFileNameWithoutExtension(audioFile);
         }
     }
 }

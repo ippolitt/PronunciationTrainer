@@ -18,15 +18,19 @@ namespace Pronunciation.Parser
 
         private const string DataFolderLPD = DataFolder + @"LPD\";
         private const string DataFolderLDOCE = DataFolder + @"LDOCE\";
+        private const string DataFolderMW = DataFolder + @"MW\";
         private const string AnalysisFolderLPD = AnalysisFolder +  @"LPD\";
         private const string AnalysisFolderLDOCE = AnalysisFolder + @"LDOCE\";
+        private const string AnalysisFolderMW = AnalysisFolder + @"MW\";
 
         // Used for generation
         private const string SoundsFolderLPD = DataFolderLPD + "Sounds";
         private const string SoundsFolderLDOCE = DataFolderLDOCE + "Sounds";
+        private const string SoundsFolderMW = DataFolderMW + "Sounds";
         private const string SoundsCacheFolder = DataFolder + "SoundsCache";
         private const string HtmlSourceFileNameLPD = "ResultsLPD.xml";
         private const string HtmlSourceFileNameLDOCE = "ResultsLDOCE.txt";
+        private const string HtmlSourceFileNameMW = "ResultsMW.txt";
         private const string TopWordsFileName = "TopWords.txt";
 
         private const string TrainerFolder = @"D:\LEARN\English\Pronunciation\Trainer\";
@@ -39,11 +43,13 @@ namespace Pronunciation.Parser
         // Used for analysis
         private const string SourceFileNameLPD = "En-En-Longman_Pronunciation.dsl";
         private const string SourceFileNameLDOCE = "En-En-Longman_DOCE5.dsl";
+        private const string SourceFileNameMW = "En-En-MWCollegiate11.dsl";
         private const string NormalizedFileName = "Results_Normalize.txt";
         private const string ResultsFileNameLPD = "Results.xml";
         private const string ResultsFileNameLDOCE = "Results.txt";
-        private const string XmlLogFileName = "XmlConvert.log";
-        private const string HtmlLogFileName = "HtmlConvert.log";
+        private const string ResultsFileNameMW = "Results.txt";
+        private const string ConvertLogFileName = "Convert.log";
+        private const string ImportLogFileName = "Import.log";
 
         static void Main(string[] args)
         {
@@ -79,6 +85,10 @@ namespace Pronunciation.Parser
                 //    Path.Combine(rootFolder, DataFolderLDOCE, SourceFileNameLDOCE),
                 //    Path.Combine(rootFolder, AnalysisFolderLDOCE, NormalizedFileName));
 
+                //NormalizeLines(
+                //    Path.Combine(rootFolder, DataFolderMW, SourceFileNameMW),
+                //    Path.Combine(rootFolder, AnalysisFolderMW, NormalizedFileName));
+
                 //var builder = new XmlBuilder(Path.Combine(rootFolder, AnalysisFolderLPD, XmlLogFileName));
                 //builder.ConvertToXml(
                 //    Path.Combine(rootFolder, DataFolderLPD, SourceFileNameLPD),
@@ -88,61 +98,67 @@ namespace Pronunciation.Parser
                 //LDOCEProcessor.ParseDictionary(
                 //    Path.Combine(rootFolder, DataFolderLDOCE, SourceFileNameLDOCE),
                 //    Path.Combine(rootFolder, AnalysisFolderLDOCE, ResultsFileNameLDOCE),
-                //    Path.Combine(rootFolder, AnalysisFolderLDOCE, XmlLogFileName));
+                //    Path.Combine(rootFolder, AnalysisFolderLDOCE, ConvertLogFileName));
+
+                //MWProcessor.ParseDictionary(
+                //    Path.Combine(rootFolder, DataFolderMW, SourceFileNameMW),
+                //    Path.Combine(rootFolder, AnalysisFolderMW, ResultsFileNameMW),
+                //    Path.Combine(rootFolder, AnalysisFolderMW, ConvertLogFileName));
 
                 //return;
 
                 bool isFakeMode = false;
                 bool deleteExtraWords = true;
+                bool preserveSounds = true;
                 var generationMode = HtmlBuilder.GenerationMode.Database;
 
-                DATFileBuilder audioDATBuilder = null;
-                DATFileBuilder htmlDATBuilder = null;
+                IFileLoader fileLoader = new FileLoader(
+                    Path.Combine(rootFolder, SoundsFolderLPD),
+                    Path.Combine(rootFolder, SoundsFolderLDOCE),
+                    Path.Combine(rootFolder, SoundsFolderMW),
+                    Path.Combine(rootFolder, SoundsCacheFolder),
+                    false);
+
+                //fileLoader = new FileLoaderMock();
+
+                DatabaseUploader dbUploader = null;
                 if (generationMode == HtmlBuilder.GenerationMode.Database)
                 {
                     if (!isFakeMode)
                     {
-                        CleanDatabase();
+                        CleanDatabase(preserveSounds);
                     }
-                    audioDATBuilder = new DATFileBuilder(Path.Combine(DATFolder, "audio_auto.dat"));
-                    htmlDATBuilder = new DATFileBuilder(Path.Combine(DATFolder, "html_auto.dat"));
+
+                    dbUploader = new DatabaseUploader(ConnectionString, 
+                        new DATFileBuilder(Path.Combine(DATFolder, "html_auto.dat")), 
+                        new SoundManager(fileLoader,
+                            new DATFileBuilder(Path.Combine(DATFolder, "audio_auto.dat")),
+                            new DATFileBuilder(Path.Combine(DATFolder, "audio_mw_auto.dat"))), 
+                        preserveSounds);
                 }
 
                 string outputHtmlFolder = generationMode == HtmlBuilder.GenerationMode.Database
                     ? HtmlFolderDB
                     : (generationMode == HtmlBuilder.GenerationMode.FileSystem ? HtmlFolderFiles : HtmlFolderIphone);
 
-                IFileLoader fileLoader = new FileLoader(
-                    Path.Combine(rootFolder, SoundsFolderLPD),
-                    Path.Combine(rootFolder, SoundsFolderLDOCE),
-                    LDOCEHtmlBuilder.AudioKeyPrefics,
-                    Path.Combine(rootFolder, SoundsCacheFolder),
-                    true);
-
-                //fileLoader = new FileLoaderMock();
-
                 var ldoceBuilder = new LDOCEHtmlBuilder(
                     generationMode,
                     LDOCEProcessor.LoadParsedData(Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameLDOCE)),
-                    fileLoader, 
-                    audioDATBuilder);
+                    fileLoader);
 
-                var htmlBuilder = new HtmlBuilder(
+                var mwBuilder = new MWHtmlBuilder(
                     generationMode,
-                    ConnectionString,
-                    audioDATBuilder,
-                    htmlDATBuilder,
-                    fileLoader,
-                    ldoceBuilder,
-                    Path.Combine(rootFolder, DataFolder, TopWordsFileName),
-                    Path.Combine(rootFolder, AnalysisFolder, HtmlLogFileName));
+                    MWProcessor.LoadParsedData(Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameMW)),
+                    fileLoader);
+
+                var usageBuilder = new WordUsageBuilder(Path.Combine(rootFolder, DataFolder, TopWordsFileName));
+                var htmlBuilder = new HtmlBuilder(
+                    generationMode, dbUploader, fileLoader, ldoceBuilder, mwBuilder, usageBuilder,
+                    Path.Combine(rootFolder, AnalysisFolder, ImportLogFileName));
 
                 htmlBuilder.ConvertToHtml(
                     Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameLPD),
-                    outputHtmlFolder,
-                    -1,
-                    isFakeMode,
-                    deleteExtraWords);
+                    outputHtmlFolder, -1, isFakeMode, deleteExtraWords);
 
                 //var topBuilder = new TopWordsBuilder();
                 //topBuilder.MergeTopWords();
@@ -162,7 +178,7 @@ namespace Pronunciation.Parser
         {
             using (var reader = new StreamReader(source))
             {
-                using (var writer = new StreamWriter(target, false, Encoding.Unicode))
+                using (var writer = new StreamWriter(target, false, Encoding.UTF8))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -233,7 +249,7 @@ namespace Pronunciation.Parser
             return;
         }
 
-        private static void CleanDatabase()
+        private static void CleanDatabase(bool preserveSounds)
         {
             using (SqlCeConnection conn = new SqlCeConnection(ConnectionString))
             {
@@ -242,8 +258,11 @@ namespace Pronunciation.Parser
                 SqlCeCommand cmd = new SqlCeCommand();
                 cmd.Connection = conn;
 
-                cmd.CommandText = "Delete DictionarySound";
-                cmd.ExecuteNonQuery();
+                if (!preserveSounds)
+                {
+                    cmd.CommandText = "Delete DictionarySound";
+                    cmd.ExecuteNonQuery();
+                }
 
                 cmd.CommandText = "Delete DictionaryCollocation";
                 cmd.ExecuteNonQuery();

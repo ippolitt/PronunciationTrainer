@@ -88,18 +88,14 @@ namespace Pronunciation.Core.Providers.Dictionary
                 IsUKAudio(soundKey));
         }
 
-        public bool IsWordsIndexCached 
-        {
-            get { return true; }
-        }
-
-        public List<IndexEntry> GetWordsIndex(bool lpdDataOnly)
+        public List<IndexEntry> GetWordsIndex(int[] dictionaryIds)
         {
             string indexFile = Path.Combine(_baseFolder, IndexFileName);
             if (!File.Exists(indexFile))
                 throw new Exception(string.Format("Dictionary index file '{0}' doesn't exist!", indexFile));
 
             var words = new List<IndexEntry>();
+            bool checkDictionaryId = dictionaryIds != null && dictionaryIds.Length > 0;
             using (var reader = new StreamReader(indexFile, Encoding.UTF8))
             {
                 while (!reader.EndOfStream)
@@ -108,8 +104,8 @@ namespace Pronunciation.Core.Providers.Dictionary
                     if (data.Length != 7)
                         throw new InvalidOperationException("Index file is broken!");
 
-                    bool isLDOCEEntry = (data[6] == "1");
-                    if (lpdDataOnly && isLDOCEEntry)
+                    int? dictionaryId = string.IsNullOrEmpty(data[6]) ? (int?)null : int.Parse(data[6]);
+                    if (checkDictionaryId && !dictionaryIds.Contains(dictionaryId ?? 0))
                         continue;
 
                     words.Add(new IndexEntry(
@@ -119,7 +115,7 @@ namespace Pronunciation.Core.Providers.Dictionary
                         string.IsNullOrEmpty(data[3]) ? (int?)null : int.Parse(data[3]), 
                         data[4], 
                         data[5],
-                        isLDOCEEntry,
+                        dictionaryId,
                         null));
                 }
             }

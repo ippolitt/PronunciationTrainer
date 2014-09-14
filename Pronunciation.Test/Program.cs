@@ -34,6 +34,33 @@ namespace Pronunciation.Test
                 //TestBigFile();
                 //TestLoadingData();
 
+                if (args != null && args.Length == 1)
+                {
+                    string filePath = args[0];
+                    Stopwatch watch = new Stopwatch();
+                    watch.Start();
+                    if (!File.Exists(filePath))
+                        return;
+
+                    using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        stream.ReadByte();
+                    }
+                    watch.Stop();
+                    Console.WriteLine("Elapsed {0} ms", watch.ElapsedMilliseconds);
+                }
+
+                //var files = Directory.GetFiles(@"D:\WORK\NET\PronunciationTrainer\Data\MW\Active");
+                //foreach (var file in files)
+                //{
+                //    File.Move(file, file.Replace(".mp3", ".wav"));                   
+                //}
+
+                List<int> l1 = new List<int> { 1, 2, 3 };
+                List<int> l2 = new List<int> { 8, 4, 2, 9, 4 };
+
+                l1.AddRange(l2.Where(x => !l1.Contains(x)));
+                return;
 
 
                 bool? rr = null;

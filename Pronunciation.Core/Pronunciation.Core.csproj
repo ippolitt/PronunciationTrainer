@@ -120,6 +120,7 @@
     <Compile Include="Providers\Dictionary\ArticleInfo.cs" />
     <Compile Include="Providers\Categories\CategoryProvider.cs" />
     <Compile Include="Providers\Categories\DictionaryCategoryListItem.cs" />
+    <Compile Include="Providers\Dictionary\DictionaryDATReader.cs" />
     <Compile Include="Providers\Dictionary\DictionarySoundInfo.cs" />
     <Compile Include="Providers\Dictionary\LPDTargetKey.cs" />
     <Compile Include="Providers\Exercise\ExerciseTargetKey.cs" />

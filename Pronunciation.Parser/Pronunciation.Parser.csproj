@@ -45,20 +45,31 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ContentCollector.cs" />
+    <Compile Include="MWEntry.cs" />
+    <Compile Include="MWParser.cs" />
+    <Compile Include="MWProcessor.cs" />
     <Compile Include="DatabaseUploader.cs" />
     <Compile Include="DataRecordWrapper.cs" />
     <Compile Include="DATBuilderMock.cs" />
     <Compile Include="DATFileBuilder.cs" />
     <Compile Include="DicElements.cs" />
+    <Compile Include="EntriesMapper.cs" />
     <Compile Include="FileLoaderMock.cs" />
+    <Compile Include="FileNameBuilder.cs" />
     <Compile Include="IDATFileBuilder.cs" />
+    <Compile Include="IExtraEntry.cs" />
     <Compile Include="IFileLoader.cs" />
     <Compile Include="LDOCEEntry.cs" />
     <Compile Include="LDOCEHtmlBuilder.cs" />
     <Compile Include="LDOCEHtmlEntry.cs" />
     <Compile Include="LDOCEParser.cs" />
     <Compile Include="LDOCEProcessor.cs" />
+    <Compile Include="MWHtmlBuilder.cs" />
+    <Compile Include="MWHtmlEntry.cs" />
+    <Compile Include="PartOfSpeechResolver.cs" />
     <Compile Include="RecordingsMigration.cs" />
+    <Compile Include="SoundManager.cs" />
+    <Compile Include="SoundTitleBuilder.cs" />
     <Compile Include="TagReader.cs" />
     <Compile Include="WordDescription.cs" />
     <Compile Include="DicWord.cs" />
@@ -75,6 +86,7 @@
     <Compile Include="WordUsageBuilder.cs" />
     <Compile Include="XmlBuilder.cs" />
     <Compile Include="XmlExtensions.cs" />
+    <Compile Include="XmlReplaceMap.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Html\DatabaseTemplate.html">

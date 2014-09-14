@@ -7,10 +7,56 @@ namespace Pronunciation.Parser
 {
     class DicWord
     {
-        public string Keyword;
+        private string _keyword;
+        private string _title;
+        private int? _dictionaryId;
+
         public List<DicEntry> LPDEntries;
         public LDOCEHtmlEntry LDOCEEntry;
-        public bool IsLDOCEEntry;
+        public MWHtmlEntry MWEntry;
+
+        private const int DictionaryIdLDOCE = 1;
+        private const int DictionaryIdMW = 2;
+
+        public string Keyword
+        {
+            get { return _keyword; }
+            set 
+            {
+                _title = value;
+                if (string.IsNullOrEmpty(_title))
+                {
+                    _keyword = _title;
+                }
+                else
+                {
+                    // Some keywords contain HTML tags in them (e.g. H20)
+                    _keyword = _title.Replace("<sub>", "").Replace("</sub>", "");                    
+                }
+            }
+        }
+
+        public string Title
+        {
+            get { return _title; }
+        }
+
+        public int? DictionaryId
+        {
+            get { return _dictionaryId; }
+        }
+
+        public bool IsLDOCEEntry
+        {
+            get { return _dictionaryId == DictionaryIdLDOCE; }
+            set { _dictionaryId = DictionaryIdLDOCE; }
+        }
+
+        public bool IsMWEntry
+        {
+            get { return _dictionaryId == DictionaryIdMW; }
+            set { _dictionaryId = DictionaryIdMW; }
+        }
     }
 
     class DicEntry

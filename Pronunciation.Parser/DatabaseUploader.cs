@@ -17,7 +17,13 @@ namespace Pronunciation.Parser
         }
 
         private readonly string _connectionString;
-        private HashSet<string> _soundKeys;
+        private readonly IDATFileBuilder _htmlDATBuilder;
+        private readonly SoundManager _soundManager;
+        private readonly bool _preserveSounds;
+
+        private int _maxWordId;
+        private int _collocationId;
+        private StringBuilder _dbStats;       
         private Dictionary<string, WordIdInfo> _wordIdMap;
 
         private SqlCeResultSet _wordsSet;
@@ -25,24 +31,24 @@ namespace Pronunciation.Parser
         private SqlCeResultSet _collocationsSet;
         private SqlCeConnection _connection;
 
-        private int _maxWordId;
-        private int _collocationId;
-        private StringBuilder _dbStats;
-
         public StringBuilder DbStats
         {
             get { return _dbStats; }
         }
 
-        public DatabaseUploader(string connectionString)
+        public DatabaseUploader(string connectionString, IDATFileBuilder htmlDATBuilder, SoundManager soundManager, 
+            bool preserveSounds)
         {
             _connectionString = connectionString;
+            _htmlDATBuilder = htmlDATBuilder;
+            _soundManager = soundManager;
+            _preserveSounds = preserveSounds;
         }
 
         public void Open()
         {
             _dbStats = new StringBuilder();
-            _soundKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            _soundManager.Stats = _dbStats;
             _connection = new SqlCeConnection(_connectionString);
             _connection.Open();
 
@@ -58,11 +64,14 @@ namespace Pronunciation.Parser
             cmdTable.CommandText = "DictionaryCollocation";
             _collocationsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable);
 
-            cmdTable.CommandText = "DictionarySound";
-            _soundsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable);
+            if (!_preserveSounds)
+            {
+                cmdTable.CommandText = "DictionarySound";
+                _soundsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable);
+            }
         }
 
-        public void StoreWord(WordDescription word, bool isLDOCEWord, string htmlIndex)
+        public void StoreWord(WordDescription word, string html)
         {
             if (_wordIdMap == null)
             {
@@ -70,24 +79,20 @@ namespace Pronunciation.Parser
             }
 
             // Sounds
-            if (word.Sounds != null)
+            if (!_preserveSounds && word.Sounds != null)
             {
                 foreach (var soundInfo in word.Sounds)
                 {
-                    var soundKey = soundInfo.SoundKey;
-                    if (!_soundKeys.Add(soundKey))
-                    {
-                        _dbStats.AppendFormat(
-                            "Sound key '{0}' is also used by the word '{1}'\r\n",
-                            soundKey, word.Text);
+                    SoundManager.RegisteredSound registeredSound;
+                    if (!_soundManager.RegisterSound(soundInfo, out registeredSound))
                         continue;
-                    }
 
                     var soundRecord = _soundsSet.CreateRecord();
-                    soundRecord["SoundKey"] = soundKey;
+                    soundRecord["SoundKey"] = soundInfo.SoundKey;
                     soundRecord["IsUKSound"] = soundInfo.IsUKSound;
-                    soundRecord["SoundIndex"] = soundInfo.SoundIndex;
-                    soundRecord["SoundText"] = soundInfo.SoundText;
+                    soundRecord["SourceFileId"] = registeredSound.DATFileId;
+                    soundRecord["SoundIndex"] = registeredSound.SoundIndex;
+                    soundRecord["SoundText"] = soundInfo.SoundTitle;
 
                     _soundsSet.Insert(soundRecord);
                 }
@@ -122,13 +127,11 @@ namespace Pronunciation.Parser
                 wordRecord["Keyword"] = word.Text;
             }
 
-            wordRecord["HtmlIndex"] = htmlIndex;
+            var htmlIndex = _htmlDATBuilder.AppendEntity(word.Text, Encoding.UTF8.GetBytes(html));
+            wordRecord["HtmlIndex"] = htmlIndex.BuildKey();
             wordRecord["SoundKeyUK"] = word.SoundKeyUK;
             wordRecord["SoundKeyUS"] = word.SoundKeyUS;
-            if (isLDOCEWord)
-            {
-                wordRecord["IsLDOCEWord"] = true;
-            }
+            wordRecord["DictionaryId"] = word.DictionaryId;
 
             // Word usage statistics
             if (word.UsageInfo != null)
@@ -245,14 +248,24 @@ namespace Pronunciation.Parser
             return deleteCount;
         }
 
+        public void FinishUpload()
+        {
+            _htmlDATBuilder.Flush();
+            _soundManager.Flush();
+
+            _dbStats.AppendFormat("Totally '{0}' sound keys have been remapped.\r\n", _soundManager.ReusedKeysCount);
+        }
+
         public void Dispose()
         {
-            _soundKeys = null;
             _wordIdMap = null;
 
             _wordsSet.Dispose();
             _collocationsSet.Dispose();
-            _soundsSet.Dispose();
+            if (_soundsSet != null)
+            {
+                _soundsSet.Dispose();
+            }
 
             _connection.Dispose();
         }

@@ -13,6 +13,7 @@ namespace Pronunciation.Parser
         public WordUsageInfo UsageInfo;
         public List<SoundInfo> Sounds = new List<SoundInfo>();
         public List<CollocationDescription> Collocations;
+        public int? DictionaryId;
     }
 
     class CollocationDescription

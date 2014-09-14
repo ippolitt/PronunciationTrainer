@@ -124,13 +124,13 @@ namespace Pronunciation.Trainer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool DisplayLPDDataOnly {
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ActiveDictionaryIds {
             get {
-                return ((bool)(this["DisplayLPDDataOnly"]));
+                return ((string)(this["ActiveDictionaryIds"]));
             }
             set {
-                this["DisplayLPDDataOnly"] = value;
+                this["ActiveDictionaryIds"] = value;
             }
         }
     }

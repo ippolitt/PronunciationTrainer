@@ -9,15 +9,21 @@ namespace Pronunciation.Parser
     {
         public string MainSoundUK { get; private set; }
         public string MainSoundUS { get; private set; }
-        public string MainSoundIndexUK { get; private set; }
-        public string MainSoundIndexUS { get; private set; }
         public List<SoundInfo> Sounds { get; private set; }
-        public string SoundText { get; private set; }
 
-        public SoundCollector(string soundText)
+        private SoundTitleBuilder _titleBuilder;
+        private string _entryNumber;
+
+        public SoundCollector()
         {
             Sounds = new List<SoundInfo>();
-            SoundText = soundText;
+        }
+
+        public SoundCollector(SoundTitleBuilder titleBuilder, string entryNumber)
+            : this()
+        {
+            _titleBuilder = titleBuilder;
+            _entryNumber = entryNumber;
         }
 
         public bool HasUKSound
@@ -30,16 +36,18 @@ namespace Pronunciation.Parser
             get { return !string.IsNullOrEmpty(MainSoundUS); }
         }
 
-        public void RegisterSound(string soundKey, string soundIndex, bool isUKSound)
+        public void RegisterSound(string soundKey, bool isUKSound)
         {
-            Sounds.Add(new SoundInfo(soundKey, soundIndex, SoundText, isUKSound));
+            var sound = new SoundInfo(soundKey, isUKSound);
+            Sounds.Add(sound);
 
+            bool isMainSound = false;
             if (isUKSound)
             {
                 if (string.IsNullOrEmpty(MainSoundUK))
                 {
                     MainSoundUK = soundKey;
-                    MainSoundIndexUK = soundIndex;
+                    isMainSound = true;
                 }
             }
             else
@@ -47,15 +55,27 @@ namespace Pronunciation.Parser
                 if (string.IsNullOrEmpty(MainSoundUS))
                 {
                     MainSoundUS = soundKey;
-                    MainSoundIndexUS = soundIndex;
+                    isMainSound = true;
                 }
+            }
+
+            if (isMainSound && _titleBuilder != null)
+            {
+                sound.SoundTitle = _titleBuilder.GetSoundTitle(soundKey, _entryNumber);
             }
         }
 
-        public void RegisterSoundText(string soundText)
+        public void SetMainSoundsTitle(string soundTitle)
         {
-            Sounds.ForEach(x => x.SoundText = soundText);
-            SoundText = soundText;
+            if (!string.IsNullOrEmpty(MainSoundUK))
+            {
+                Sounds.First(x => x.SoundKey == MainSoundUK).SoundTitle = soundTitle;
+            }
+
+            if (!string.IsNullOrEmpty(MainSoundUS))
+            {
+                Sounds.First(x => x.SoundKey == MainSoundUS).SoundTitle = soundTitle;
+            }
         }
     }
 }

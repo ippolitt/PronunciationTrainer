@@ -191,29 +191,24 @@ input
 
 .stress_low:before, .ldoce_stress_low:before
 {
-    content: "ˬ";
+    content: "ˌ";
     font-weight: bold;
-    color: green;
+    font-size: 1.2em;
+    color: blue;
 }
-.stress_low_optional:before
+.stress_low_optional
 {
-    content: "(ˬ)";
     font-weight: normal;
-    color: green;
+    color: blue;
 }
 .stress_up:before, .ldoce_stress_up:before
 {
-    content: "ˆ";
+    content: "ˈ";
     font-weight: bold;
-    color: green;
-}
-.stress_shift:before
-{
-    content: "◂";
-    font-weight: bold;
+    font-size: 1.2em;
     color: blue;
 }
-.ldoce_stress_shift:before
+.stress_shift:before, .ldoce_stress_shift:before
 {
     content: " ◂";
     font-weight: bold;

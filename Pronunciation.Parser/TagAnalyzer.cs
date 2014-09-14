@@ -52,7 +52,7 @@ namespace Pronunciation.Parser
             AddMap("[b]", "[/b]", "strong");
             AddMap("[c blue]ˈ[/c]", null, "<stress_up/>", null, false, EntryType.Collocation); // do it only for collocations to separate phrase stress from word stress
             AddMap("[c blue]ˌ[/c]", null, "<stress_low/>", null, false, EntryType.Collocation);
-            AddMap("[c blue]₍ˌ₎[/c]", null, "<stress_low_optional/>", null, false, EntryType.Collocation);
+            AddMap("[c blue]₍ˌ₎[/c]", null, "<stress_low_optional><sub>(</sub><stress_low/><sub>)</sub></stress_low_optional>", null, false, EntryType.Collocation);
             AddMap("[c blue]◂[/c]", null, "<stress_shift/>", null, false);
             AddMap("[c blue]", "[/c]", null); // remove the tags for all other cases
 
@@ -354,11 +354,11 @@ namespace Pronunciation.Parser
                 {
                     if (activeTag == null)
                     {
-                        bld.Append(ValidateText(ch.ToString()));
+                        bld.Append(ValidateSymbol(ch));
                     }
                     else
                     {
-                        activeTag.Data += ValidateText(ch.ToString());
+                        activeTag.Data += ValidateSymbol(ch);
                     }
                 }
             }
@@ -366,7 +366,8 @@ namespace Pronunciation.Parser
             if (pendingToken != null)
                 throw new ArgumentException();
 
-            return _regMissedAmE.Replace(bld.ToString(), ReplaceEvaluator);
+            string result = bld.ToString().Replace(" ◂", "<stress_shift/>");
+            return _regMissedAmE.Replace(result, ReplaceEvaluator);
         }
 
         private string ReplaceEvaluator(Match match)
@@ -377,9 +378,9 @@ namespace Pronunciation.Parser
             return result;
         }
 
-        private string ValidateText(string text)
+        private string ValidateSymbol(char ch)
         {
-            return text.Replace("&", "&amp;");
+            return ch.ToString().Replace("&", "&amp;");
         }
 
         private void RegisterTag(EntryType entry, string tag, string word)

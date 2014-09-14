@@ -22,7 +22,7 @@ namespace Pronunciation.Core.Utility
             if (!File.Exists(_sourceFile))
                 return;
 
-            using (var stream = new FileStream(_sourceFile, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var stream = new FileStream(_sourceFile, FileMode.Open, FileAccess.Read))
             {
                 stream.ReadByte();
             }
@@ -36,7 +36,7 @@ namespace Pronunciation.Core.Utility
             if (offset <= 0)
                 throw new ArgumentException("Can't load data: the offset must be greater then zero!");
 
-            using (var stream = new FileStream(_sourceFile, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var stream = new FileStream(_sourceFile, FileMode.Open, FileAccess.Read))
             {
                 var buffer = new byte[length];
                 stream.Seek(offset - 1, SeekOrigin.Begin);

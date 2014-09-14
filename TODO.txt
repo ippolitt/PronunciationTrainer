@@ -1,6 +1,17 @@
 ﻿Top:
-- Try giving more memory to video adapter
+- Clean sounds cache and rebuild it (to remove extra LDOCE sounds)
+- Install MW standalone to be able to compare
+- What is "1 is also"? See "there"
+- Change color of dictionary name
+- Find words that present only in MW (with several audios)
+- Search: we must also match items with accented characters (e.g. à la carte)
+- Add table with Dictionaries list
+- Import MW dictionary. Remember, that with several pronunciations order is important (dog). Validate using words like [dog, awkward, author, law, water]
+--
+- Test in FileSystem
+- Try installing video card, then try giving more memory to video adapter
 - Delete a word from category with DEL (not Backspace, remove Backspace also from Recordings list) 
+- Add records count to the suggestions list
 - Add total statistics (recorded N words over Y days). Move statistics from status bar to a dedicated tab.
 - Add ability to add notes for a word
 - Add ability to rewind player by 1/3 seconds (should be configurable)
@@ -9,15 +20,12 @@
 - Somehow mark the entries from LDOCE in UI
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 LDOCE import:
-	- Optimize reimport: if we only change HTML then there's no need to rebuild Audio.dat 
-	- Analyze words that present in LPD but miss in LDOCE
-	- ? DB mode: don't import sounds that have "_lpd_" inside and can be matched to the existing LPD sound. Remap them instead.
-	- Check if [.stress_shift] style is ever applied in LPD entries
-	- Backup new LPD database and PronunciationTrainer
+	- Import also those audio that presents in LDOCE but misses in LPD (try matching by audio name)
 	- Clean DIC folder and generate file system entries
-	- ZIP sounds in LDOCE folder
-	- Upload new HTML to iPhone (don't forget to change mobile .css)
+	- Generate iPhone entries and upload them to iPhone (don't forget to change mobile .css)
 	- If possible - find other pronunciations inside LDOCE articles (e.g. for word forms - see abduction)
+	- Analyze words that present in LPD but miss in LDOCE
+	- ? [analyze] DB mode: don't import sounds that have "_lpd_" inside and can be matched to the existing LPD sound. Remap them instead.
 - Bugs
 	- Alt+left/right arrow doesn't work when focus is inside the browser
 	- When doubleclick on the item in audio list, refresh context is called two times: selection changed and double click
@@ -26,8 +34,9 @@ LDOCE import:
 	- Bug when sequence is scheduled and I start another action
 	- There are no tags in my exported mp3 files
 	- Before removing the FakeEntity (for Exercise and Training) ensure they are not loaded into dbcontext
+	- Parts of speech have deddicated tag in LDOCE/MW but in LPD they are just <em> (see "buffet")
 - Performance:
-	- Get rid of entity framework - create own datalayer
+	- Get rid of entity framework in lists (Exercises, Trainings, Comboboxes, Categories) - use it only when updating/inserting detailed record
 	- If we switch to using int32 instead of string as Words/Collocations reference to Sounds it reduces RAM by 4MB. Problems: can't easily cleanup Sounds table on reimport (foreign key)
 	- Before deploying DB it should be warmed-up (load some pages etc)
 	- Profile memory: when Exercise tab is first loaded etc.
@@ -42,12 +51,14 @@ LDOCE import:
 	- Use other control instead of WebBrowser (see http://stackoverflow.com/questions/18119125/options-for-embedding-chromium-instead-of-ie-webbrowser-control-with-wpf-c)
 - New functionality:
 	- Add ability to pause the recording
+	- Find some good dictionary with Russian translations
+	- Somehow get CEPD pronunciations?
 	- Import spelling-to-sound from LPD
 	- During import add a flag "several pronunciations/meanings". Then use this flag for autolist "several pronunciations"
 	- Add ability to search by wildcards (e.g. select a certain problematic syllable - lrt - and practice many words with it)
 	- Add ability to expand list when I click on "..." (e.g. I want to through all items)
 	- Add bility to exclude "collocations" from search (useful when moving down the list of words)
-	- Add at least main russian meaning to the LPD
+	- Add at least main russian meaning to the LPD (from popup dictionary?)
 	- Add a setting "Decrease recorded audio volume"
 	- Long records: improve usability (back/forward a few seconds, repeat a region etc.)
 	- Compare different reference pronunciation or different recorded ones
@@ -59,6 +70,7 @@ LDOCE import:
 	- Add a setting "Active book" to avoid displaying exercises from other books
 	- Add auto lists: words with notes, trouble words (many attempts to rccord at a time)
 - Usability improvements
+	- When pointing the cursor to category name should its full name and description
 	- Display wveforms even during playback
 	- Improve tab headers: add tooltips and icons
 	- Add special and phonetic symbols explanations (both for LPD and LDOCE)
@@ -73,10 +85,9 @@ LDOCE import:
 	- We should be able to see waveforms when an audio is playing (but not when is recording)
 	- Review logic for building TOP words - why it's 1200 instead of 1000?
 	- Don't show message box if dictionary is missing - show error inside the tab (for those who don't want to use dictionary)
+	- History dialog: duration is confusing without a caption
 - Code improvements:
 	- Add a handling to MessageHelper when message needs to be shown from a background thread
-	- Add logic to check if it's an updated version and call some migration logic (MUST be done before deployment!)
-	- Think how a new changes to the database will be deployed (consider that all audio/html index will be broken)
 	- Use stack panel in AudioPanel (read first what is better: Grid or stack panel)
 	- Use Lazy for Active record in Exercise/Trainig details dialog
 	- Add error logging
@@ -91,6 +102,10 @@ Waveforms:
 	- Add word name to the last played audio
 	- Play sound along with moving a slider on waveform
 	- Add ability to show real amplitude of the sounds (don't stretch them) to compare loudness 
+Deployment:
+	- Add logic to check if it's an updated version and call some migration logic (MUST be done before deployment!)
+	- Think how a new changes to the database will be deployed (consider that all audio/html index will be broken)
+	- Deploy also "Index.txt" to speedup first start
 
 Possible problems:
 - Deleting many exercises may cause an exception because IN statement would be too long (when deleting recorded audios)

@@ -29,8 +29,8 @@
     <Setting Name="MaxAudioSamplesInWaveform" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">100000</Value>
     </Setting>
-    <Setting Name="DisplayLPDDataOnly" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
+    <Setting Name="ActiveDictionaryIds" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
     </Setting>
   </Settings>
 </SettingsFile>
