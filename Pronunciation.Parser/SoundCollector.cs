@@ -11,19 +11,9 @@ namespace Pronunciation.Parser
         public string MainSoundUS { get; private set; }
         public List<SoundInfo> Sounds { get; private set; }
 
-        private SoundTitleBuilder _titleBuilder;
-        private string _entryNumber;
-
         public SoundCollector()
         {
             Sounds = new List<SoundInfo>();
-        }
-
-        public SoundCollector(SoundTitleBuilder titleBuilder, string entryNumber)
-            : this()
-        {
-            _titleBuilder = titleBuilder;
-            _entryNumber = entryNumber;
         }
 
         public bool HasUKSound
@@ -41,13 +31,11 @@ namespace Pronunciation.Parser
             var sound = new SoundInfo(soundKey, isUKSound);
             Sounds.Add(sound);
 
-            bool isMainSound = false;
             if (isUKSound)
             {
                 if (string.IsNullOrEmpty(MainSoundUK))
                 {
                     MainSoundUK = soundKey;
-                    isMainSound = true;
                 }
             }
             else
@@ -55,26 +43,7 @@ namespace Pronunciation.Parser
                 if (string.IsNullOrEmpty(MainSoundUS))
                 {
                     MainSoundUS = soundKey;
-                    isMainSound = true;
                 }
-            }
-
-            if (isMainSound && _titleBuilder != null)
-            {
-                sound.SoundTitle = _titleBuilder.GetSoundTitle(soundKey, _entryNumber);
-            }
-        }
-
-        public void SetMainSoundsTitle(string soundTitle)
-        {
-            if (!string.IsNullOrEmpty(MainSoundUK))
-            {
-                Sounds.First(x => x.SoundKey == MainSoundUK).SoundTitle = soundTitle;
-            }
-
-            if (!string.IsNullOrEmpty(MainSoundUS))
-            {
-                Sounds.First(x => x.SoundKey == MainSoundUS).SoundTitle = soundTitle;
             }
         }
     }

@@ -36,6 +36,11 @@ function getAudioData(element) {
     return element.attributes["raw-data"].value;
 }
 
+function getAudioText(element) {
+    var attribute = element.attributes["audio_title"];
+    return (attribute ? attribute.value : null);
+}
+
 function registerAudio() {
     var elements = document.getElementsByClassName("audio_button");
     for (var i = 0; i < elements.length; i++) {
@@ -120,19 +125,26 @@ function rawDataViaAudio(element) {
 }
 
 function rawDataViaContainer(element) {
-    var rawData = getAudioData(element);
-    if (!rawData)
-        return;
-
-    window.external.PlayAudioExt(getAudioKey(element), rawData);
+    playAudioViaContainer(element, true);
 }
 
 function audioKeyViaContainer(element) {
+    playAudioViaContainer(element, false);
+}
+
+function playAudioViaContainer(element, loadData) {
     var audioKey = getAudioKey(element);
     if (!audioKey)
         return;
 
-    window.external.PlayAudioExt(audioKey, null);
+    var rawData = null;
+    if (loadData) {
+        rawData = getAudioData(element);
+        if (!rawData)
+            return;
+    }
+
+    window.external.PlayAudioExt(audioKey, getAudioText(element), rawData);
 }
 
 function fileViaAudio(element) {

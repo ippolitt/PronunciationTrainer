@@ -124,9 +124,7 @@ namespace Pronunciation.Trainer
             audioPanel.RecordingCompleted += AudioPanel_RecordingCompleted;
 
             _history = new NavigationHistory<ArticlePage>();
-            _scriptingProxy = new DictionaryContainerScriptingProxy(
-                (x,y) => _audioContext.PlayScriptAudio(x, y),
-                (x) => NavigateWordFromHyperlink(x));
+            _scriptingProxy = new DictionaryContainerScriptingProxy(_audioContext.PlayScriptAudio, NavigateWordFromHyperlink);
             browser.ObjectForScripting = _scriptingProxy;
 
             borderSearch.BorderBrush = txtSearch.BorderBrush;
@@ -320,6 +318,7 @@ namespace Pronunciation.Trainer
         {
             _audioContext.RefreshContext(
                 AppSettings.Instance.StartupMode == StartupPlayMode.British ? index.SoundKeyUK : index.SoundKeyUS,
+                index.EntryText,
                 AppSettings.Instance.StartupMode != StartupPlayMode.None);
         }
 

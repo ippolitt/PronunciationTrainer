@@ -37,7 +37,7 @@ namespace Pronunciation.Parser
             }
         }
 
-        private class ParseResult
+        public class ParseResult
         {
             public string HtmlData;
 
@@ -47,7 +47,7 @@ namespace Pronunciation.Parser
 
         private readonly WordUsageBuilder _usageBuilder;
         private readonly Dictionary<int, int> _ranks;
-        private IFileLoader _fileLoader;
+        private readonly IFileLoader _fileLoader;
         private readonly LDOCEHtmlBuilder _ldoce;
         private readonly MWHtmlBuilder _mw;
         private readonly DatabaseUploader _dbUploader;
@@ -56,6 +56,7 @@ namespace Pronunciation.Parser
         private readonly string _logFile;
         private readonly string _binFolder;
         private readonly GenerationMode _generationMode;
+        private readonly AudioButtonHtmlBuilder _buttonBuilder;
 
         private const string TemplateFilePath = @"Html\FileTemplate.html";
         private const string TopTemplateFilePath = @"Html\TopTemplate.html";
@@ -64,11 +65,6 @@ namespace Pronunciation.Parser
         private const string DicPath = "Dic/";
         private const string DicFolderName = "Dic";
         private const string IndexFileName = "Index.txt";
-
-        public const string CaptionBigUK = "British";
-        public const string CaptionBigUS = "American";
-        public const string CaptionSmallUK = "BrE";
-        public const string CaptionSmallUS = "AmE";
 
         private bool IsDatabaseMode
         {
@@ -95,9 +91,10 @@ namespace Pronunciation.Parser
             _mw = mw;
             _dbUploader = dbUploader;
             _usageBuilder = usageBuilder;
-            _ranks = PrepareRanks(_usageBuilder.GetRanks());
 
-            _replaceMap = new XmlReplaceMap(generationMode == GenerationMode.Database);
+            _buttonBuilder = new AudioButtonHtmlBuilder(generationMode, fileLoader);
+            _ranks = PrepareRanks(_usageBuilder.GetRanks());
+            _replaceMap = new XmlReplaceMap();
             _nameBuilder = new FileNameBuilder();
             _binFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         }
@@ -166,8 +163,8 @@ namespace Pronunciation.Parser
         {
             IFileLoader fileLoader = _fileLoader;
             
-            // We use mock instead of the actual file loader to speed up HTML generation inside "AddCollocations" method
-            _fileLoader = new FileLoaderMock();
+            // Disable content loading to speed up HTML generation inside "AddCollocations" method
+            _buttonBuilder.IsContentLoadDisabled = true;
             try
             {
                 var keywords = new HashSet<string>(words.Select(x => x.Keyword));
@@ -185,7 +182,7 @@ namespace Pronunciation.Parser
             }
             finally
             {
-                _fileLoader = fileLoader;
+                _buttonBuilder.IsContentLoadDisabled = false;
             }
         }
 
@@ -510,7 +507,6 @@ namespace Pronunciation.Parser
         {
             wordAudio = null;
             var bld = new StringBuilder();
-            var titleBuilder = new SoundTitleBuilder(keyword, entries.Count);
             bool isWordAudioSet = false;
             int ordinal = 0;
             foreach (var entry in entries)
@@ -518,7 +514,7 @@ namespace Pronunciation.Parser
                 ordinal++;
 
                 // Parse main data
-                var entrySoundCollector = new SoundCollector(titleBuilder, entry.EntryNumber);
+                var entrySoundCollector = new SoundCollector();
                 ParseResult entryResult = ParseItemXml(entry.RawMainData, true, null, entrySoundCollector);
                 wordDescription.Sounds.AddRange(entrySoundCollector.Sounds);
 
@@ -565,6 +561,8 @@ namespace Pronunciation.Parser
                         soundStats.AppendFormat("Word entry [{0}] {1} {2}\r\n", keyword, entry.EntryNumber, warningText);
                     }
                 }
+
+                _buttonBuilder.InjectSoundText(entryResult, keyword, entry.EntryNumber, entrySoundCollector.Sounds);
 
                 bld.Append(
 @"      
@@ -642,7 +640,8 @@ namespace Pronunciation.Parser
                                 var contentItems = ParseCollocationsContent(contentCollector.GetContent());
                                 if (contentItems != null && contentItems.Length > 0)
                                 {
-                                    itemSoundCollector.SetMainSoundsTitle(string.Join(", ", contentItems));
+                                    _buttonBuilder.InjectSoundText(itemResult, 
+                                        string.Join(", ", contentItems), null, itemSoundCollector.Sounds);
                                 }
                             }
                             wordDescription.Sounds.AddRange(itemSoundCollector.Sounds);
@@ -895,24 +894,15 @@ namespace Pronunciation.Parser
                     if (string.IsNullOrEmpty(data))
                         throw new ArgumentException();
 
-                    string lang = info.ReplacementType == ReplacementType.ReplaceSoundUK
-                        ? (extractSounds ? CaptionBigUK : CaptionSmallUK)
-                        : (extractSounds ? CaptionBigUS : CaptionSmallUS);
+                    AudioButtonStyle buttonStyle = info.ReplacementType == ReplacementType.ReplaceSoundUK
+                        ? (extractSounds ? AudioButtonStyle.BigUK : AudioButtonStyle.SmallUK)
+                        : (extractSounds ? AudioButtonStyle.BigUS : AudioButtonStyle.SmallUS);
 
-                    string fileKey = Path.GetFileNameWithoutExtension(data);
-                    if (IsDatabaseMode)
-                    {
-                        result = string.Format(info.AdditionalData, fileKey, lang);
-                    }
-                    else
-                    {
-                        result = string.Format(info.AdditionalData,
-                            fileKey, _fileLoader.GetBase64Content(fileKey), lang);
-                    }
-
+                    string soundKey = Path.GetFileNameWithoutExtension(data);
+                    result = _buttonBuilder.BuildHtml(buttonStyle, soundKey);
                     if (soundCollector != null)
                     {
-                        soundCollector.RegisterSound(fileKey, info.ReplacementType == ReplacementType.ReplaceSoundUK);
+                        soundCollector.RegisterSound(soundKey, info.ReplacementType == ReplacementType.ReplaceSoundUK);
                     }
                     break;
 

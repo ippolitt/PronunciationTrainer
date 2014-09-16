@@ -9,15 +9,15 @@ namespace Pronunciation.Parser
     class LDOCEHtmlBuilder
     {
         private readonly Dictionary<string, LDOCEHtmlEntry> _entries;
-        private readonly IFileLoader _fileLoader;
-        private readonly bool _isDatabaseMode;
+        private readonly AudioButtonHtmlBuilder _buttonBuilder;
+        private readonly HtmlBuilder.GenerationMode _generationMode;
 
         public LDOCEHtmlBuilder(HtmlBuilder.GenerationMode generationMode, LDOCEHtmlEntry[] entries,
-            IFileLoader fileLoader)
+            AudioButtonHtmlBuilder buttonBuilder)
         {
-            _isDatabaseMode = (generationMode == HtmlBuilder.GenerationMode.Database);
+            _generationMode = generationMode;
             _entries = entries.ToDictionary(x => x.Keyword);
-            _fileLoader = fileLoader;
+            _buttonBuilder = buttonBuilder;
         }
 
         public IEnumerable<LDOCEHtmlEntry> GetEntries()
@@ -51,7 +51,6 @@ namespace Pronunciation.Parser
 ",
                 isFragment ? "ldoce_fragment" : "ldoce_page");
 
-            var textBuilder = new SoundTitleBuilder(entry.Keyword, entry.Items.Count);
             bool isMainAudioSet = false;
             bool addNumber = entry.Items.Count > 1;
             foreach (var item in entry.Items)
@@ -95,28 +94,34 @@ namespace Pronunciation.Parser
                     bool hasUSAudio = !string.IsNullOrEmpty(item.SoundFileUS);
                     string soundKeyUK = GetAudioKey(item.SoundFileUK);
                     string soundKeyUS = GetAudioKey(item.SoundFileUS);
+
+                    string htmlEntryNumber = addNumber ? item.Number.ToString() : null;
                     if (entry.Items.Count == 1)
                     {
                         // If there's only one item then put audio buttons on the word level, not on the item level
                         wordAudio = new HtmlBuilder.WordAudio();
                         if (hasUKAudio)
                         {
-                            wordAudio.SoundTextUK = PrepareButtonText(HtmlBuilder.CaptionBigUK, soundKeyUK, true);
+                            wordAudio.SoundTextUK = _buttonBuilder.BuildHtml(
+                                AudioButtonStyle.BigUK, soundKeyUK, entry.Keyword, htmlEntryNumber);
                         }
                         if (hasUSAudio)
                         {
-                            wordAudio.SoundTextUS = PrepareButtonText(HtmlBuilder.CaptionBigUS, soundKeyUS, false);
+                            wordAudio.SoundTextUS = _buttonBuilder.BuildHtml(
+                                AudioButtonStyle.BigUS, soundKeyUS, entry.Keyword, htmlEntryNumber);
                         }
                     }
                     else
                     {
                         if (hasUKAudio)
                         {
-                            bld.Append(PrepareButtonText(HtmlBuilder.CaptionSmallUK, soundKeyUK, true));
+                            bld.Append(_buttonBuilder.BuildHtml(
+                                AudioButtonStyle.SmallUK, soundKeyUK, entry.Keyword, htmlEntryNumber));
                         }
                         if (hasUSAudio)
                         {
-                            bld.Append(PrepareButtonText(HtmlBuilder.CaptionSmallUS, soundKeyUS, false));
+                            bld.Append(_buttonBuilder.BuildHtml(
+                                AudioButtonStyle.SmallUS, soundKeyUS, entry.Keyword, htmlEntryNumber));
                         }
                     }
 
@@ -131,13 +136,11 @@ namespace Pronunciation.Parser
 
                         if (hasUKAudio)
                         {
-                            wordDescription.Sounds.Add(new SoundInfo(soundKeyUK, 
-                                textBuilder.GetSoundTitle(soundKeyUK, item.Number.ToString()), true));
+                            wordDescription.Sounds.Add(new SoundInfo(soundKeyUK, true));
                         }
                         if (hasUSAudio)
                         {
-                            wordDescription.Sounds.Add(new SoundInfo(soundKeyUS, 
-                                textBuilder.GetSoundTitle(soundKeyUS, item.Number.ToString()), false));
+                            wordDescription.Sounds.Add(new SoundInfo(soundKeyUS, false));
                         }
                     }
                 }
@@ -155,23 +158,6 @@ namespace Pronunciation.Parser
 ");
 
             return bld.ToString();
-        }
-
-        private string PrepareButtonText(string caption, string soundKey, bool isUkAudio)
-        {
-            string styleName = isUkAudio ? "audio_uk" : "audio_us";
-            if (_isDatabaseMode)
-            {
-                return string.Format(
-@" <button type=""button"" class=""audio_button {0}"" data-src=""{1}"">{2}</button>",
-                    styleName, soundKey, caption);
-            }
-            else
-            {
-                return string.Format(
-@" <button type=""button"" class=""audio_button {0}"" data-src=""{1}"" raw-data=""{2}"">{3}</button>",
-                    styleName, soundKey, _fileLoader.GetBase64Content(soundKey), caption);
-            }
         }
 
         private string PrepareDisplayNameHtml(string displayName)

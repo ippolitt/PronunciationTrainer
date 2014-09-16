@@ -107,9 +107,10 @@ namespace Pronunciation.Parser
 
                 //return;
 
-                bool isFakeMode = true;
-                bool deleteExtraWords = true;
+                bool isFakeMode = false;
                 bool preserveSounds = true;
+                int numberOfRecords = -1;
+                bool deleteExtraWords = false;
                 var generationMode = HtmlBuilder.GenerationMode.Database;
 
                 IFileLoader fileLoader = new FileLoader(
@@ -150,12 +151,12 @@ namespace Pronunciation.Parser
                 var ldoceBuilder = new LDOCEHtmlBuilder(
                     generationMode,
                     LDOCEProcessor.LoadParsedData(Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameLDOCE)),
-                    fileLoader);
+                    new AudioButtonHtmlBuilder(generationMode, fileLoader));
 
                 var mwBuilder = new MWHtmlBuilder(
                     generationMode,
                     MWProcessor.LoadParsedData(Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameMW)),
-                    fileLoader);
+                    new AudioButtonHtmlBuilder(generationMode, fileLoader));
 
                 var usageBuilder = new WordUsageBuilder(Path.Combine(rootFolder, DataFolder, TopWordsFileName));
                 var htmlBuilder = new HtmlBuilder(
@@ -164,7 +165,7 @@ namespace Pronunciation.Parser
 
                 htmlBuilder.ConvertToHtml(
                     Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameLPD),
-                    outputHtmlFolder, -1, isFakeMode, deleteExtraWords);
+                    outputHtmlFolder, numberOfRecords, isFakeMode, deleteExtraWords);
 
                 //var topBuilder = new TopWordsBuilder();
                 //topBuilder.MergeTopWords();

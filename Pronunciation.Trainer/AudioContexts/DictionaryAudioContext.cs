@@ -19,6 +19,7 @@ namespace Pronunciation.Trainer.AudioContexts
         private readonly IRecordingHistoryPolicy _recordingPolicy;
         private LPDTargetKey _recordingKey;
         private string _soundKey;
+        private string _soundText;
         private DictionarySoundInfo _soundInfo;
         private const string MWSoundPrefix = "mw_";
 
@@ -32,10 +33,11 @@ namespace Pronunciation.Trainer.AudioContexts
             _recordingPolicy = recordingPolicy;
         }
 
-        public void RefreshContext(string soundKey, bool playImmediately)
+        public void RefreshContext(string soundKey, string soundText, bool playImmediately)
         {
             _soundKey = soundKey;
-            _soundInfo = playImmediately ? _dictionaryProvider.GetAudio(soundKey) : null;
+            _soundText = soundText;
+            _soundInfo = playImmediately ? _dictionaryProvider.GetAudio(_soundKey) : null;
             _recordingKey = string.IsNullOrEmpty(_soundKey) ? null : new LPDTargetKey(_soundKey);
 
             if (ContextChanged != null)
@@ -44,12 +46,13 @@ namespace Pronunciation.Trainer.AudioContexts
             }
         }
 
-        public void PlayScriptAudio(string soundKey, string audioData)
+        public void PlayScriptAudio(string soundKey, string soundText, string audioData)
         {
             if (string.IsNullOrEmpty(soundKey))
                 return;
 
             _soundKey = soundKey;
+            _soundText = soundText;
             if (string.IsNullOrEmpty(audioData))
             {
                 _soundInfo = _dictionaryProvider.GetAudio(soundKey);
@@ -106,7 +109,7 @@ namespace Pronunciation.Trainer.AudioContexts
                     return null;
 
                 return string.Format("Active audio: \"{0}\" {1}",
-                    string.IsNullOrEmpty(_soundInfo.SoundText) ? _soundKey : _soundInfo.SoundText, 
+                    string.IsNullOrEmpty(_soundText) ? _soundKey : _soundText, 
                     IsMWSound(_soundKey) ? "MW" : (_soundInfo.IsUKAudio ? "UK" : "US")); 
             }
         }

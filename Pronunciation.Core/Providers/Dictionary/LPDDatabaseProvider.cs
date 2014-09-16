@@ -114,7 +114,6 @@ FROM DictionaryWord";
                 return null;
 
             string soundIndex;
-            string soundText;
             bool isUKAudio;
             int? sourceFileId;
             using (SqlCeConnection conn = new SqlCeConnection(_connectionString))
@@ -122,7 +121,7 @@ FROM DictionaryWord";
                 conn.Open();
 
                 SqlCeCommand cmd = new SqlCeCommand(
-@"SELECT IsUKSound, SoundIndex, SoundText, SourceFileId
+@"SELECT IsUKSound, SoundIndex, SourceFileId
 FROM DictionarySound
 WHERE SoundKey = @soundKey", conn);
                 cmd.Parameters.AddWithValue("@soundKey", soundKey);
@@ -137,13 +136,12 @@ WHERE SoundKey = @soundKey", conn);
 
                     isUKAudio = (bool)reader["IsUKSound"];
                     soundIndex = (string)reader["SoundIndex"];
-                    soundText = reader["SoundText"] as string;
                     sourceFileId = reader["SourceFileId"] as int?;
                 }
             }
 
             var data = _datReader.GetAudioData(sourceFileId, soundIndex);
-            return new DictionarySoundInfo(new PlaybackData(data), isUKAudio, soundText);
+            return new DictionarySoundInfo(new PlaybackData(data), isUKAudio);
         }
 
         public DictionarySoundInfo GetAudioFromScriptData(string soundKey, string scriptData)

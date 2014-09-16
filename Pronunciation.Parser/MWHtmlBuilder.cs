@@ -9,15 +9,16 @@ namespace Pronunciation.Parser
     class MWHtmlBuilder
     {
         private readonly Dictionary<string, MWHtmlEntry> _entries;
-        private readonly IFileLoader _fileLoader;
-        private readonly bool _isDatabaseMode;
+        private readonly AudioButtonHtmlBuilder _buttonBuilder;
+        private readonly HtmlBuilder.GenerationMode _generationMode;
+        private readonly bool _embedSoundTitle;
 
         public MWHtmlBuilder(HtmlBuilder.GenerationMode generationMode, MWHtmlEntry[] entries,
-            IFileLoader fileLoader)
+            AudioButtonHtmlBuilder buttonBuilder)
         {
-            _isDatabaseMode = (generationMode == HtmlBuilder.GenerationMode.Database);
+            _generationMode = generationMode;
             _entries = entries.ToDictionary(x => x.Keyword);
-            _fileLoader = fileLoader;
+            _buttonBuilder = buttonBuilder;
         }
 
         public IEnumerable<MWHtmlEntry> GetEntries()
@@ -51,7 +52,6 @@ namespace Pronunciation.Parser
 ",
                 isFragment ? "mw_fragment" : "mw_page");
 
-            var textBuilder = new SoundTitleBuilder(entry.Keyword, entry.Items.Count);
             bool isMainAudioSet = false;
             bool addNumber = entry.Items.Count > 1;
             foreach (var item in entry.Items)
@@ -93,16 +93,21 @@ namespace Pronunciation.Parser
                         string soundKey = GetAudioKey(soundFile);
 
                         // If there's only one item with one audio then put audio button on the word level, not on the item level
-                        if (entry.Items.Count == 1 && !isFragment && isSingleAudio)
+                        bool isWordAudio = entry.Items.Count == 1 && !isFragment && isSingleAudio;
+                        string buttonText = _buttonBuilder.BuildHtml(
+                            isWordAudio ? AudioButtonStyle.BigUS : AudioButtonStyle.SmallUS, 
+                            soundKey,
+                            entry.Keyword,
+                            addNumber ? item.Number.ToString() : null,
+                            isSingleAudio ? 0 : soundNumber);
+                        if (isWordAudio)
                         {
                             wordAudio = new HtmlBuilder.WordAudio();
-                            wordAudio.SoundTextUK = PrepareButtonText(
-                                HtmlBuilder.CaptionBigUS, isSingleAudio ? 0 : soundNumber, soundKey);
+                            wordAudio.SoundTextUS = buttonText;
                         }
                         else
                         {
-                            bld.Append(PrepareButtonText(
-                                HtmlBuilder.CaptionSmallUS, isSingleAudio ? 0 : soundNumber, soundKey));
+                            bld.Append(buttonText);
                         }
 
                         if (wordDescription != null)
@@ -113,12 +118,7 @@ namespace Pronunciation.Parser
                                 isMainAudioSet = true;
                             }
 
-                            string textEntryNumber = string.Format("{0}{1}", 
-                                item.Number, isSingleAudio ? null : "." + soundNumber);                         
-                            wordDescription.Sounds.Add(new SoundInfo(
-                                soundKey,
-                                textBuilder.GetSoundTitle(soundKey, textEntryNumber),
-                                false));
+                            wordDescription.Sounds.Add(new SoundInfo(soundKey, false));
                         }
                     }
                 }
@@ -135,23 +135,6 @@ namespace Pronunciation.Parser
 ");
 
             return bld.ToString();
-        }
-
-        private string PrepareButtonText(string baseCaption, int soundNumber, string soundKey)
-        {
-            string caption = soundNumber > 0 ? string.Format("{0} {1}", baseCaption, soundNumber) : baseCaption;
-            if (_isDatabaseMode)
-            {
-                return string.Format(
-@" <button type=""button"" class=""audio_button audio_us"" data-src=""{0}"">{1}</button>",
-                    soundKey, caption);
-            }
-            else
-            {
-                return string.Format(
-@" <button type=""button"" class=""audio_button audio_us"" data-src=""{0}"" raw-data=""{1}"">{2}</button>",
-                    soundKey, _fileLoader.GetBase64Content(soundKey), caption);
-            }
         }
 
         private string PrepareTranscriptionHtml(string transcription)

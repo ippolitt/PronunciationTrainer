@@ -11,7 +11,7 @@ namespace Pronunciation.Parser
 
         public const string XmlElementStrong = "strong";
 
-        public XmlReplaceMap(bool isDatabaseMode)
+        public XmlReplaceMap()
         {
             _map = new List<TagReplaceInfo>();
 
@@ -36,24 +36,9 @@ namespace Pronunciation.Parser
                 "<img class=\"poll_image\" src=\"{0}\" />", false);
             AddMap("wlink", ReplacementType.ReplaceLink, "a",
                 "<a class=\"word_link\" href=\"{0}\">{1}</a>", false);
-            if (isDatabaseMode)
-            {
-                AddMap("sound_uk", ReplacementType.ReplaceSoundUK, "button",
-                    "<button type=\"button\" class=\"audio_button audio_uk\" data-src=\"{0}\">{1}</button>",
-                    false);
-                AddMap("sound_us", ReplacementType.ReplaceSoundUS, "button",
-                    "<button type=\"button\" class=\"audio_button audio_us\" data-src=\"{0}\">{1}</button>",
-                    false);
-            }
-            else
-            {
-                AddMap("sound_uk", ReplacementType.ReplaceSoundUK, "button",
-                    "<button type=\"button\" class=\"audio_button audio_uk\" data-src=\"{0}\" raw-data=\"{1}\">{2}</button>",
-                    false);
-                AddMap("sound_us", ReplacementType.ReplaceSoundUS, "button",
-                    "<button type=\"button\" class=\"audio_button audio_us\" data-src=\"{0}\" raw-data=\"{1}\">{2}</button>",
-                    false);
-            }
+
+            AddMap("sound_uk", ReplacementType.ReplaceSoundUK, "button", null, false);
+            AddMap("sound_us", ReplacementType.ReplaceSoundUS, "button", null, false);
         }
 
         public TagReplaceInfo GetReplaceInfo(string tagName)

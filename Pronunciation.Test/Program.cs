@@ -56,6 +56,9 @@ namespace Pronunciation.Test
                 //    File.Move(file, file.Replace(".mp3", ".wav"));                   
                 //}
 
+                var builder = new StringBuilder("hello");
+                builder.Replace("l", "p");
+
                 List<int> l1 = new List<int> { 1, 2, 3 };
                 List<int> l2 = new List<int> { 8, 4, 2, 9, 4 };
 

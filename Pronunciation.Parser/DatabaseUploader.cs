@@ -88,7 +88,6 @@ namespace Pronunciation.Parser
                     soundRecord["IsUKSound"] = soundInfo.IsUKSound;
                     soundRecord["SourceFileId"] = registeredSound.DATFileId;
                     soundRecord["SoundIndex"] = registeredSound.SoundIndex;
-                    soundRecord["SoundText"] = soundInfo.SoundTitle;
 
                     _soundsSet.Insert(soundRecord);
                 }

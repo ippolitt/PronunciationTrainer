@@ -1,19 +1,21 @@
 ﻿Top:
 - Try installing video card, then try giving more memory to video adapter
 --
-- Check what title has "new year" collocation
 - Search: we must also match items with accented characters (e.g. à la carte)
 - Delete a word from category with DEL (not Backspace, remove Backspace also from Recordings list) 
 - Add records count to the suggestions list
 - Add total statistics (recorded N words over Y days). Move statistics from status bar to a dedicated tab.
 - Add ability to add notes for a word
 - Add ability to rewind player by 1/3 seconds (should be configurable)
+- BUG: load application, quickly type , hit Enter - nothing happens
 - Lazy load categories (only if tab is visible)
 - Remove some logging
 - Somehow mark the entries from LDOCE/MW in UI
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 LDOCE import:
 	- Rethink sounds text logic: "new" and "gnu" use the same audio file "us_gnu".
+	- Valiudate invalid chars  in HTML attribute value (ampresand)
+	- Display IndexEntry text if main audio has been click in HTML (audio context)
 	- Improvements:
 		- If LPD has several word spellings (absinth, absinthe) split them and point to the same article
 		- import variants [i]also[/i], [i]or[/i]. Think how to match with LPD.
@@ -28,7 +30,6 @@ LDOCE import:
 	- Sound button is lower then collocation/MW entry
 	- Generate hyperlink for MW [ref] (both in file system and databse)
 	- Add table Dictionaries. Register sound key prefix there (then change logic of current audio text in DictionaryContextt)
-	- Add a mode for updating sound text only
 	- Find words that present only in MW (with several audios)
 	- Clean DIC folder and generate file system entries. Test MW entries: UI and sounds
 	- Generate iPhone entries and upload them to iPhone (don't forget to change mobile .css)
@@ -84,6 +85,7 @@ LDOCE import:
 	- Add a setting "Active book" to avoid displaying exercises from other books
 	- Add auto lists: words with notes, trouble words (many attempts to rccord at a time)
 - Usability improvements
+	- Confusing behavior: user may try to record separates audios for the sound with the same key (because we display text from UI)
 	- When pointing the cursor to category name should its full name and description
 	- Display wveforms even during playback
 	- Improve tab headers: add tooltips and icons

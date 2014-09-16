@@ -9,18 +9,18 @@ namespace Pronunciation.Trainer.Dictionary
     [ComVisibleAttribute(true)]
     public class DictionaryContainerScriptingProxy
     {
-        private readonly Action<string, string> _playAudioInvoker;
+        private readonly Action<string, string, string> _playAudioInvoker;
         private readonly Action<string> _loadPageInvoker;
 
-        public DictionaryContainerScriptingProxy(Action<string, string> playAudioInvoker, Action<string> loadPageInvoker)
+        public DictionaryContainerScriptingProxy(Action<string, string, string> playAudioInvoker, Action<string> loadPageInvoker)
         {
             _playAudioInvoker = playAudioInvoker;
             _loadPageInvoker = loadPageInvoker;
         }
 
-        public void PlayAudioExt(string soundKey, string audioData)
+        public void PlayAudioExt(string soundKey, string soundText, string audioData)
         {
-            _playAudioInvoker(soundKey, audioData);
+            _playAudioInvoker(soundKey, soundText, audioData);
         }
 
         public void LoadPageExt(string wordName)

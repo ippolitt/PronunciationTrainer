@@ -44,7 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AudioButtonHtmlBuilder.cs" />
     <Compile Include="ContentCollector.cs" />
+    <Compile Include="HtmlHelper.cs" />
     <Compile Include="MWEntry.cs" />
     <Compile Include="MWParser.cs" />
     <Compile Include="MWProcessor.cs" />
@@ -69,7 +71,6 @@
     <Compile Include="PartOfSpeechResolver.cs" />
     <Compile Include="RecordingsMigration.cs" />
     <Compile Include="SoundManager.cs" />
-    <Compile Include="SoundTitleBuilder.cs" />
     <Compile Include="TagReader.cs" />
     <Compile Include="WordDescription.cs" />
     <Compile Include="DicWord.cs" />
