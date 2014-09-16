@@ -81,35 +81,11 @@ FROM DictionaryWord";
                         index.Add(new IndexEntry(
                             htmlIndex,
                             reader["Keyword"] as string,
-                            false,
                             reader["UsageRank"] as int?,
                             reader["SoundKeyUK"] as string,
                             reader["SoundKeyUS"] as string,
                             reader["DictionaryId"] as int?,
                             (int)reader["WordId"]));
-                    }
-                }
-
-                // Load collocations
-                cmd.CommandText =
-@"SELECT WordId, CollocationText, SoundKeyUK, SoundKeyUS  
-FROM DictionaryCollocation";
-                using (SqlCeDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        string htmlIndex;
-                        wordIndexes.TryGetValue((int)reader["WordId"], out htmlIndex);
-
-                        index.Add(new IndexEntry(
-                            htmlIndex,
-                            reader["CollocationText"] as string,
-                            true,
-                            null,
-                            reader["SoundKeyUK"] as string,
-                            reader["SoundKeyUS"] as string,
-                            null,
-                            null));
                     }
                 }
             }
@@ -191,8 +167,8 @@ WHERE SoundKey = @soundKey", conn);
             var bld = new StringBuilder();
             foreach (var entry in index)
             {
-                bld.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}",
-                    entry.EntryText, entry.ArticleKey, entry.IsCollocation ? 1 : 0, entry.UsageRank,
+                bld.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}",
+                    entry.EntryText, entry.ArticleKey, entry.UsageRank,
                     entry.SoundKeyUK, entry.SoundKeyUS, entry.DictionaryId, entry.WordId));
             }
 
@@ -208,21 +184,20 @@ WHERE SoundKey = @soundKey", conn);
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 8)
+                    if (data.Length != 7)
                         throw new InvalidOperationException("Index file is broken!");
 
-                    int? dictionaryId = string.IsNullOrEmpty(data[6]) ? (int?)null : int.Parse(data[6]);
+                    int? dictionaryId = string.IsNullOrEmpty(data[5]) ? (int?)null : int.Parse(data[5]);
                     if (checkDictionaryId && !dictionaryIds.Contains(dictionaryId ?? 0))
                         continue;
 
                     words.Add(new IndexEntry(data[1], 
                         data[0], 
-                        data[2] == "1" ? true : false,
-                        string.IsNullOrEmpty(data[3]) ? (int?)null : int.Parse(data[3]), 
-                        data[4], 
-                        data[5],
+                        string.IsNullOrEmpty(data[2]) ? (int?)null : int.Parse(data[2]), 
+                        data[3], 
+                        data[4],
                         dictionaryId,
-                        string.IsNullOrEmpty(data[7]) ? (int?)null : int.Parse(data[7])));
+                        string.IsNullOrEmpty(data[6]) ? (int?)null : int.Parse(data[6])));
                 }
             }
 

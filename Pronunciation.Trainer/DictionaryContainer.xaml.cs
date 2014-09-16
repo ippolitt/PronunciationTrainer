@@ -253,7 +253,7 @@ namespace Pronunciation.Trainer
                     string pageKey = ((ArticlePage)_currentPage.Page).ArticleKey;
                     _statsCollector.RegisterViewedPage(pageKey);
 
-                    if (sourceIndex != null && !sourceIndex.IsCollocation)
+                    if (sourceIndex != null)
                     {
                         _currentPage.WordIndex = sourceIndex;
                     }

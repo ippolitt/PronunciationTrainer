@@ -46,8 +46,8 @@ namespace Pronunciation.Parser
             bld.AppendFormat(
 @"
     <div class=""{0}"">
-        <div class=""mw_header""></div>
-        <div class=""mw_content"">
+        <div class=""dic_header""></div>
+        <div class=""dic_content"">
 ",
                 isFragment ? "mw_fragment" : "mw_page");
 
@@ -57,52 +57,52 @@ namespace Pronunciation.Parser
             foreach (var item in entry.Items)
             {
                 bld.Append(
-@"      <div class=""mw_entry"">
+@"          <div class=""dic_entry"">
 ");
                 bld.AppendFormat(
-@"          <span class=""mw_word_name"">{0}</span>",
+@"              <span class=""entry_name"">{0}</span>",
                     item.DisplayName);
 
                 if (addNumber)
                 {
                     // Ensure there's no space before <span>
                     bld.AppendFormat(
-@"<span class=""mw_entry_number""><sup>{0}</sup></span>",
+@"<span class=""entry_number""><sup>{0}</sup></span>",
                         item.Number);
 
                     if (!string.IsNullOrEmpty(item.PartsOfSpeech))
                     {
                         bld.AppendFormat(
-@" <span class=""mw_speech_part"">{0}</span>", item.PartsOfSpeech);
+@" <span class=""speech_part"">{0}</span>", item.PartsOfSpeech);
                     }
                 }
 
                 if (!string.IsNullOrEmpty(item.Transcription))
                 {
                     bld.AppendFormat(
-@" <span class=""mw_pron"">{0}</span>", PrepareTranscriptionHtml(item.Transcription));
+@" <span class=""pron"">{0}</span>", PrepareTranscriptionHtml(item.Transcription));
                 }
 
                 if (item.SoundFiles != null && item.SoundFiles.Length > 0)
                 {
                     int soundNumber = 0;
+                    bool isSingleAudio = item.SoundFiles.Length == 1;
                     foreach (var soundFile in item.SoundFiles)
                     {
-                        if (item.SoundFiles.Length > 1)
-                        {
-                            soundNumber++;
-                        }
+                        soundNumber++;
                         string soundKey = GetAudioKey(soundFile);
 
                         // If there's only one item with one audio then put audio button on the word level, not on the item level
-                        if (entry.Items.Count == 1 && !isFragment && item.SoundFiles.Length == 1)
+                        if (entry.Items.Count == 1 && !isFragment && isSingleAudio)
                         {
                             wordAudio = new HtmlBuilder.WordAudio();
-                            wordAudio.SoundTextUK = PrepareButtonText(HtmlBuilder.CaptionBigUS, soundNumber, soundKey);
+                            wordAudio.SoundTextUK = PrepareButtonText(
+                                HtmlBuilder.CaptionBigUS, isSingleAudio ? 0 : soundNumber, soundKey);
                         }
                         else
                         {
-                            bld.Append(PrepareButtonText(HtmlBuilder.CaptionSmallUS, soundNumber, soundKey));
+                            bld.Append(PrepareButtonText(
+                                HtmlBuilder.CaptionSmallUS, isSingleAudio ? 0 : soundNumber, soundKey));
                         }
 
                         if (wordDescription != null)
@@ -113,9 +113,11 @@ namespace Pronunciation.Parser
                                 isMainAudioSet = true;
                             }
 
+                            string textEntryNumber = string.Format("{0}{1}", 
+                                item.Number, isSingleAudio ? null : "." + soundNumber);                         
                             wordDescription.Sounds.Add(new SoundInfo(
                                 soundKey,
-                                textBuilder.GetSoundTitle(soundKey, item.Number.ToString()),
+                                textBuilder.GetSoundTitle(soundKey, textEntryNumber),
                                 false));
                         }
                     }
@@ -123,13 +125,12 @@ namespace Pronunciation.Parser
 
                 bld.Append(
 @"
-        </div>
+            </div>
 ");
             }
 
             bld.Append(
-@"
-        </div>
+@"      </div>
     </div>
 ");
 
@@ -159,15 +160,15 @@ namespace Pronunciation.Parser
                 return transcription;
 
             return transcription
-                .Replace(MWParser.TranscriptionRefOpenTag, "<span class=\"mw_reference\">")
+                .Replace(MWParser.TranscriptionRefOpenTag, "<span class=\"word_reference\">")
                 .Replace(MWParser.TranscriptionRefCloseTag, "</span>")
                 .Replace(MWParser.TranscriptionItalicOpenTag, "<em>")
                 .Replace(MWParser.TranscriptionItalicCloseTag, "</em>")
-                .Replace(MWParser.TranscriptionUnderlinedOpenTag, "<span class=\"mw_underlined\">")
+                .Replace(MWParser.TranscriptionUnderlinedOpenTag, "<span class=\"underlined_text\">")
                 .Replace(MWParser.TranscriptionUnderlinedCloseTag, "</span>")
-                .Replace(MWParser.TranscriptionNoteOpenTag, "<span class=\"mw_pron_note\">")
+                .Replace(MWParser.TranscriptionNoteOpenTag, "<span class=\"pron_note\">")
                 .Replace(MWParser.TranscriptionNoteCloseTag, "</span>")
-                .Replace(MWParser.TranscriptionSeparatorOpenTag, "<span class=\"mw_pron_separator\">")
+                .Replace(MWParser.TranscriptionSeparatorOpenTag, "<span class=\"pron_separator\">")
                 .Replace(MWParser.TranscriptionSeparatorCloseTag, "</span>");
         }
 

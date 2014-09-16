@@ -28,7 +28,6 @@ namespace Pronunciation.Parser
 
         private SqlCeResultSet _wordsSet;
         private SqlCeResultSet _soundsSet;
-        private SqlCeResultSet _collocationsSet;
         private SqlCeConnection _connection;
 
         public StringBuilder DbStats
@@ -60,9 +59,6 @@ namespace Pronunciation.Parser
 
             cmdTable.CommandText = "DictionaryWord";
             _wordsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable | ResultSetOptions.Scrollable);
-
-            cmdTable.CommandText = "DictionaryCollocation";
-            _collocationsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable);
 
             if (!_preserveSounds)
             {
@@ -132,6 +128,7 @@ namespace Pronunciation.Parser
             wordRecord["SoundKeyUK"] = word.SoundKeyUK;
             wordRecord["SoundKeyUS"] = word.SoundKeyUS;
             wordRecord["DictionaryId"] = word.DictionaryId;
+            wordRecord["IsCollocation"] = word.IsCollocation ? true : (bool?)null;
 
             // Word usage statistics
             if (word.UsageInfo != null)
@@ -170,24 +167,6 @@ namespace Pronunciation.Parser
             {
                 _wordsSet.Insert(wordInsertRecord);
                 _wordIdMap.Add(word.Text, new WordIdInfo { WordId = currentWordId, RecordPosition = _wordIdMap.Count, IsUsed = true });
-            }
-
-            // Collocations
-            if (word.Collocations != null)
-            {
-                foreach (var collocation in word.Collocations)
-                {
-                    _collocationId++;
-
-                    var collocationRecord = _collocationsSet.CreateRecord();
-                    collocationRecord["CollocationId"] = _collocationId;
-                    collocationRecord["WordId"] = currentWordId;
-                    collocationRecord["CollocationText"] = collocation.Text;
-                    collocationRecord["SoundKeyUK"] = collocation.SoundKeyUK;
-                    collocationRecord["SoundKeyUS"] = collocation.SoundKeyUS;
-
-                    _collocationsSet.Insert(collocationRecord);
-                }
             }
         }
 
@@ -261,7 +240,6 @@ namespace Pronunciation.Parser
             _wordIdMap = null;
 
             _wordsSet.Dispose();
-            _collocationsSet.Dispose();
             if (_soundsSet != null)
             {
                 _soundsSet.Dispose();

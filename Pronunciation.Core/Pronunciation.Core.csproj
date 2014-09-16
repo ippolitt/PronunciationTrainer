@@ -85,7 +85,6 @@
     <Compile Include="Database\AudioTargetType.cs" />
     <Compile Include="Database\Book.cs" />
     <Compile Include="Database\DbExtensions.cs" />
-    <Compile Include="Database\DictionaryCollocation.cs" />
     <Compile Include="Database\DictionaryWord.cs" />
     <Compile Include="Database\Entities.cs" />
     <Compile Include="Database\Exercise.cs" />

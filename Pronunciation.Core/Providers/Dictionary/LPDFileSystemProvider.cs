@@ -101,20 +101,19 @@ namespace Pronunciation.Core.Providers.Dictionary
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 7)
+                    if (data.Length != 6)
                         throw new InvalidOperationException("Index file is broken!");
 
-                    int? dictionaryId = string.IsNullOrEmpty(data[6]) ? (int?)null : int.Parse(data[6]);
+                    int? dictionaryId = string.IsNullOrEmpty(data[5]) ? (int?)null : int.Parse(data[5]);
                     if (checkDictionaryId && !dictionaryIds.Contains(dictionaryId ?? 0))
                         continue;
 
                     words.Add(new IndexEntry(
                         data[1], 
                         data[0], 
-                        data[2] == "1" ? true : false,
-                        string.IsNullOrEmpty(data[3]) ? (int?)null : int.Parse(data[3]), 
-                        data[4], 
-                        data[5],
+                        string.IsNullOrEmpty(data[2]) ? (int?)null : int.Parse(data[2]), 
+                        data[3], 
+                        data[4],
                         dictionaryId,
                         null));
                 }

@@ -9,7 +9,6 @@ namespace Pronunciation.Core.Database
     {
         public DictionaryWord()
         {
-            this.DictionaryCollocations = new HashSet<DictionaryCollocation>();
             this.DictionaryCategories = new HashSet<DictionaryCategory>();
         }
 
@@ -25,7 +24,6 @@ namespace Pronunciation.Core.Database
         public string SoundKeyUS { get; set; }
         public string HtmlIndex { get; set; }
 
-        public virtual ICollection<DictionaryCollocation> DictionaryCollocations { get; set; }
         public virtual ICollection<DictionaryCategory> DictionaryCategories { get; set; }
     }
 }

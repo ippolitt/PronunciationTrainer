@@ -46,8 +46,8 @@ namespace Pronunciation.Parser
             bld.AppendFormat(
 @"
     <div class=""{0}"">
-        <div class=""ldoce_header""></div>
-        <div class=""ldoce_content"">
+        <div class=""dic_header""></div>
+        <div class=""dic_content"">
 ",
                 isFragment ? "ldoce_fragment" : "ldoce_page");
 
@@ -57,36 +57,36 @@ namespace Pronunciation.Parser
             foreach (var item in entry.Items)
             {
                 bld.Append(
-@"      <div class=""ldoce_entry"">
+@"      <div class=""dic_entry"">
 ");
                 bld.AppendFormat(
-@"          <span class=""ldoce_word_name"">{0}</span>",
+@"          <span class=""entry_name"">{0}</span>",
                     PrepareDisplayNameHtml(item.DisplayName));
 
                 if (addNumber)
                 {
                     // Ensure there's no space before <span>
                     bld.AppendFormat(
-@"<span class=""ldoce_entry_number""><sup>{0}</sup></span>",
+@"<span class=""entry_number""><sup>{0}</sup></span>",
                         item.Number);
 
                     if (!string.IsNullOrEmpty(item.PartsOfSpeech))
                     {
                         bld.AppendFormat(
-@" <span class=""ldoce_speech_part"">{0}</span>", item.PartsOfSpeech);
+@" <span class=""speech_part"">{0}</span>", item.PartsOfSpeech);
                     }
                 }
 
                 if (!string.IsNullOrEmpty(item.TranscriptionUK))
                 {
                     bld.AppendFormat(
-@" <span class=""ldoce_pron"">{0}</span>", PrepareTranscriptionHtml(item.TranscriptionUK));
+@" <span class=""pron"">{0}</span>", PrepareTranscriptionHtml(item.TranscriptionUK));
                 }
 
                 if (!string.IsNullOrEmpty(item.TranscriptionUS))
                 {
                     bld.AppendFormat(
-@" <span class=""ldoce_pron_us"">{0}</span>", PrepareTranscriptionHtml(item.TranscriptionUS));
+@" <span class=""pron_us"">{0}</span>", PrepareTranscriptionHtml(item.TranscriptionUS));
                 }
 
                 if (!isFragment)
@@ -180,8 +180,8 @@ namespace Pronunciation.Parser
                 return displayName;
 
             return displayName
-                .Replace("ˈ", "<span class=\"ldoce_stress_up\"></span>")
-                .Replace("ˌ", "<span class=\"ldoce_stress_low\"></span>");
+                .Replace("ˈ", "<span class=\"stress_up\"></span>")
+                .Replace("ˌ", "<span class=\"stress_low\"></span>");
         }
 
         private string PrepareTranscriptionHtml(string transcription)
@@ -190,13 +190,13 @@ namespace Pronunciation.Parser
                 return transcription;
 
             return transcription
-                .Replace(LDOCEParser.TranscriptionNoteOpenTag, "<span class=\"ldoce_pron_note\">")
+                .Replace(LDOCEParser.TranscriptionNoteOpenTag, "<span class=\"pron_note\">")
                 .Replace(LDOCEParser.TranscriptionNoteCloseTag, "</span>")
                 .Replace(LDOCEParser.TranscriptionItalicOpenTag, "<em>")
                 .Replace(LDOCEParser.TranscriptionItalicCloseTag, "</em>")
-                .Replace(LDOCEParser.TranscriptionSeparatorOpenTag, "<span class=\"ldoce_pron_separator\">")
+                .Replace(LDOCEParser.TranscriptionSeparatorOpenTag, "<span class=\"pron_separator\">")
                 .Replace(LDOCEParser.TranscriptionSeparatorCloseTag, "</span>")
-                .Replace("◂", "<span class=\"ldoce_stress_shift\"></span>");
+                .Replace("◂", "<span class=\"stress_shift\"></span>");
         }
 
         private string GetAudioKey(string audioFile)

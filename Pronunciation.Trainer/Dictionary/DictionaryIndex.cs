@@ -42,7 +42,7 @@ namespace Pronunciation.Trainer.Dictionary
             if (!_isInitialized)
                 return null;
 
-            return _entries.FirstOrDefault(x => !x.IsCollocation && x.EntryText == wordName);
+            return _entries.FirstOrDefault(x => x.EntryText == wordName);
         }
 
         public IndexEntry GetWordByPageKey(string pageKey)
@@ -50,7 +50,7 @@ namespace Pronunciation.Trainer.Dictionary
             if (!_isInitialized)
                 return null;
 
-            return _entries.FirstOrDefault(x => !x.IsCollocation && x.ArticleKey == pageKey);
+            return _entries.FirstOrDefault(x => x.ArticleKey == pageKey);
         }
 
         public IndexEntry GetEntryByPosition(int entryPosition)
@@ -189,12 +189,7 @@ namespace Pronunciation.Trainer.Dictionary
                 if (x != null && y != null)
                 {
                     result = string.Compare(x.EntryText, y.EntryText);
-                    if (result == 0)
-                    {
-                        // Ensure that word goes before collocation with the same name
-                        result = (x.IsCollocation == y.IsCollocation) ? 0 : (x.IsCollocation ? 1 : -1);
-                    }
-                    else
+                    if (result != 0)
                     {
                         // Check if they differ only by case and ensure that case-sensitive match with the search text 
                         // is higher than case-insensitive one. So if search text is "A", then we display: "A, a" 

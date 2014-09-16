@@ -101,11 +101,16 @@ namespace Pronunciation.Parser
                 throw new ArgumentNullException("DAT file builder is not initialized!");
 
             byte[] audioData = _fileLoader.GetRawData(soundKey);
-            DataIndex soundIndex = datBuilder.AppendEntity(soundKey, audioData);
+            DataIndex soundIndex = null;
+            if (audioData != null && audioData.Length > 0)
+            {
+                soundIndex = datBuilder.AppendEntity(soundKey, audioData);
+            }
+
             registeredSound = new RegisteredSound 
             {
-                DATFileId = ReferenceEquals(datBuilder, _mwBuilder) ? MWFileId : (int?)null, 
-                SoundIndex = soundIndex.BuildKey() 
+                DATFileId = ReferenceEquals(datBuilder, _mwBuilder) ? MWFileId : (int?)null,
+                SoundIndex = soundIndex == null ? null : soundIndex.BuildKey() 
             };
 
             _sounds.Add(soundKey, registeredSound);

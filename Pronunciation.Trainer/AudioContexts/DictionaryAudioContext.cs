@@ -20,6 +20,7 @@ namespace Pronunciation.Trainer.AudioContexts
         private LPDTargetKey _recordingKey;
         private string _soundKey;
         private DictionarySoundInfo _soundInfo;
+        private const string MWSoundPrefix = "mw_";
 
         public event AudioContextChangedHandler ContextChanged;
 
@@ -106,7 +107,7 @@ namespace Pronunciation.Trainer.AudioContexts
 
                 return string.Format("Active audio: \"{0}\" {1}",
                     string.IsNullOrEmpty(_soundInfo.SoundText) ? _soundKey : _soundInfo.SoundText, 
-                    _soundInfo.IsUKAudio ? "UK" : "US"); 
+                    IsMWSound(_soundKey) ? "MW" : (_soundInfo.IsUKAudio ? "UK" : "US")); 
             }
         }
 
@@ -140,6 +141,11 @@ namespace Pronunciation.Trainer.AudioContexts
         public string RegisterRecordedAudio(string recordedFilePath, DateTime recordingDate)
         {
             return _recordingProvider.RegisterNewAudio(_recordingKey, recordingDate, recordedFilePath, _recordingPolicy);
+        }
+
+        private bool IsMWSound(string soundKey)
+        {
+            return !string.IsNullOrEmpty(soundKey) && soundKey.StartsWith(MWSoundPrefix);
         }
     }
 }

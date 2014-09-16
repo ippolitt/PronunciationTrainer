@@ -107,7 +107,7 @@ namespace Pronunciation.Parser
 
                 //return;
 
-                bool isFakeMode = false;
+                bool isFakeMode = true;
                 bool deleteExtraWords = true;
                 bool preserveSounds = true;
                 var generationMode = HtmlBuilder.GenerationMode.Database;
@@ -117,13 +117,19 @@ namespace Pronunciation.Parser
                     Path.Combine(rootFolder, SoundsFolderLDOCE),
                     Path.Combine(rootFolder, SoundsFolderMW),
                     Path.Combine(rootFolder, SoundsCacheFolder),
-                    false);
+                    true);
 
                 //fileLoader = new FileLoaderMock();
 
                 DatabaseUploader dbUploader = null;
                 if (generationMode == HtmlBuilder.GenerationMode.Database)
                 {
+                    if (preserveSounds)
+                    {
+                        // To avoid loading/flushing cache
+                        fileLoader = new FileLoaderMock();
+                    }
+
                     if (!isFakeMode)
                     {
                         CleanDatabase(preserveSounds);
@@ -251,6 +257,9 @@ namespace Pronunciation.Parser
 
         private static void CleanDatabase(bool preserveSounds)
         {
+            if (preserveSounds)
+                return;
+
             using (SqlCeConnection conn = new SqlCeConnection(ConnectionString))
             {
                 conn.Open();
@@ -258,13 +267,7 @@ namespace Pronunciation.Parser
                 SqlCeCommand cmd = new SqlCeCommand();
                 cmd.Connection = conn;
 
-                if (!preserveSounds)
-                {
-                    cmd.CommandText = "Delete DictionarySound";
-                    cmd.ExecuteNonQuery();
-                }
-
-                cmd.CommandText = "Delete DictionaryCollocation";
+                cmd.CommandText = "Delete DictionarySound";
                 cmd.ExecuteNonQuery();
             }
         }

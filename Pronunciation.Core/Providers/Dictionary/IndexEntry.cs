@@ -10,7 +10,6 @@ namespace Pronunciation.Core.Providers.Dictionary
         public int? WordId { get; private set; }
         public string ArticleKey { get; private set; }
         public string EntryText { get; private set; }
-        public bool IsCollocation { get; private set; }
         public int? UsageRank { get; private set; }
         public string SoundKeyUK { get; private set; }
         public string SoundKeyUS { get; private set; }
@@ -21,12 +20,11 @@ namespace Pronunciation.Core.Providers.Dictionary
             return EntryText;
         }
 
-        public IndexEntry(string articleKey, string entryText, bool isCollocation, int? usageRank,
+        public IndexEntry(string articleKey, string entryText, int? usageRank,
             string soundKeyUK, string soundKeyUS, int? dictionaryId, int? wordId)
         {
             ArticleKey = articleKey;
             EntryText = entryText;
-            IsCollocation = isCollocation;
             UsageRank = usageRank;
             SoundKeyUK = soundKeyUK;
             SoundKeyUS = soundKeyUS;

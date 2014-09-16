@@ -49,6 +49,13 @@ input
     color: purple;
     font-weight: bold;
 }
+.word_reference
+{
+    font-size: 1em;
+    font-style: normal;
+    font-weight: bold;
+    color: purple;
+}
 .word_usage
 {
     float: right;
@@ -68,17 +75,21 @@ input
     padding-left: 1em;
     padding-bottom: 1em;
 }
-.entry_number
+.entry .entry_number
 {
     font-style: italic;
     margin-left: -0.5em;
     margin-right: 1em;
     font-size: 1.2em;
 }
-
 .entry_text strong
 {
     font-size: 1.2em;
+}
+.speech_part
+{
+    font-weight: normal;
+    font-style: italic;
 }
 
 .forms, .collocations, .notes
@@ -124,18 +135,18 @@ input
     font-size: 1em;
 }
 
-.pron, .pron_us, .ldoce_pron, .ldoce_pron_us
+.pron, .pron_us
 {
     font-weight: bold;
     color: blue;
     font-size: 1.2em;
 }
-.pron em, .pron_us em, .ldoce_pron em, .ldoce_pron_us em
+.pron em, .pron_us em, .pron em, .pron_us em
 {
     font-weight: normal;
     color: blue;
 }
-.pron_us:before, .pron_us_alt:before, .ldoce_pron_us:before
+.pron_us:before, .pron_us_alt:before, .pron_us:before
 {
     content: "AmE ";
     font-weight: bold;
@@ -154,42 +165,54 @@ input
 {
     content: "]";
 }
-
-.ldoce_fragment .ldoce_header:before
-{
-    content: "LDOCE";
-    font-weight: bold;
-    font-style:italic;
-    color: green;
-}
-.ldoce_content
-{
-    margin-left: 1em;
-    padding: 5px;
-}
-.ldoce_word_name
-{
-    font-weight: bold;
-    font-size: 1.2em;
-}
-.ldoce_pron_note
+.pron_note
 {
     font-weight: normal;
     font-style: italic;
     color: black;
     font-size: 0.9em;
 }
-.ldoce_speech_part
+.pron_separator
 {
-    font-weight: normal;
-    font-style: italic;
+    font-weight: bold;
+    color: black;
+    margin-right: 5px;
 }
-.ldoce_entry_number
+
+.ldoce_fragment, .mw_fragment, .ldoce_page, .mw_page
+{
+    margin-bottom: 10px;
+}
+.ldoce_fragment .dic_header:before
+{
+    content: "LDOCE";
+    font-weight: bold;
+    font-style:italic;
+    color: green;
+}
+.mw_fragment .dic_header:before
+{
+    content: "Merriam-Webster";
+    font-weight: bold;
+    font-style:italic;
+    color: green;
+}
+.dic_content
+{
+    margin-left: 1em;
+    padding: 5px;
+}
+.dic_entry .entry_name
+{
+    font-weight: bold;
+    font-size: 1.2em;
+}
+.dic_entry .entry_number
 {
     font-weight: bold;
 }
 
-.stress_low:before, .ldoce_stress_low:before
+.stress_low:before
 {
     content: "ˌ";
     font-weight: bold;
@@ -201,14 +224,14 @@ input
     font-weight: normal;
     color: blue;
 }
-.stress_up:before, .ldoce_stress_up:before
+.stress_up:before
 {
     content: "ˈ";
     font-weight: bold;
     font-size: 1.2em;
     color: blue;
 }
-.stress_shift:before, .ldoce_stress_shift:before
+.stress_shift:before
 {
     content: " ◂";
     font-weight: bold;
@@ -248,4 +271,8 @@ input
 .page_scroll
 {
     float: right;
+}
+.underlined_text
+{
+    text-decoration: underline;
 }

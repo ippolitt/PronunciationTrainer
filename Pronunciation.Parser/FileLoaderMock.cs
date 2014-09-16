@@ -10,8 +10,7 @@ namespace Pronunciation.Parser
     {
         private const string BaseFolder = @"D:\WORK\NET\PronunciationTrainer\Data\";
         private const string SourceFolderLDOCE = BaseFolder + @"LDOCE\Sounds";
-        private const string SoundsFolderMW = BaseFolder + @"MW\Sounds";
-        private const string ExtraFolderMW = BaseFolder + @"MW\Extra";
+        private const string DataFolderMW = BaseFolder + @"MW";
 
         public bool FlushCache()
         {
@@ -35,7 +34,7 @@ namespace Pronunciation.Parser
         public byte[] GetRawData(string fileKey)
         {
             //CheckFileLDOCE(fileKey);
-            CheckFileMW(fileKey);
+            //CheckFileMW(fileKey);
             return new byte[1];
         }
 
@@ -44,15 +43,15 @@ namespace Pronunciation.Parser
             if (fileKey.StartsWith(SoundManager.MW_SoundKeyPrefix))
             {
                 string fileName = string.Format("{0}.mp3", fileKey.Remove(0, SoundManager.MW_SoundKeyPrefix.Length));
-                string activeFile = Path.Combine(SoundsFolderMW, fileName);
+                string activeFile = Path.Combine(DataFolderMW, "Sounds", fileName);
                 if (File.Exists(activeFile))
                     return;
 
                 fileName = string.Format("{0}.wav", fileKey.Remove(0, SoundManager.MW_SoundKeyPrefix.Length));
-                string extraFile = Path.Combine(ExtraFolderMW, fileName);
+                string extraFile = Path.Combine(DataFolderMW, "Extra", fileName);
                 if (File.Exists(extraFile))
                 {
-                    File.Move(extraFile, activeFile);
+                    File.Move(extraFile, Path.Combine(DataFolderMW, "Active", fileName));
                 }
                 else
                 {

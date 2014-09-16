@@ -14,9 +14,7 @@ namespace Pronunciation.Trainer.StyleSelectors
     public class SuggestionsListItemStyleSelector : StyleSelector
     {
         private readonly static Style _serviceItemStyle;
-        private readonly static Style _collocationItemStyle;
-        private readonly static Style _extraItemNormalStyle;
-        private readonly static Style _extraItemCollocationStyle;
+        private readonly static Style _extraItemStyle;
 
         static SuggestionsListItemStyleSelector()
         {
@@ -25,14 +23,8 @@ namespace Pronunciation.Trainer.StyleSelectors
             _serviceItemStyle.Setters.Add(new Setter(ListBoxItem.FontStyleProperty, FontStyles.Italic));
             _serviceItemStyle.Setters.Add(new Setter(ListBoxItem.FocusableProperty, false));
 
-            _collocationItemStyle = new Style(typeof(ListBoxItem));
-            _collocationItemStyle.Setters.Add(new Setter(ListBoxItem.FontStyleProperty, FontStyles.Italic));
-
-            _extraItemNormalStyle = new Style(typeof(ListBoxItem));
-            _extraItemNormalStyle.Setters.Add(new Setter(ListBoxItem.ForegroundProperty, Brushes.DarkSlateGray));
-
-            _extraItemCollocationStyle = new Style(typeof(ListBoxItem), _extraItemNormalStyle);
-            _extraItemCollocationStyle.Setters.Add(new Setter(ListBoxItem.FontStyleProperty, FontStyles.Italic));
+            _extraItemStyle = new Style(typeof(ListBoxItem));
+            _extraItemStyle.Setters.Add(new Setter(ListBoxItem.ForegroundProperty, Brushes.DarkSlateGray));
         }
 
         public override Style SelectStyle(object item, DependencyObject container)
@@ -44,15 +36,9 @@ namespace Pronunciation.Trainer.StyleSelectors
             }
             else if (item is IndexEntry)
             {
-                bool isCollocation = ((IndexEntry)item).IsCollocation;
-                bool isExtraItem = IsExtraItem((IndexEntry)item, container);
-                if (isExtraItem)
+                if (IsExtraItem((IndexEntry)item, container))
                 {
-                    st = isCollocation ? _extraItemCollocationStyle : _extraItemNormalStyle;
-                }
-                else
-                {
-                    st = isCollocation ? _collocationItemStyle : null;
+                    st = _extraItemStyle;
                 }
             }
 

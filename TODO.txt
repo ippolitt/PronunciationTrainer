@@ -1,15 +1,8 @@
 ﻿Top:
-- Clean sounds cache and rebuild it (to remove extra LDOCE sounds)
-- Install MW standalone to be able to compare
-- What is "1 is also"? See "there"
-- Change color of dictionary name
-- Find words that present only in MW (with several audios)
-- Search: we must also match items with accented characters (e.g. à la carte)
-- Add table with Dictionaries list
-- Import MW dictionary. Remember, that with several pronunciations order is important (dog). Validate using words like [dog, awkward, author, law, water]
---
-- Test in FileSystem
 - Try installing video card, then try giving more memory to video adapter
+--
+- Check what title has "new year" collocation
+- Search: we must also match items with accented characters (e.g. à la carte)
 - Delete a word from category with DEL (not Backspace, remove Backspace also from Recordings list) 
 - Add records count to the suggestions list
 - Add total statistics (recorded N words over Y days). Move statistics from status bar to a dedicated tab.
@@ -17,15 +10,35 @@
 - Add ability to rewind player by 1/3 seconds (should be configurable)
 - Lazy load categories (only if tab is visible)
 - Remove some logging
-- Somehow mark the entries from LDOCE in UI
+- Somehow mark the entries from LDOCE/MW in UI
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 LDOCE import:
-	- Import also those audio that presents in LDOCE but misses in LPD (try matching by audio name)
-	- Clean DIC folder and generate file system entries
+	- Rethink sounds text logic: "new" and "gnu" use the same audio file "us_gnu".
+	- Improvements:
+		- If LPD has several word spellings (absinth, absinthe) split them and point to the same article
+		- import variants [i]also[/i], [i]or[/i]. Think how to match with LPD.
+		- import derived forms [m1]• (abandon -> abandonment). Probably, to different entry as LPD does.
+		- import [com]([b]  (inflected form: able-abler-ablest) and [com]([i]plural[/i]  (plurals). May even without audio? Import into entry.
+		- Ensure that new entries don't match the default MW entries
+	- Word forms are lost:
+		- plurals
+		- be -> was " [com]" (be000002.wav)
+		- twenty -> [m1]• [b]twen·ti·eth[/b] [s]twenty03.wav[/s] (in LPD "ninetieth" is a separate entry)
+	- Change color of dictionary name
+	- Sound button is lower then collocation/MW entry
+	- Generate hyperlink for MW [ref] (both in file system and databse)
+	- Add table Dictionaries. Register sound key prefix there (then change logic of current audio text in DictionaryContextt)
+	- Add a mode for updating sound text only
+	- Find words that present only in MW (with several audios)
+	- Clean DIC folder and generate file system entries. Test MW entries: UI and sounds
 	- Generate iPhone entries and upload them to iPhone (don't forget to change mobile .css)
 	- If possible - find other pronunciations inside LDOCE articles (e.g. for word forms - see abduction)
 	- Analyze words that present in LPD but miss in LDOCE
 	- ? [analyze] DB mode: don't import sounds that have "_lpd_" inside and can be matched to the existing LPD sound. Remap them instead.
+	- Backup database and binaries
+	- CSS: 
+		- ".entry_text strong" migrate to ".entry_name", 
+		- LPD misses "part_of_speech" (it's just <em>)
 - Bugs
 	- Alt+left/right arrow doesn't work when focus is inside the browser
 	- When doubleclick on the item in audio list, refresh context is called two times: selection changed and double click
@@ -34,7 +47,7 @@ LDOCE import:
 	- Bug when sequence is scheduled and I start another action
 	- There are no tags in my exported mp3 files
 	- Before removing the FakeEntity (for Exercise and Training) ensure they are not loaded into dbcontext
-	- Parts of speech have deddicated tag in LDOCE/MW but in LPD they are just <em> (see "buffet")
+	- Parts of speech have dedicated tag in LDOCE/MW but in LPD they are just <em> (see "buffet")
 - Performance:
 	- Get rid of entity framework in lists (Exercises, Trainings, Comboboxes, Categories) - use it only when updating/inserting detailed record
 	- If we switch to using int32 instead of string as Words/Collocations reference to Sounds it reduces RAM by 4MB. Problems: can't easily cleanup Sounds table on reimport (foreign key)
@@ -51,6 +64,7 @@ LDOCE import:
 	- Use other control instead of WebBrowser (see http://stackoverflow.com/questions/18119125/options-for-embedding-chromium-instead-of-ie-webbrowser-control-with-wpf-c)
 - New functionality:
 	- Add ability to pause the recording
+	- Add a list of all recordings for the opened dictionary article (lazy load)
 	- Find some good dictionary with Russian translations
 	- Somehow get CEPD pronunciations?
 	- Import spelling-to-sound from LPD

@@ -11,6 +11,7 @@ namespace Pronunciation.Parser
         private string _title;
         private int? _dictionaryId;
 
+        public bool IsLPDCollocation;
         public List<DicEntry> LPDEntries;
         public LDOCEHtmlEntry LDOCEEntry;
         public MWHtmlEntry MWEntry;

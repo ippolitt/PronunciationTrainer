@@ -120,11 +120,15 @@ namespace Pronunciation.Parser
             File.AppendAllText(_logFile, string.Format("********* Starting conversion {0} ***********\r\n\r\n", DateTime.Now));
 
             List<DicWord> words = ParseFile(sourceXml);
-            List<string> collocations = CollectCollocations(words);
+            if (IsDatabaseMode)
+            {
+                int addedCollocations = AddCollocations(words);
+                File.AppendAllText(_logFile, string.Format("\r\nAdded {0} collocations as words.\r\n", addedCollocations));
+            }
 
-            EntriesMapper mapper = new EntriesMapper(words, collocations);
-            mapper.MatchEntries(_ldoce);
-            mapper.MatchEntries(_mw);
+            EntriesMapper mapper = new EntriesMapper(words);
+            mapper.AddEntries(_ldoce, IsDatabaseMode);
+            mapper.AddEntries(_mw, IsDatabaseMode);
             if (mapper.Stats != null)
             {
                 File.AppendAllText(_logFile, "\r\nExtra entries matching stats:\r\n" + mapper.Stats.ToString());
@@ -158,50 +162,60 @@ namespace Pronunciation.Parser
             File.AppendAllText(_logFile, "Ended conversion.\r\n\r\n");
         }
 
-        private List<string> CollectCollocations(List<DicWord> words)
+        private int AddCollocations(List<DicWord> words)
         {
-            var collocations = new List<string>();
             IFileLoader fileLoader = _fileLoader;
             
             // We use mock instead of the actual file loader to speed up HTML generation inside "AddCollocations" method
             _fileLoader = new FileLoaderMock();
             try
             {
+                var keywords = new HashSet<string>(words.Select(x => x.Keyword));
+                List<DicWord> extraWords = new List<DicWord>();
                 foreach (var word in words)
                 {
                     foreach (DicEntry entry in word.LPDEntries)
                     {
-                        AddCollocations(entry, collocations);
+                        AddCollocations(entry, extraWords, keywords);
                     }
                 }
+
+                words.AddRange(extraWords);
+                return extraWords.Count;
             }
             finally
             {
                 _fileLoader = fileLoader;
             }
-
-            return collocations;
         }
 
-        private int AddCollocations(DicEntry entry, List<string> collocations)
+        private void AddCollocations(DicEntry entry, List<DicWord> words, HashSet<string> keywords)
         {
             if (entry.AllItems == null || entry.AllItems.Count <= 0)
-                return 0;
-
-            int collocationsCount = 0;
+                return;
+           
             foreach (var item in entry.AllItems.Where(x => x.ItemType == ItemType.Collocation))
             {
                 var contentCollector = new ContentCollector(XmlReplaceMap.XmlElementStrong, true);
                 ParseItemXml(item.RawData, false, contentCollector, null);
+
                 string[] names = ParseCollocationsContent(contentCollector.GetContent());
                 if (names != null)
                 {
-                    collocations.AddRange(names);
-                    collocationsCount += names.Length;
+                    foreach (var name in names)
+                    {
+                        if (keywords.Add(name))
+                        {
+                            words.Add(new DicWord
+                            {
+                                Keyword = name,
+                                IsLPDCollocation = true,
+                                LPDEntries = new List<DicEntry> { new DicEntry { RawMainData = item.RawData } }
+                            });
+                        }
+                    }
                 }
             }
-
-            return collocationsCount;
         }
 
         private void GenerateInDatabase(List<DicWord> words, StringBuilder soundStats, int maxWords, bool isFakeMode, bool deleteExtraWords)
@@ -325,19 +339,9 @@ namespace Pronunciation.Parser
                 {
                     WordDescription description = GenerateHtml(word, pageBuilder, soundStats);
                     int? usageRank = description.UsageInfo == null ? (int?)null : description.UsageInfo.CombinedRank;
-                    indexBuilder.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}",
-                        description.Text, group.Name, 0, usageRank,
+                    indexBuilder.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}",
+                        description.Text, group.Name, usageRank,
                         description.SoundKeyUK, description.SoundKeyUS, word.DictionaryId));
-
-                    if (description.Collocations != null)
-                    {
-                        foreach (var collocation in description.Collocations)
-                        {
-                            indexBuilder.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}",
-                                collocation.Text, group.Name, 1, null,
-                                collocation.SoundKeyUK, collocation.SoundKeyUS, null));
-                        }
-                    }
                 }
 
                 // Generate title
@@ -407,6 +411,7 @@ namespace Pronunciation.Parser
             var wordDescription = new WordDescription 
             { 
                 Text = word.Keyword,
+                IsCollocation = word.IsLPDCollocation,
                 UsageInfo = _usageBuilder.GetUsage(word.Keyword)
             };
 
@@ -637,19 +642,7 @@ namespace Pronunciation.Parser
                                 var contentItems = ParseCollocationsContent(contentCollector.GetContent());
                                 if (contentItems != null && contentItems.Length > 0)
                                 {
-                                    if (wordDescription.Collocations == null)
-                                    {
-                                        wordDescription.Collocations = new List<CollocationDescription>();
-                                    }
-
-                                    wordDescription.Collocations.AddRange(contentItems.Select(x => new CollocationDescription
-                                    {
-                                        Text = x,
-                                        SoundKeyUK = itemSoundCollector.MainSoundUK,
-                                        SoundKeyUS = itemSoundCollector.MainSoundUS
-                                    }));
-
-                                    itemSoundCollector.SetMainSoundsTitle(contentItems[0]);
+                                    itemSoundCollector.SetMainSoundsTitle(string.Join(", ", contentItems));
                                 }
                             }
                             wordDescription.Sounds.AddRange(itemSoundCollector.Sounds);

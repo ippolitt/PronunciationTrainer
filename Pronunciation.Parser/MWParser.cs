@@ -36,7 +36,8 @@ namespace Pronunciation.Parser
         public MWEntry[] Parse(string sourceFile)
         {
             Log("*** Started parsing ***\r\n");
-
+            //var lst = new List<string>();
+            //var lst2 = new List<string>();
             var entries = new List<MWEntry>();
             MWEntry entry = null;
             using (var reader = new StreamReader(sourceFile))
@@ -60,6 +61,17 @@ namespace Pronunciation.Parser
                         {
                             item = ParseMainTag(text);
                         }
+                        //else if (text.Contains(".wav"))
+                        //{
+                        //    if (text.StartsWith("[com]") || text.StartsWith("[m1]•")
+                        //        // || text.StartsWith("[m2]")
+                        //        //|| text.StartsWith("[i]also") || text.StartsWith("[i]or")
+                        //        )
+                        //    {
+                        //        lst.Add(string.Format("{0}\r\n\t{1}", entry == null ? null : entry.Keyword, text));
+                        //        lst2.Add(text);
+                        //    }
+                        //}
                         else
                         {
                             continue;
@@ -94,7 +106,9 @@ namespace Pronunciation.Parser
 
             Log("*** Ended parsing ***\r\n");
             File.AppendAllText(_logFile, _log.ToString());
-
+            //File.WriteAllText(@"D:\test.txt", string.Join(Environment.NewLine, lst.OrderBy(x => x)));
+            //File.WriteAllText(@"D:\test2.txt", string.Join(Environment.NewLine, lst2.GroupBy(x => x.Substring(0, 8))
+            //    .Select(x => x.Key + " " + x.Count()).OrderBy(x => x)));
             return entries.ToArray();
         }
 

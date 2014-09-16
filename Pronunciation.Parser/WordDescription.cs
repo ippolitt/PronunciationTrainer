@@ -12,14 +12,7 @@ namespace Pronunciation.Parser
         public string SoundKeyUS;
         public WordUsageInfo UsageInfo;
         public List<SoundInfo> Sounds = new List<SoundInfo>();
-        public List<CollocationDescription> Collocations;
         public int? DictionaryId;
-    }
-
-    class CollocationDescription
-    {
-        public string Text;
-        public string SoundKeyUK;
-        public string SoundKeyUS;
+        public bool IsCollocation;
     }
 }

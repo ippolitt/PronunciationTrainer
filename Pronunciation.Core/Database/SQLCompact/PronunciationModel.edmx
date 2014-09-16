@@ -10,7 +10,6 @@
           <EntitySet Name="Book" EntityType="PronunciationModel.Store.Book" store:Type="Tables" />
           <EntitySet Name="DictionaryCategory" EntityType="PronunciationModel.Store.DictionaryCategory" store:Type="Tables" />
           <EntitySet Name="DictionaryCategoryWord" EntityType="PronunciationModel.Store.DictionaryCategoryWord" store:Type="Tables" />
-          <EntitySet Name="DictionaryCollocation" EntityType="PronunciationModel.Store.DictionaryCollocation" store:Type="Tables" />
           <EntitySet Name="DictionarySound" EntityType="PronunciationModel.Store.DictionarySound" store:Type="Tables" />
           <EntitySet Name="DictionaryWord" EntityType="PronunciationModel.Store.DictionaryWord" store:Type="Tables" />
           <EntitySet Name="Exercise" EntityType="PronunciationModel.Store.Exercise" store:Type="Tables" />
@@ -19,10 +18,6 @@
           <EntitySet Name="RecordedAudio" EntityType="PronunciationModel.Store.RecordedAudio" store:Type="Tables" />
           <EntitySet Name="Topic" EntityType="PronunciationModel.Store.Topic" store:Type="Tables" />
           <EntitySet Name="Training" EntityType="PronunciationModel.Store.Training" store:Type="Tables" />
-          <AssociationSet Name="Collocation_WordId" Association="PronunciationModel.Store.Collocation_WordId">
-            <End Role="DictionaryWord" EntitySet="DictionaryWord" />
-            <End Role="DictionaryCollocation" EntitySet="DictionaryCollocation" />
-          </AssociationSet>
           <AssociationSet Name="FK_DictionaryCategoryWord_DictionaryCategory" Association="PronunciationModel.Store.FK_DictionaryCategoryWord_DictionaryCategory">
             <End Role="DictionaryCategory" EntitySet="DictionaryCategory" />
             <End Role="DictionaryCategoryWord" EntitySet="DictionaryCategoryWord" />
@@ -93,16 +88,6 @@
           <Property Name="CategoryId" Type="uniqueidentifier" Nullable="false" />
           <Property Name="WordId" Type="int" Nullable="false" />
         </EntityType>
-        <EntityType Name="DictionaryCollocation">
-          <Key>
-            <PropertyRef Name="CollocationId" />
-          </Key>
-          <Property Name="CollocationId" Type="int" Nullable="false" />
-          <Property Name="CollocationText" Type="nvarchar" Nullable="false" MaxLength="100" />
-          <Property Name="WordId" Type="int" Nullable="false" />
-          <Property Name="SoundKeyUK" Type="nvarchar" MaxLength="100" />
-          <Property Name="SoundKeyUS" Type="nvarchar" MaxLength="100" />
-        </EntityType>
         <EntityType Name="DictionarySound">
           <Key>
             <PropertyRef Name="SoundKey" />
@@ -110,7 +95,7 @@
           <Property Name="SoundKey" Type="nvarchar" Nullable="false" MaxLength="100" />
           <Property Name="IsUKSound" Type="bit" Nullable="false" />
           <Property Name="SoundText" Type="nvarchar" MaxLength="100" />
-          <Property Name="SoundIndex" Type="nvarchar" Nullable="false" MaxLength="50" />
+          <Property Name="SoundIndex" Type="nvarchar" MaxLength="50" />
           <Property Name="SourceFileId" Type="int" />
         </EntityType>
         <EntityType Name="DictionaryWord">
@@ -128,6 +113,7 @@
           <Property Name="SoundKeyUS" Type="nvarchar" MaxLength="100" />
           <Property Name="HtmlIndex" Type="nvarchar" MaxLength="50" />
           <Property Name="DictionaryId" Type="int" />
+          <Property Name="IsCollocation" Type="bit" />
         </EntityType>
         <EntityType Name="Exercise">
           <Key>
@@ -201,18 +187,6 @@
           <Property Name="CharacterCount" Type="int" />
           <Property Name="ReferenceAudioDuration" Type="int" />
         </EntityType>
-        <Association Name="Collocation_WordId">
-          <End Role="DictionaryWord" Type="PronunciationModel.Store.DictionaryWord" Multiplicity="1" />
-          <End Role="DictionaryCollocation" Type="PronunciationModel.Store.DictionaryCollocation" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="DictionaryWord">
-              <PropertyRef Name="WordId" />
-            </Principal>
-            <Dependent Role="DictionaryCollocation">
-              <PropertyRef Name="WordId" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
         <Association Name="FK_DictionaryCategoryWord_DictionaryCategory">
           <End Role="DictionaryCategory" Type="PronunciationModel.Store.DictionaryCategory" Multiplicity="1">
             <OnDelete Action="Cascade" />
@@ -368,17 +342,12 @@
           <EntitySet Name="Trainings" EntityType="PronunciationModel.Training" />
           <EntitySet Name="DictionarySounds" EntityType="PronunciationModel.DictionarySound" />
           <EntitySet Name="DictionaryCategories" EntityType="PronunciationModel.DictionaryCategory" />
-          <EntitySet Name="DictionaryCollocations" EntityType="PronunciationModel.DictionaryCollocation" />
           <EntitySet Name="DictionaryWords" EntityType="PronunciationModel.DictionaryWord" />
-          <AssociationSet Name="Collocation_WordId" Association="PronunciationModel.Collocation_WordId">
-            <End Role="DictionaryWord" EntitySet="DictionaryWords" />
-            <End Role="DictionaryCollocation" EntitySet="DictionaryCollocations" />
-          </AssociationSet>
           <AssociationSet Name="DictionaryCategoryWord" Association="PronunciationModel.DictionaryCategoryWord">
             <End Role="DictionaryCategory" EntitySet="DictionaryCategories" />
             <End Role="DictionaryWord" EntitySet="DictionaryWords" />
           </AssociationSet>
-        </EntityContainer>
+          </EntityContainer>
         <EntityType Name="Book">
           <Key>
             <PropertyRef Name="BookId" />
@@ -585,17 +554,6 @@
           <Property Type="Boolean" Name="IsSystemCategory" />
           <NavigationProperty Name="DictionaryWords" Relationship="PronunciationModel.DictionaryCategoryWord" FromRole="DictionaryCategory" ToRole="DictionaryWord" />
         </EntityType>
-        <EntityType Name="DictionaryCollocation">
-          <Key>
-            <PropertyRef Name="CollocationId" />
-          </Key>
-          <Property Type="Int32" Name="CollocationId" Nullable="false" />
-          <Property Type="String" Name="CollocationText" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
-          <Property Type="Int32" Name="WordId" Nullable="false" />
-          <Property Type="String" Name="SoundKeyUK" MaxLength="100" FixedLength="false" Unicode="true" />
-          <Property Type="String" Name="SoundKeyUS" MaxLength="100" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="DictionaryWord" Relationship="PronunciationModel.Collocation_WordId" FromRole="DictionaryCollocation" ToRole="DictionaryWord" />
-        </EntityType>
         <EntityType Name="DictionaryWord">
           <Key>
             <PropertyRef Name="WordId" />
@@ -611,26 +569,14 @@
           <Property Type="String" Name="SoundKeyUS" MaxLength="100" FixedLength="false" Unicode="true" />
           <Property Type="String" Name="HtmlIndex" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Type="Int32" Name="DictionaryId" />
-          <NavigationProperty Name="DictionaryCollocations" Relationship="PronunciationModel.Collocation_WordId" FromRole="DictionaryWord" ToRole="DictionaryCollocation" />
+          <Property Type="Boolean" Name="IsCollocation" />
           <NavigationProperty Name="DictionaryCategories" Relationship="PronunciationModel.DictionaryCategoryWord" FromRole="DictionaryWord" ToRole="DictionaryCategory" />
         </EntityType>
-        <Association Name="Collocation_WordId">
-          <End Type="PronunciationModel.DictionaryWord" Role="DictionaryWord" Multiplicity="1" />
-          <End Type="PronunciationModel.DictionaryCollocation" Role="DictionaryCollocation" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="DictionaryWord">
-              <PropertyRef Name="WordId" />
-            </Principal>
-            <Dependent Role="DictionaryCollocation">
-              <PropertyRef Name="WordId" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
         <Association Name="DictionaryCategoryWord">
           <End Type="PronunciationModel.DictionaryCategory" Role="DictionaryCategory" Multiplicity="*" />
           <End Type="PronunciationModel.DictionaryWord" Role="DictionaryWord" Multiplicity="*" />
         </Association>
-      </Schema>
+        </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
     <edmx:Mappings>
@@ -753,20 +699,10 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="DictionaryCollocations">
-            <EntityTypeMapping TypeName="PronunciationModel.DictionaryCollocation">
-              <MappingFragment StoreEntitySet="DictionaryCollocation">
-                <ScalarProperty Name="SoundKeyUS" ColumnName="SoundKeyUS" />
-                <ScalarProperty Name="SoundKeyUK" ColumnName="SoundKeyUK" />
-                <ScalarProperty Name="WordId" ColumnName="WordId" />
-                <ScalarProperty Name="CollocationText" ColumnName="CollocationText" />
-                <ScalarProperty Name="CollocationId" ColumnName="CollocationId" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
           <EntitySetMapping Name="DictionaryWords">
             <EntityTypeMapping TypeName="PronunciationModel.DictionaryWord">
               <MappingFragment StoreEntitySet="DictionaryWord">
+                <ScalarProperty Name="IsCollocation" ColumnName="IsCollocation" />
                 <ScalarProperty Name="DictionaryId" ColumnName="DictionaryId" />
                 <ScalarProperty Name="HtmlIndex" ColumnName="HtmlIndex" />
                 <ScalarProperty Name="SoundKeyUS" ColumnName="SoundKeyUS" />
@@ -853,15 +789,10 @@
         <EntityTypeShape EntityType="PronunciationModel.Training" Width="1.5" PointX="7.375" PointY="9.75" Height="3.1340950520833335" />
         <EntityTypeShape EntityType="PronunciationModel.DictionarySound" Width="1.5" PointX="0.75" PointY="0.75" Height="1.7879850260416674" />
         <EntityTypeShape EntityType="PronunciationModel.DictionaryCategory" Width="1.5" PointX="9.375" PointY="10.75" Height="1.9802864583333388" />
-        <EntityTypeShape EntityType="PronunciationModel.DictionaryCollocation" Width="1.5" PointX="13.875" PointY="10.625" Height="2.1725878906250031" />
         <EntityTypeShape EntityType="PronunciationModel.DictionaryWord" Width="1.5" PointX="11.625" PointY="10" Height="3.5186979166666674" />
-        <AssociationConnector Association="PronunciationModel.Collocation_WordId" >
-          <ConnectorPoint PointX="13.125" PointY="11.711293945312502" />
-          <ConnectorPoint PointX="13.875" PointY="11.711293945312502" />
-        </AssociationConnector>
         <AssociationConnector Association="PronunciationModel.DictionaryCategoryWord" >
-          <ConnectorPoint PointX="10.875" PointY="11.740143229166669" />
-          <ConnectorPoint PointX="11.625" PointY="11.740143229166669" />
+          <ConnectorPoint PointX="10.875" PointY="11.740143229166666" />
+          <ConnectorPoint PointX="11.625" PointY="11.740143229166666" />
         </AssociationConnector>
         </Diagram>
     </Diagrams>
