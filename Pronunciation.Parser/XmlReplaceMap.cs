@@ -9,17 +9,20 @@ namespace Pronunciation.Parser
     {
         private readonly List<TagReplaceInfo> _map = new List<TagReplaceInfo>();
 
-        public const string XmlElementStrong = "strong";
+        public const string XmlElementCollocationName = "col_name";
+        private const string XmlElementEntryNameName = "entry_name";
 
         public XmlReplaceMap()
         {
             _map = new List<TagReplaceInfo>();
 
-            AddMap(XmlElementStrong, ReplacementType.LeaveOldTag, null, null);
+            AddMap("strong", ReplacementType.LeaveOldTag, null, null);
             AddMap("em", ReplacementType.LeaveOldTag, null, null);
             AddMap("sub", ReplacementType.LeaveOldTag, null, null);
             AddMap("sup", ReplacementType.LeaveOldTag, null, null);
 
+            AddMap(XmlElementEntryNameName, ReplacementType.ReplaceOldTag, "span", "class=\"entry_name\"");
+            AddMap(XmlElementCollocationName, ReplacementType.ReplaceOldTag, "span", "class=\"collocation_name\"");
             AddMap(XmlBuilder.ElementComment, ReplacementType.ReplaceOldTag, "div", "class=\"comment\"");
             AddMap("pron", ReplacementType.ReplaceOldTag, "span", "class=\"pron\"");
             AddMap("pron_us", ReplacementType.ReplaceOldTag, "span", "class=\"pron_us\"");
@@ -44,6 +47,14 @@ namespace Pronunciation.Parser
         public TagReplaceInfo GetReplaceInfo(string tagName)
         {
             return _map.Single(x => x.SourceTag == tagName);
+        }
+
+        public string ConvertCollocationToWord(string collocationXml)
+        {
+            if (string.IsNullOrEmpty(collocationXml))
+                return collocationXml;
+
+            return collocationXml.Replace(XmlElementCollocationName, XmlElementEntryNameName);
         }
 
         private void AddMap(string sourceTag, ReplacementType replacementType, string replacementTag, string additionalData)

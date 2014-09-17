@@ -41,6 +41,9 @@ namespace Pronunciation.Parser
         public StringBuilder BldStats = new StringBuilder();
         private const string PronTag = "pron";
         private const string PronUsAltTag = "pron_us_alt";
+        private const string StrongTag = "strong";
+        private const string EntryNameTag = "entry_name";
+        private const string CollocationNameTag = "col_name";
 
         private string _activeWord;
 
@@ -49,10 +52,19 @@ namespace Pronunciation.Parser
 
         static TagAnalyzer()
         {
-            AddMap("[b]", "[/b]", "strong");
-            AddMap("[c blue]ˈ[/c]", null, "<stress_up/>", null, false, EntryType.Collocation); // do it only for collocations to separate phrase stress from word stress
+            AddMap("[b]", "[/b]", StrongTag);
+            // do it only for collocations to separate phrase stress from word stress
+            AddMap("[c blue]ˈ[/c]", null, "<stress_up/>", null, false, EntryType.Collocation);
+            AddMap("[c blue] ˈ[/c]", null, " <stress_up/>", null, false, EntryType.Collocation); // the space before <stress_up/> is required
+            AddMap("[c blue]     ˈ[/c]", null, "<stress_up/>", null, false, EntryType.Collocation); // used in "spending money"
             AddMap("[c blue]ˌ[/c]", null, "<stress_low/>", null, false, EntryType.Collocation);
-            AddMap("[c blue]₍ˌ₎[/c]", null, "<stress_low_optional><sub>(</sub><stress_low/><sub>)</sub></stress_low_optional>", null, false, EntryType.Collocation);
+            AddMap("[c blue] ˌ[/c]", null, "<stress_low/>", null, false, EntryType.Collocation); // no space before <stress_low/>
+
+            string optionalLowStress = "<stress_low_optional><sub>(</sub><stress_low/><sub>)</sub></stress_low_optional>";
+            AddMap("[c blue]₍ˌ₎[/c]", null, optionalLowStress, null, false, EntryType.Collocation);
+            AddMap("[c blue]̪₍ˌ₎[/c]", null, optionalLowStress, null, false, EntryType.Collocation); // South Africa
+            AddMap("[c blue]̯₍ˌ₎[/c]", null, optionalLowStress, null, false, EntryType.Collocation); // Trade union
+            AddMap("[c blue]₍ˌ₎ˈ[/c]", null, optionalLowStress + "<stress_up/>", null, false, EntryType.Collocation); // cwm -> Rhondda
             AddMap("[c blue]◂[/c]", null, "<stress_shift/>", null, false);
             AddMap("[c blue]", "[/c]", null); // remove the tags for all other cases
 
@@ -75,12 +87,12 @@ namespace Pronunciation.Parser
             AddMap("↑<<", ">>", "wlink");
         }
 
-        private static void AddMap(string openTag, string closeTag, string htmlTag)
+        private static void AddMap(string openTag, string closeTag, string xmlTag)
         {
-            AddMap(openTag, closeTag, htmlTag, true, EntryType.MainEntry);
+            AddMap(openTag, closeTag, xmlTag, true, EntryType.MainEntry);
         }
 
-        private static void AddMap(string openTag, string closeTag, string htmlTag, bool applyToAll, EntryType filter)
+        private static void AddMap(string openTag, string closeTag, string xmlTag, bool applyToAll, EntryType filter)
         {
             ReplaceMap.Add(new ReplaceInfo
             {
@@ -88,8 +100,8 @@ namespace Pronunciation.Parser
                 Filter = filter,
                 OpenTag = openTag,
                 CloseTag = closeTag,
-                OpenTagReplacement = string.IsNullOrEmpty(htmlTag) ? null : string.Format("<{0}>", htmlTag),
-                CloseTagReplacement = string.IsNullOrEmpty(htmlTag) ? null : string.Format("</{0}>", htmlTag)
+                OpenTagReplacement = string.IsNullOrEmpty(xmlTag) ? null : string.Format("<{0}>", xmlTag),
+                CloseTagReplacement = string.IsNullOrEmpty(xmlTag) ? null : string.Format("</{0}>", xmlTag)
             });
         }
 
@@ -367,7 +379,17 @@ namespace Pronunciation.Parser
                 throw new ArgumentException();
 
             string result = bld.ToString().Replace(" ◂", "<stress_shift/>");
-            return _regMissedAmE.Replace(result, ReplaceEvaluator);
+            result = _regMissedAmE.Replace(result, ReplaceEvaluator);
+            if (entry == EntryType.MainEntry)
+            {
+                result = ReplaceItemName(result, EntryNameTag, true);
+            }
+            else if (entry == EntryType.Collocation)
+            {
+                result = ReplaceItemName(result, CollocationNameTag, false);
+            }
+
+            return result;
         }
 
         private string ReplaceEvaluator(Match match)
@@ -382,6 +404,32 @@ namespace Pronunciation.Parser
         {
             return ch.ToString().Replace("&", "&amp;");
         }
+
+        private string ReplaceItemName(string text, string replacementTag, bool firstOccurenceOnly)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            var reader = new TagReader(text);
+
+            string openTag = string.Format("<{0}>", StrongTag);
+            string closeTag = string.Format("</{0}>", StrongTag);
+            while (reader.LoadTagContent(openTag, closeTag, false))
+            {
+                text = text.Replace(
+                    string.Format("{0}{1}{2}", openTag, reader.Content, closeTag),
+                    string.Format("<{0}>{1}</{0}>", replacementTag, reader.Content));
+                if (firstOccurenceOnly)
+                    break;
+
+                // "<em> —see"
+                // "<em> —or see"
+            }
+
+            return text;
+        }
+
+        public List<string> Names = new List<string>();
 
         private void RegisterTag(EntryType entry, string tag, string word)
         {
@@ -402,6 +450,11 @@ namespace Pronunciation.Parser
                 items.Add(item);
             }
             item.TagsCount++;
+        }
+
+        private string Trim(string text)
+        {
+            return string.IsNullOrEmpty(text) ? text : text.Trim();
         }
     }
 }

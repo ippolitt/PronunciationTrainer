@@ -34,10 +34,10 @@ namespace Pronunciation.Parser
             {
                 var settings = new XmlWriterSettings() 
                 { 
-                    Encoding = Encoding.Unicode,
+                    Encoding = Encoding.UTF8,
                     Indent = true
                 };
-
+                
                 using (var dest = XmlWriter.Create(target, settings))
                 {
                     dest.WriteProcessingInstruction("xml-stylesheet", "type='text/css' href='Sample.css'");
@@ -184,6 +184,8 @@ namespace Pronunciation.Parser
                     {
                         WriteStats(tags);
                     }
+
+                    File.WriteAllText(@"D:\names.txt", string.Join(Environment.NewLine, tags.Names.OrderBy(x => x)));
                 }
             }
         }

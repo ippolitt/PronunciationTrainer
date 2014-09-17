@@ -14,10 +14,10 @@
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 LDOCE import:
 	- If LPD has several word spellings (absinth, absinthe) split them and point to the same article
-	- MW: where is New York?
-	- MW: analyze and group words if they have the same sounds but differ only by pronunciation (Washington, Castro)
-	- MW: put word forms both into main article and as a dedicated word
 	- Improvements:
+		- MW: some entries may not have main sound but there's a sound later in [m1]• (see New York -> New Yorker)
+		- MW: analyze and group words if they have the same sounds but differ only by pronunciation (Washington, Castro)
+		- MW: put word forms both into main article and as a dedicated word
 		- import variants [i]also[/i], [i]or[/i]. Think how to match with LPD.
 		- import derived forms [m1]• (abandon -> abandonment). Probably, to different entry as LPD does.
 		- import [com]([b]  (inflected form: able-abler-ablest) and [com]([i]plural[/i]  (plurals). May even without audio? Import into entry.
@@ -51,6 +51,7 @@ LDOCE import:
 	- Parts of speech have dedicated tag in LDOCE/MW but in LPD they are just <em> (see "buffet")
 - Performance:
 	- Get rid of entity framework in lists (Exercises, Trainings, Comboboxes, Categories) - use it only when updating/inserting detailed record
+	- If we use only "text + rank" in index we reduce memory usage by 12MB
 	- If we switch to using int32 instead of string as Words/Collocations reference to Sounds it reduces RAM by 4MB. Problems: can't easily cleanup Sounds table on reimport (foreign key)
 	- Before deploying DB it should be warmed-up (load some pages etc)
 	- Profile memory: when Exercise tab is first loaded etc.

@@ -38,16 +38,11 @@ input
     margin-bottom: 20px;
     font-size: 1.5em;
 }
-.word_name
+.word_name, .word_link
 {
     color: purple;
     font-weight: bold;
     font-size: 1.2em;
-}
-.word_link
-{
-    color: purple;
-    font-weight: bold;
 }
 .word_reference
 {
@@ -82,6 +77,11 @@ input
     margin-right: 1em;
     font-size: 1.2em;
 }
+.entry_name
+{
+    font-weight: bold;
+    font-size: 1.2em;
+}
 .entry_text strong
 {
     font-size: 1.2em;
@@ -107,6 +107,10 @@ input
 .collocations
 {
     border-color: blue;
+}
+.collocation_name
+{
+    font-weight: bold;
 }
 
 .audio_uk
@@ -201,11 +205,6 @@ input
 {
     margin-left: 1em;
     padding: 5px;
-}
-.dic_entry .entry_name
-{
-    font-weight: bold;
-    font-size: 1.2em;
 }
 .dic_entry .entry_number
 {

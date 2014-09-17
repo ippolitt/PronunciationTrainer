@@ -89,7 +89,7 @@ namespace Pronunciation.Parser
                 //    Path.Combine(rootFolder, DataFolderMW, SourceFileNameMW),
                 //    Path.Combine(rootFolder, AnalysisFolderMW, NormalizedFileName));
 
-                //var builder = new XmlBuilder(Path.Combine(rootFolder, AnalysisFolderLPD, XmlLogFileName));
+                //var builder = new XmlBuilder(Path.Combine(rootFolder, AnalysisFolderLPD, ConvertLogFileName));
                 //builder.ConvertToXml(
                 //    Path.Combine(rootFolder, DataFolderLPD, SourceFileNameLPD),
                 //    Path.Combine(rootFolder, AnalysisFolderLPD, ResultsFileNameLPD),
@@ -110,7 +110,7 @@ namespace Pronunciation.Parser
                 bool isFakeMode = false;
                 bool preserveSounds = true;
                 int numberOfRecords = -1;
-                bool deleteExtraWords = false;
+                bool deleteExtraWords = true;
                 var generationMode = HtmlBuilder.GenerationMode.Database;
 
                 IFileLoader fileLoader = new FileLoader(

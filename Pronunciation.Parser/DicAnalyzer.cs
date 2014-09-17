@@ -40,6 +40,12 @@ namespace Pronunciation.Parser
                 if (GetData(text, WordFormOpenTag, CloseTag, out data))
                     return new EntryElement(EntryType.WordForm, data);
 
+                // This must be called before CollocationOpenTag which also uses "[m1]▶"
+                // Don't use full tag name "[i]" to avoid trimming the whitespace.
+                // "[m1]▶[i]   [/i]" - this is a special case for "sheet lightning" collocation
+                if (!text.StartsWith("[m1]▶[i]   [/i]") && GetData(text, "[m1]▶[i", CloseTag, out data))
+                    return new EntryElement(EntryType.Comment, "[i" + data);
+
                 if (GetData(text, CollocationOpenTag, CloseTag, out data))
                     return new EntryElement(EntryType.Collocation, data);
 

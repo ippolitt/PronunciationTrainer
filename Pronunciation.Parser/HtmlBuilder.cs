@@ -114,7 +114,7 @@ namespace Pronunciation.Parser
 
         public void ConvertToHtml(string sourceXml, string htmlFolder, int maxWords, bool isFakeMode, bool deleteExtraWords)
         {
-            File.AppendAllText(_logFile, string.Format("********* Starting conversion {0} ***********\r\n\r\n", DateTime.Now));
+            File.WriteAllText(_logFile, string.Format("*** Starting conversion {0} ***\r\n\r\n", DateTime.Now));
 
             List<DicWord> words = ParseFile(sourceXml);
             if (IsDatabaseMode)
@@ -193,7 +193,7 @@ namespace Pronunciation.Parser
            
             foreach (var item in entry.AllItems.Where(x => x.ItemType == ItemType.Collocation))
             {
-                var contentCollector = new ContentCollector(XmlReplaceMap.XmlElementStrong, true);
+                var contentCollector = new ContentCollector(XmlReplaceMap.XmlElementCollocationName, true);
                 ParseItemXml(item.RawData, false, contentCollector, null);
 
                 string[] names = ParseCollocationsContent(contentCollector.GetContent());
@@ -207,7 +207,10 @@ namespace Pronunciation.Parser
                             {
                                 Keyword = name,
                                 IsLPDCollocation = true,
-                                LPDEntries = new List<DicEntry> { new DicEntry { RawMainData = item.RawData } }
+                                LPDEntries = new List<DicEntry> 
+                                { 
+                                    new DicEntry { RawMainData = _replaceMap.ConvertCollocationToWord(item.RawData) } 
+                                }
                             });
                         }
                     }
@@ -447,7 +450,7 @@ namespace Pronunciation.Parser
 
             pageBuilder.AppendFormat(
 @"  <div class=""word"">
-    <span class=""word_name"">{0}</span>
+        <span class=""word_name"">{0}</span>
 ",
                 word.Title);
 
@@ -460,9 +463,9 @@ namespace Pronunciation.Parser
             {
                 pageBuilder.AppendFormat(
 @"      <div class=""word_audio"">
-        {0}
-        {1}
-    </div>
+            {0}
+            {1}
+        </div>
 ",
                     wordAudio.SoundTextUK, wordAudio.SoundTextUS);
             }
@@ -589,10 +592,10 @@ namespace Pronunciation.Parser
                     if (!string.IsNullOrEmpty(entryResult.SoundTextUK) || !string.IsNullOrEmpty(entryResult.SoundTextUS))
                     {
                         bld.AppendFormat(
-@"      <span class=""entry_audio"">
-            {0}
-            {1}
-        </span>
+@"          <span class=""entry_audio"">
+                {0}
+                {1}
+            </span>
 ",
                             entryResult.SoundTextUK, entryResult.SoundTextUS);
                     }
@@ -630,7 +633,7 @@ namespace Pronunciation.Parser
                             ContentCollector contentCollector = null;
                             if (itemGroup.GroupType == ItemType.Collocation)
                             {
-                                contentCollector = new ContentCollector(XmlReplaceMap.XmlElementStrong, true);
+                                contentCollector = new ContentCollector(XmlReplaceMap.XmlElementCollocationName, true);
                             }
 
                             var itemSoundCollector = new SoundCollector();
