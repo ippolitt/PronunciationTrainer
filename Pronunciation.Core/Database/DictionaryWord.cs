@@ -23,6 +23,7 @@ namespace Pronunciation.Core.Database
         public string SoundKeyUK { get; set; }
         public string SoundKeyUS { get; set; }
         public string HtmlIndex { get; set; }
+        public Nullable<bool> IsCollocation { get; set; }
 
         public virtual ICollection<DictionaryCategory> DictionaryCategories { get; set; }
     }

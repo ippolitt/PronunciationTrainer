@@ -428,7 +428,7 @@ namespace Pronunciation.Parser
                 }
                 else
                 {
-                    ldoceHtml = _ldoce.GenerateFragmentHtml(word.LDOCEEntry);
+                    ldoceHtml = _ldoce.GenerateFragmentHtml(word.LDOCEEntry, wordDescription);
                 }
             }
 

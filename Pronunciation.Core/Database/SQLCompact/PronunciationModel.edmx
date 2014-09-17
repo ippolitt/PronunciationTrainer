@@ -10,7 +10,6 @@
           <EntitySet Name="Book" EntityType="PronunciationModel.Store.Book" store:Type="Tables" />
           <EntitySet Name="DictionaryCategory" EntityType="PronunciationModel.Store.DictionaryCategory" store:Type="Tables" />
           <EntitySet Name="DictionaryCategoryWord" EntityType="PronunciationModel.Store.DictionaryCategoryWord" store:Type="Tables" />
-          <EntitySet Name="DictionarySound" EntityType="PronunciationModel.Store.DictionarySound" store:Type="Tables" />
           <EntitySet Name="DictionaryWord" EntityType="PronunciationModel.Store.DictionaryWord" store:Type="Tables" />
           <EntitySet Name="Exercise" EntityType="PronunciationModel.Store.Exercise" store:Type="Tables" />
           <EntitySet Name="ExerciseAudio" EntityType="PronunciationModel.Store.ExerciseAudio" store:Type="Tables" />
@@ -87,16 +86,6 @@
           </Key>
           <Property Name="CategoryId" Type="uniqueidentifier" Nullable="false" />
           <Property Name="WordId" Type="int" Nullable="false" />
-        </EntityType>
-        <EntityType Name="DictionarySound">
-          <Key>
-            <PropertyRef Name="SoundKey" />
-          </Key>
-          <Property Name="SoundKey" Type="nvarchar" Nullable="false" MaxLength="100" />
-          <Property Name="IsUKSound" Type="bit" Nullable="false" />
-          <Property Name="SoundText" Type="nvarchar" MaxLength="100" />
-          <Property Name="SoundIndex" Type="nvarchar" MaxLength="50" />
-          <Property Name="SourceFileId" Type="int" />
         </EntityType>
         <EntityType Name="DictionaryWord">
           <Key>
@@ -340,7 +329,6 @@
             <End Role="ExerciseAudio" EntitySet="ExerciseAudios" />
           </AssociationSet>
           <EntitySet Name="Trainings" EntityType="PronunciationModel.Training" />
-          <EntitySet Name="DictionarySounds" EntityType="PronunciationModel.DictionarySound" />
           <EntitySet Name="DictionaryCategories" EntityType="PronunciationModel.DictionaryCategory" />
           <EntitySet Name="DictionaryWords" EntityType="PronunciationModel.DictionaryWord" />
           <AssociationSet Name="DictionaryCategoryWord" Association="PronunciationModel.DictionaryCategoryWord">
@@ -534,16 +522,6 @@
           <Property Type="Int32" Name="CharacterCount" />
           <Property Type="Int32" Name="ReferenceAudioDuration" />
         </EntityType>
-        <EntityType Name="DictionarySound">
-          <Key>
-            <PropertyRef Name="SoundKey" />
-          </Key>
-          <Property Type="String" Name="SoundKey" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
-          <Property Type="Boolean" Name="IsUKSound" Nullable="false" />
-          <Property Type="String" Name="SoundText" MaxLength="100" FixedLength="false" Unicode="true" />
-          <Property Type="String" Name="SoundIndex" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
-          <Property Type="Int32" Name="SourceFileId" />
-        </EntityType>
         <EntityType Name="DictionaryCategory">
           <Key>
             <PropertyRef Name="CategoryId" />
@@ -678,17 +656,6 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="DictionarySounds">
-            <EntityTypeMapping TypeName="PronunciationModel.DictionarySound">
-              <MappingFragment StoreEntitySet="DictionarySound">
-                <ScalarProperty Name="SourceFileId" ColumnName="SourceFileId" />
-                <ScalarProperty Name="SoundIndex" ColumnName="SoundIndex" />
-                <ScalarProperty Name="SoundText" ColumnName="SoundText" />
-                <ScalarProperty Name="IsUKSound" ColumnName="IsUKSound" />
-                <ScalarProperty Name="SoundKey" ColumnName="SoundKey" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
           <EntitySetMapping Name="DictionaryCategories">
             <EntityTypeMapping TypeName="PronunciationModel.DictionaryCategory">
               <MappingFragment StoreEntitySet="DictionaryCategory">
@@ -787,12 +754,11 @@
           <ConnectorPoint PointX="7.5" PointY="7.2689925130208328" />
         </AssociationConnector>
         <EntityTypeShape EntityType="PronunciationModel.Training" Width="1.5" PointX="7.375" PointY="9.75" Height="3.1340950520833335" />
-        <EntityTypeShape EntityType="PronunciationModel.DictionarySound" Width="1.5" PointX="0.75" PointY="0.75" Height="1.7879850260416674" />
-        <EntityTypeShape EntityType="PronunciationModel.DictionaryCategory" Width="1.5" PointX="9.375" PointY="10.75" Height="1.9802864583333388" />
-        <EntityTypeShape EntityType="PronunciationModel.DictionaryWord" Width="1.5" PointX="11.625" PointY="10" Height="3.5186979166666674" />
+        <EntityTypeShape EntityType="PronunciationModel.DictionaryCategory" Width="1.5" PointX="9.375" PointY="10.75" Height="1.9802864583333353" />
+        <EntityTypeShape EntityType="PronunciationModel.DictionaryWord" Width="1.5" PointX="11.625" PointY="10" Height="3.5186979166666745" />
         <AssociationConnector Association="PronunciationModel.DictionaryCategoryWord" >
-          <ConnectorPoint PointX="10.875" PointY="11.740143229166666" />
-          <ConnectorPoint PointX="11.625" PointY="11.740143229166666" />
+          <ConnectorPoint PointX="10.875" PointY="11.740143229166668" />
+          <ConnectorPoint PointX="11.625" PointY="11.740143229166668" />
         </AssociationConnector>
         </Diagram>
     </Diagrams>

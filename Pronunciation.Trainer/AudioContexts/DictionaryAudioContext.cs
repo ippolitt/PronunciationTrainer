@@ -22,6 +22,7 @@ namespace Pronunciation.Trainer.AudioContexts
         private string _soundText;
         private DictionarySoundInfo _soundInfo;
         private const string MWSoundPrefix = "mw_";
+        private const string LDOCESoundPrefix = "ldoce_";
 
         public event AudioContextChangedHandler ContextChanged;
 
@@ -108,9 +109,12 @@ namespace Pronunciation.Trainer.AudioContexts
                 if (_soundInfo == null)
                     return null;
 
-                return string.Format("Active audio: \"{0}\" {1}",
+                string dictionaryName = GetDictionaryName(_soundKey);
+
+                return string.Format("Active audio: \"{0}\" {1}{2}",
                     string.IsNullOrEmpty(_soundText) ? _soundKey : _soundText, 
-                    IsMWSound(_soundKey) ? "MW" : (_soundInfo.IsUKAudio ? "UK" : "US")); 
+                    _soundInfo.IsUKAudio ? "UK" : "US",
+                    string.IsNullOrEmpty(dictionaryName) ? null : string.Format(" ({0})", dictionaryName)); 
             }
         }
 
@@ -146,9 +150,14 @@ namespace Pronunciation.Trainer.AudioContexts
             return _recordingProvider.RegisterNewAudio(_recordingKey, recordingDate, recordedFilePath, _recordingPolicy);
         }
 
-        private bool IsMWSound(string soundKey)
+        private string GetDictionaryName(string soundKey)
         {
-            return !string.IsNullOrEmpty(soundKey) && soundKey.StartsWith(MWSoundPrefix);
+            if (string.IsNullOrEmpty(soundKey))
+                return null;
+
+            return soundKey.StartsWith(MWSoundPrefix) 
+                ? "Merriam-Webster" 
+                : (soundKey.StartsWith(LDOCESoundPrefix) ? "LDOCE" : null);
         }
     }
 }
