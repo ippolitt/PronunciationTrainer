@@ -406,7 +406,7 @@ namespace Pronunciation.Parser
             }
         }
 
-        private bool SoundsEqual(List<string> source, List<string> target)
+        private bool SoundsEqual(ICollection<string> source, ICollection<string> target)
         {
             if (source != null && target != null)
             {

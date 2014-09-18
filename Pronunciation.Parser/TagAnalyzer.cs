@@ -411,7 +411,8 @@ namespace Pronunciation.Parser
                 return text;
 
             var reader = new TagReader(text);
-
+            int k = 0;
+            var bld = new StringBuilder();
             string openTag = string.Format("<{0}>", StrongTag);
             string closeTag = string.Format("</{0}>", StrongTag);
             while (reader.LoadTagContent(openTag, closeTag, false))
@@ -428,8 +429,6 @@ namespace Pronunciation.Parser
 
             return text;
         }
-
-        public List<string> Names = new List<string>();
 
         private void RegisterTag(EntryType entry, string tag, string word)
         {

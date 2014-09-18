@@ -77,7 +77,7 @@ iframe
 {
     font-size: 1.2em;
 }
-.speech_part
+.speech_part, .entry_notes
 {
     font-weight: normal;
     font-style: italic;

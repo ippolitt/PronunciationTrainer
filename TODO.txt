@@ -1,10 +1,11 @@
 ﻿Top:
 - Try installing video card, then try giving more memory to video adapter
 --
-- Search: we must also match items with accented characters (e.g. à la carte)
+- Search: we must also match items with accented characters (e.g. à la carte, Ælfric)
 - Delete a word from category with DEL (not Backspace, remove Backspace also from Recordings list) 
 - Add records count to the suggestions list
 - Add total statistics (recorded N words over Y days). Move statistics from status bar to a dedicated tab.
+- Change index logic: use only "text + rank + wordId" and load other info (isFavorite, htmlIndex, sounds, wordnote) from DB. Measure speed drop. Measure the reduce of memory usage (by 12MB?)
 - Add ability to add notes for a word
 - Add ability to rewind player by 1/3 seconds (should be configurable)
 - BUG: load application, quickly type , hit Enter - nothing happens
@@ -13,15 +14,17 @@
 - Somehow mark the entries from LDOCE/MW in UI
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 LDOCE import:
-	- If LPD has several word spellings (absinth, absinthe) split them and point to the same article
 	- Improvements:
+		- MW: scrub ", the"
 		- MW: some entries may not have main sound but there's a sound later in [m1]• (see New York -> New Yorker)
-		- MW: analyze and group words if they have the same sounds but differ only by pronunciation (Washington, Castro)
+		- MW: analyze and group words if they have the same sounds but differ only by pronunciation (Washington, Castro). Take the longer transcription?
 		- MW: put word forms both into main article and as a dedicated word
 		- import variants [i]also[/i], [i]or[/i]. Think how to match with LPD.
 		- import derived forms [m1]• (abandon -> abandonment). Probably, to different entry as LPD does.
 		- import [com]([b]  (inflected form: able-abler-ablest) and [com]([i]plural[/i]  (plurals). May even without audio? Import into entry.
 		- Ensure that new entries don't match the default MW entries
+		- Resolve references in LPD ("am" -> see "I'm", except ... -> ... (ref) ) and MW
+		- Add more information to LDOCE and MW articles (e.g. "movie")
 	- Word forms are lost:
 		- plurals
 		- be -> was " [com]" (be000002.wav)
@@ -51,7 +54,6 @@ LDOCE import:
 	- Parts of speech have dedicated tag in LDOCE/MW but in LPD they are just <em> (see "buffet")
 - Performance:
 	- Get rid of entity framework in lists (Exercises, Trainings, Comboboxes, Categories) - use it only when updating/inserting detailed record
-	- If we use only "text + rank" in index we reduce memory usage by 12MB
 	- If we switch to using int32 instead of string as Words/Collocations reference to Sounds it reduces RAM by 4MB. Problems: can't easily cleanup Sounds table on reimport (foreign key)
 	- Before deploying DB it should be warmed-up (load some pages etc)
 	- Profile memory: when Exercise tab is first loaded etc.
@@ -85,7 +87,10 @@ LDOCE import:
 	- Add ability to add any word in the exercise to dictionary favorites
 	- Add a setting "Active book" to avoid displaying exercises from other books
 	- Add auto lists: words with notes, trouble words (many attempts to rccord at a time)
+	- Extract transcription for each word and store in the database
+	- Add ability to search by phonetic symbols (see LPD implementation).
 - Usability improvements
+	- Change visual looks of buttons (not for iPhone)
 	- Sometimes I want to assign to category a word form (e.g. earlier ->  hard to pronounce). It's not possible currently
 	- Confusing behavior: user may try to record separates audios for the sound with the same key (because we display text from UI)
 	- Too little space for the category name

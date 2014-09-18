@@ -184,8 +184,6 @@ namespace Pronunciation.Parser
                     {
                         WriteStats(tags);
                     }
-
-                    File.WriteAllText(@"D:\names.txt", string.Join(Environment.NewLine, tags.Names.OrderBy(x => x)));
                 }
             }
         }

@@ -19,6 +19,8 @@ namespace Pronunciation.Parser
         public const string TranscriptionSeparatorOpenTag = "<sp>";
         public const string TranscriptionSeparatorCloseTag = "</sp>";
 
+        private const string TheEnding = ", the";
+
         public LDOCEParser(string logFile)
         {
             _logFile = logFile;
@@ -60,9 +62,13 @@ namespace Pronunciation.Parser
                     {
                         if (entry != null)
                         {
-                            RegisterEntry(entry, entries);
+                            ProcessEntry(entry);
+                            if (entry.Items.Count > 0)
+                            {
+                                entries.Add(entry);
+                            }
                         }
-                        entry = new LDOCEEntry { Keyword = text, Items = new List<LDOCEEntryItem>() };
+                        entry = new LDOCEEntry { Keyword = RemoveExtraText(text), Items = new List<LDOCEEntryItem>() };
                     }
 
                     if (item != null)
@@ -72,13 +78,13 @@ namespace Pronunciation.Parser
                             //Log("Entry without a text '{0}' {1}       {2}", entry.Keyword, item.ItemNumber, item.RawData);
                             continue;
                         }
-                        
-                        if (item.ItemText != entry.Keyword)
+
+                        if (item.ItemText != entry.Keyword && item.AlternativeSpelling != entry.Keyword)
                         {
-                            //Log("Entry with a different text '{0}' {1}", entry.Keyword, item.ItemNumber);
+                            //Log("Entry with a different text '{0}' -> '{1}'", entry.Keyword, item.ItemText);
                             continue;
                         }
-                        
+
                         if (string.IsNullOrEmpty(item.Transcription)
                             && string.IsNullOrEmpty(item.SoundFileUK) && string.IsNullOrEmpty(item.SoundFileUS))
                         {
@@ -93,22 +99,59 @@ namespace Pronunciation.Parser
 
             if (entry != null)
             {
-                RegisterEntry(entry, entries);
+                ProcessEntry(entry);
+                if (entry.Items.Count > 0)
+                {
+                    entries.Add(entry);
+                }
             }
 
-            int noTranscriptionCount = entries.SelectMany(x => x.Items).Count(x => string.IsNullOrEmpty(x.Transcription));
+            // Group entries by keyword
+            var finalEntries = new List<LDOCEEntry>();
+            foreach (var group in entries.GroupBy(x => x.Keyword))
+            {
+                var mainEntry = group.FirstOrDefault(x => !x.IsDuplicateEntry);
+                if (mainEntry == null)
+                {
+                    mainEntry = group.FirstOrDefault();
+                }
+
+                finalEntries.Add(mainEntry);
+            }
+
+            int noTranscriptionCount = finalEntries.SelectMany(x => x.Items).Count(x => string.IsNullOrEmpty(x.Transcription));
             Log("Total entries without transcription: {0}", noTranscriptionCount);
+
+            Log(string.Join(Environment.NewLine, finalEntries.Where(x => x.IsDuplicateEntry)
+                .SelectMany(x => x.Items)
+                .Select(x => string.Format("Extracted entry '{0}' -> '{1}'", x.AlternativeSpelling, x.ItemText))
+                .OrderBy(x => x)));
+            int extractedCount = finalEntries.Count(x => x.IsDuplicateEntry);
+            Log("Total entries extracted: {0}", extractedCount);
 
             Log("*** Ended parsing ***\r\n");
             File.AppendAllText(_logFile, _log.ToString());
 
-            return entries.ToArray();
+            return finalEntries.ToArray();
         }
 
-        private void RegisterEntry(LDOCEEntry entry, List<LDOCEEntry> entries)
+        int pp = 0;
+        private void ProcessEntry(LDOCEEntry entry)
         {
             if (entry == null || entry.Items.Count == 0)
                 return;
+
+            if (entry.Items.Any(x => x.ItemText != entry.Keyword))
+            {
+                if (entry.Items.Count > 1)
+                {
+                    pp += entry.Items.RemoveAll(x => x.ItemText != entry.Keyword);
+                }
+                else
+                {
+                    entry.IsDuplicateEntry = true;
+                }
+            }
 
             var groupsWithTranscription = entry.Items.Where(x => !string.IsNullOrEmpty(x.Transcription))
                 .GroupBy(x => x.Transcription).ToArray();
@@ -192,11 +235,6 @@ namespace Pronunciation.Parser
                     entry.Items.Remove(item);
                 }
             }
-
-            if (entry.Items.Count > 0)
-            {
-                entries.Add(entry);
-            }
         }
 
         private LDOCEEntryItem ParseNumberedItem(string text)
@@ -225,24 +263,26 @@ namespace Pronunciation.Parser
                 new ClosingTagInfo(tagEnd, "[b][c red]"),
                 new ClosingTagInfo(tagEnd, "[i][c maroon]")}, true))
             {
-                item.ItemStressedText = Trim(RemoveTitleTags(reader.Content));
+                item.ItemStressedText = Trim(PrepareTitle(reader.Content));
                 item.ItemText = Trim(RemoveWordStress(item.ItemStressedText));
             }
 
-            if (reader.LoadTagContent(" /", new[] {new ClosingTagInfo( "/ "), new ClosingTagInfo("/", "[")}, true))
-            {
-                if (!reader.IsTagOpen("(", ")") 
-                    && reader.Content != null && !reader.Content.Contains("(") && !reader.Content.Contains(")"))
-                {
-                    item.Transcription = Trim(PrepareTranscription(reader.Content));
-                    if (item.Transcription.Contains("[") || item.Transcription.Contains("]"))
-                        throw new Exception("Transcription contains unsupported tags inside!");
-                }
-            }
+            item.Transcription = FindTranscription(reader);
 
             if (reader.LoadTagContent("[i][c] ", "[/c][/i]", false))
             {
                 item.PartsOfSpeech = SplitPartsOfSpeech(Trim(reader.Content));
+            }
+
+            reader.ResetPosition();
+            while (reader.LoadTagContent("[i][c maroon]", "[/c][/i]", false))
+            {
+                var note = Trim(reader.Content);
+                if (note == "trademark")
+                {
+                    item.Notes = note;
+                    break;
+                }
             }
 
             reader.ResetPosition();
@@ -262,8 +302,54 @@ namespace Pronunciation.Parser
 
                 item.SoundFileUS = Trim(reader.Content);
             }
-            
+
+            AssignAlternativeSpelling(reader, item);
             return item;
+        }
+
+        private string FindTranscription(TagReader reader)
+        {
+            string transcription = null;
+            if (reader.LoadTagContent(" /", new[] { 
+                new ClosingTagInfo("/ "), new ClosingTagInfo("/, "), new ClosingTagInfo("/", "["), }, 
+                true))
+            {
+                if (!reader.IsTagOpen("(", ")")
+                    && reader.Content != null && !reader.Content.Contains("(") && !reader.Content.Contains(")"))
+                {
+                    transcription = Trim(PrepareTranscription(reader.Content));
+                    if (transcription.Contains("[") || transcription.Contains("]"))
+                        throw new Exception("Transcription contains unsupported tags inside!");
+                }
+            }
+
+            return transcription;
+        }
+
+        private void AssignAlternativeSpelling(TagReader reader, LDOCEEntryItem item)
+        {
+            if (string.IsNullOrEmpty(item.ItemText))
+                return;
+
+            reader.ResetPosition();
+            if (reader.LoadTagContent("[b][c blue]", "[/c][/b]", false))
+            {
+                if (!reader.IsTagOpen("(", ")"))
+                {
+                    string stressText = PrepareTitle(reader.Content);
+                    string wordText = Trim(RemoveWordStress(stressText));
+                    if (string.IsNullOrEmpty(wordText))
+                        return;
+
+                    var transcription = FindTranscription(reader);
+                    if (!string.IsNullOrEmpty(item.Transcription) && transcription == item.Transcription
+                        && wordText != item.ItemText)
+                    {
+                        item.AlternativeSpelling = wordText;
+                        item.AlternativeStressedText = stressText;
+                    }
+                }
+            }
         }
 
         private string Trim(string text)
@@ -305,7 +391,7 @@ namespace Pronunciation.Parser
             _log.AppendLine();
         }
 
-        private string RemoveTitleTags(string itemTitle)
+        private string PrepareTitle(string itemTitle)
         {
             if (string.IsNullOrEmpty(itemTitle))
                 return itemTitle;
@@ -314,7 +400,21 @@ namespace Pronunciation.Parser
             if (result.Contains("[") || result.Contains("]"))
                 throw new ArgumentException();
 
+            result = RemoveExtraText(result);
             return result;
+        }
+
+        private string RemoveExtraText(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            if (text.ToLower().EndsWith(TheEnding))
+            {
+                text = text.Substring(0, text.Length - TheEnding.Length).Trim();
+            }
+
+            return text;
         }
 
         private string RemoveWordStress(string text)

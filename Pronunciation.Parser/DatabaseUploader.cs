@@ -211,7 +211,7 @@ namespace Pronunciation.Parser
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("\r\nFAILED to delete extra word: " + ex.ToString());
+                        Console.WriteLine("\r\nFAILED to delete extra word: '{0}'. {1}", keyword, ex);
                         _dbStats.AppendFormat("FAILED to delete extra word '{0}': {1}\r\n", keyword, ex);
                     }
                 }

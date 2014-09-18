@@ -14,5 +14,13 @@ namespace Pronunciation.Parser
 
             return value.Replace("\"", "&quot;").Replace("&", "&amp;");
         }
+
+        public static string PrepareJScriptString(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return value;
+
+            return value.Replace("'", @"\'");
+        }
     }
 }

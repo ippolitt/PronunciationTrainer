@@ -59,21 +59,25 @@ namespace Pronunciation.Parser
 @"      <div class=""dic_entry"">
 ");
                 bld.AppendFormat(
-@"          <span class=""entry_name"">{0}</span>",
-                    PrepareDisplayNameHtml(item.DisplayName));
+@"          <span class=""entry_name"">{0}</span>", PrepareDisplayNameHtml(item.DisplayName));
 
                 if (addNumber)
                 {
                     // Ensure there's no space before <span>
                     bld.AppendFormat(
-@"<span class=""entry_number""><sup>{0}</sup></span>",
-                        item.Number);
+@"<span class=""entry_number""><sup>{0}</sup></span>", item.Number);
 
                     if (!string.IsNullOrEmpty(item.PartsOfSpeech))
                     {
                         bld.AppendFormat(
 @" <span class=""speech_part"">{0}</span>", item.PartsOfSpeech);
                     }
+                }
+
+                if (string.IsNullOrEmpty(item.PartsOfSpeech) && !string.IsNullOrEmpty(item.Notes))
+                {
+                    bld.AppendFormat(
+@" <span class=""entry_notes"">{0}</span>", item.Notes);
                 }
 
                 if (!string.IsNullOrEmpty(item.TranscriptionUK))

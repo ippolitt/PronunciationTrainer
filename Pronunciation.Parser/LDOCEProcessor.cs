@@ -24,11 +24,12 @@ namespace Pronunciation.Parser
                         entry.Keyword, 
                         number,
                         PreparePartsOfSpeech(item.PartsOfSpeech),
-                        item.ItemStressedText,
+                        PrepareStressedText(item),
                         GetTranscriptionUK(item.Transcription),
                         GetTranscriptionUS(item.Transcription),
                         item.SoundFileUK,
-                        item.SoundFileUS));
+                        item.SoundFileUS,
+                        item.Notes));
                     bld.AppendLine();
                 }
             }
@@ -44,18 +45,18 @@ namespace Pronunciation.Parser
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 8)
+                    if (data.Length != 9)
                         throw new InvalidOperationException("Source LDOCE file is broken!");
 
                     string keyword = data[0];
                     LDOCEHtmlEntry entry;
                     if (!entries.TryGetValue(keyword, out entry))
                     {
-                        entry = new LDOCEHtmlEntry { Keyword = keyword, Items = new List<LDOCEHtmlEntity>() };
+                        entry = new LDOCEHtmlEntry { Keyword = keyword, Items = new List<LDOCEHtmlEntryItem>() };
                         entries.Add(keyword, entry);
                     }
 
-                    entry.Items.Add(new LDOCEHtmlEntity 
+                    entry.Items.Add(new LDOCEHtmlEntryItem 
                     { 
                         Number = int.Parse(data[1]),
                         PartsOfSpeech = data[2],
@@ -63,7 +64,8 @@ namespace Pronunciation.Parser
                         TranscriptionUK = data[4],
                         TranscriptionUS = data[5],
                         SoundFileUK = data[6],
-                        SoundFileUS = data[7]
+                        SoundFileUS = data[7],
+                        Notes = data[8]
                     });
                 }
             }
@@ -91,6 +93,23 @@ namespace Pronunciation.Parser
 
             var parts = transcription.Split('$');
             return parts.Length > 1 ? Trim(parts[1]) : null;
+        }
+
+        private static string PrepareStressedText(LDOCEEntryItem item)
+        {
+            if (string.IsNullOrEmpty(item.AlternativeStressedText))
+                return item.ItemStressedText;
+
+            if (string.IsNullOrEmpty(item.ItemStressedText))
+                return item.AlternativeStressedText;
+
+            string concatenator = ",";
+            if (item.ItemStressedText.Contains(",") || item.AlternativeStressedText.Contains(","))
+            {
+                concatenator = ";";
+            }
+
+            return string.Format("{0}{1} {2}", item.ItemStressedText, concatenator, item.AlternativeStressedText);
         }
 
         private static string Trim(string text)

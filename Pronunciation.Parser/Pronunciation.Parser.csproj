@@ -45,7 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AudioButtonHtmlBuilder.cs" />
-    <Compile Include="ContentCollector.cs" />
+    <Compile Include="XmlContentCollector.cs" />
     <Compile Include="HtmlHelper.cs" />
     <Compile Include="MWEntry.cs" />
     <Compile Include="MWParser.cs" />

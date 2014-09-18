@@ -114,13 +114,13 @@ namespace Pronunciation.Parser
 
         public void ConvertToHtml(string sourceXml, string htmlFolder, int maxWords, bool isFakeMode, bool deleteExtraWords)
         {
-            File.WriteAllText(_logFile, string.Format("*** Starting conversion {0} ***\r\n\r\n", DateTime.Now));
+            File.AppendAllText(_logFile, string.Format("*** Starting conversion {0} ***\r\n\r\n", DateTime.Now));
 
             List<DicWord> words = ParseFile(sourceXml);
+            SplitSynonyms(words);
             if (IsDatabaseMode)
             {
-                int addedCollocations = AddCollocations(words);
-                File.AppendAllText(_logFile, string.Format("\r\nAdded {0} collocations as words.\r\n", addedCollocations));
+                AddCollocations(words);
             }
 
             EntriesMapper mapper = new EntriesMapper(words);
@@ -159,15 +159,71 @@ namespace Pronunciation.Parser
             File.AppendAllText(_logFile, "Ended conversion.\r\n\r\n");
         }
 
-        private int AddCollocations(List<DicWord> words)
+        private void SplitSynonyms(List<DicWord> words)
         {
-            IFileLoader fileLoader = _fileLoader;
-            
-            // Disable content loading to speed up HTML generation inside "AddCollocations" method
+            // Disable content loading to speed up HTML generation inside "ParseItemXml" method
             _buttonBuilder.IsContentLoadDisabled = true;
             try
             {
-                var keywords = new HashSet<string>(words.Select(x => x.Keyword));
+                var keywords = new HashSet<string>(words.Select(x => x.Keyword), StringComparer.OrdinalIgnoreCase);
+                List<DicWord> extraWords = new List<DicWord>();
+                foreach (var word in words)
+                {
+                    foreach (DicEntry entry in word.LPDEntries)
+                    {
+                        SplitSynonyms(entry, extraWords, keywords);
+                    }
+                }
+
+                words.AddRange(extraWords);
+
+                File.AppendAllText(_logFile, string.Join(Environment.NewLine, extraWords
+                    .OrderBy(x => x.Keyword)
+                    .Select(x => string.Format("Extracted synonym '{0}'.", x.Keyword))));
+                File.AppendAllText(_logFile, string.Format("\r\n\r\nExtracted {0} synonyms as words.\r\n\r\n", extraWords.Count));
+            }
+            finally
+            {
+                _buttonBuilder.IsContentLoadDisabled = false;
+            }
+        }
+
+        private void SplitSynonyms(DicEntry entry, List<DicWord> words, HashSet<string> keywords)
+        {
+            if (string.IsNullOrEmpty(entry.RawMainData))
+                return;
+
+            var contentCollector = new XmlContentCollector(XmlReplaceMap.XmlElementEntryName, true);
+            ParseItemXml(entry.RawMainData, false, contentCollector, null);
+
+            var names = PrepareWordNames(contentCollector.GetContent());
+            if (names == null || names.Count <= 1)
+                return;
+
+            // Start from the second name
+            for(int i = 1; i < names.Count; i++)
+            {
+                if (keywords.Add(names[i]))
+                {
+                    words.Add(new DicWord
+                    {
+                        Keyword = names[i],
+                        LPDEntries = new List<DicEntry> 
+                        { 
+                            new DicEntry { RawMainData = entry.RawMainData, AllItems = entry.AllItems } 
+                        }
+                    });
+                }
+            }
+        }
+
+        private void AddCollocations(List<DicWord> words)
+        {
+            // Disable content loading to speed up HTML generation inside "ParseItemXml" method
+            _buttonBuilder.IsContentLoadDisabled = true;
+            try
+            {
+                var keywords = new HashSet<string>(words.Select(x => x.Keyword), StringComparer.OrdinalIgnoreCase);
                 List<DicWord> extraWords = new List<DicWord>();
                 foreach (var word in words)
                 {
@@ -178,7 +234,12 @@ namespace Pronunciation.Parser
                 }
 
                 words.AddRange(extraWords);
-                return extraWords.Count;
+
+                File.AppendAllText(_logFile, string.Join(Environment.NewLine, extraWords
+                    .OrderBy(x => x.Keyword)
+                    .Select(x => string.Format("Extracted collocation '{0}'.", x.Keyword))));
+                File.AppendAllText(_logFile, 
+                    string.Format("\r\n\r\nExtracted {0} collocations as words.\r\n\r\n", extraWords.Count));
             }
             finally
             {
@@ -193,26 +254,27 @@ namespace Pronunciation.Parser
            
             foreach (var item in entry.AllItems.Where(x => x.ItemType == ItemType.Collocation))
             {
-                var contentCollector = new ContentCollector(XmlReplaceMap.XmlElementCollocationName, true);
+                var contentCollector = new XmlContentCollector(XmlReplaceMap.XmlElementCollocationName, false);
                 ParseItemXml(item.RawData, false, contentCollector, null);
 
-                string[] names = ParseCollocationsContent(contentCollector.GetContent());
-                if (names != null)
+                var names = PrepareCollocationNames(contentCollector.GetContent());
+                if (names == null || names.Count == 0)
+                    continue;
+
+                foreach (var name in names)
                 {
-                    foreach (var name in names)
+                    if (keywords.Add(name))
                     {
-                        if (keywords.Add(name))
+                        words.Add(new DicWord
                         {
-                            words.Add(new DicWord
-                            {
-                                Keyword = name,
-                                IsLPDCollocation = true,
-                                LPDEntries = new List<DicEntry> 
-                                { 
-                                    new DicEntry { RawMainData = _replaceMap.ConvertCollocationToWord(item.RawData) } 
-                                }
-                            });
-                        }
+                            Keyword = name,
+                            IsLPDCollocation = true,
+                            LPDEntries = new List<DicEntry> 
+                            { 
+                                new DicEntry { RawMainData = _replaceMap.ConvertCollocationToWord(item.RawData) } 
+                            }
+                        });
+
                     }
                 }
             }
@@ -630,18 +692,18 @@ namespace Pronunciation.Parser
 
                         foreach (var item in itemGroup.Items)
                         {
-                            ContentCollector contentCollector = null;
+                            XmlContentCollector contentCollector = null;
                             if (itemGroup.GroupType == ItemType.Collocation)
                             {
-                                contentCollector = new ContentCollector(XmlReplaceMap.XmlElementCollocationName, true);
+                                contentCollector = new XmlContentCollector(XmlReplaceMap.XmlElementCollocationName, true);
                             }
 
                             var itemSoundCollector = new SoundCollector();
                             ParseResult itemResult = ParseItemXml(item.RawData, false, contentCollector, itemSoundCollector);
                             if (itemGroup.GroupType == ItemType.Collocation)
                             {
-                                var contentItems = ParseCollocationsContent(contentCollector.GetContent());
-                                if (contentItems != null && contentItems.Length > 0)
+                                var contentItems = PrepareCollocationNames(contentCollector.GetContent());
+                                if (contentItems != null && contentItems.Count > 0)
                                 {
                                     _buttonBuilder.InjectSoundText(itemResult, 
                                         string.Join(", ", contentItems), null, itemSoundCollector.Sounds);
@@ -694,7 +756,7 @@ namespace Pronunciation.Parser
         {
             if (IsDatabaseMode)
             {
-                return string.Format("javascript:void(loadPage('{0}'))", keyword);
+                return string.Format("javascript:void(loadPage('{0}'))", HtmlHelper.PrepareJScriptString(keyword));
             }
             else
             {
@@ -731,7 +793,7 @@ namespace Pronunciation.Parser
             return words;
         }
 
-        private ParseResult ParseItemXml(string rawData, bool extractSounds, ContentCollector contentCollector, 
+        private ParseResult ParseItemXml(string rawData, bool extractSounds, XmlContentCollector contentCollector, 
             SoundCollector soundCollector)
         {
             if (string.IsNullOrWhiteSpace(rawData))
@@ -1100,42 +1162,110 @@ namespace Pronunciation.Parser
             }
         }
 
-        // Test: Richmond-u₍ˌ₎pon-Thames, S₍ˌ₎VO language
-        // Test how ₍ˌ₎ looks
-        private string[] ParseCollocationsContent(string rawContent)
+        private List<string> PrepareWordNames(string[] contents)
         {
-            if (string.IsNullOrWhiteSpace(rawContent))
+            if (contents == null || contents.Length == 0)
                 return null;
 
-            List<string> contentItems = new List<string>();
-            foreach (var rawItem in rawContent.Trim().Split(new [] {','}, StringSplitOptions.RemoveEmptyEntries))
+            var names = new List<string>();
+            string baseName = null;
+            foreach (var rawItem in contents.Where(x => !string.IsNullOrEmpty(x))
+                .SelectMany(x => x.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)))
             {
-                if (string.IsNullOrWhiteSpace(rawItem))
+                var name = rawItem.Trim();
+                if (string.IsNullOrEmpty(name))
+                    continue;
+
+                if (string.IsNullOrEmpty(baseName))
+                {
+                    baseName = name;
+                    names.Add(name);
+                    continue;
+                }
+
+                if (name.StartsWith("~"))
+                {
+                    name = name.Remove(0, 1);
+                    if (name == "'") // Achilles'
+                        continue;
+
+                    int separatorIndex = baseName.LastIndexOf("|");
+                    if (separatorIndex >= 0)
+                    {
+                        name = baseName.Substring(0, separatorIndex) + name;
+                    }
+                    else
+                    {
+                        name = baseName + name;
+                    }
+                }
+
+                if (name.EndsWith("~"))
+                {
+                    name = name.Remove(name.Length - 1, 1);
+                    if (name.Length == 1)
+                    {
+                        if (!string.Equals(name, baseName.Substring(0, 1), StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        name = name + baseName.Remove(0, 1);
+                    }
+                    else
+                    {
+                        if (name.Contains("~")) // cabernet sauvignon (C~ S~)
+                            continue;
+
+                        int separatorIndex = baseName.IndexOf("|");
+                        if (separatorIndex >= 0 && separatorIndex < baseName.Length - 1) // behavio|ristic, behavior|al
+                        {
+                            name = name + baseName.Substring(separatorIndex + 1);
+                        }
+                        else
+                            continue; // Via Dolorosa
+                    }
+                }
+
+                name = name.Replace("|", "");
+                if (string.IsNullOrWhiteSpace(name))
+                    continue;
+
+                names.Add(name);
+            }
+
+            return names;
+        }
+
+        // Test: Richmond-u₍ˌ₎pon-Thames, S₍ˌ₎VO language
+        private List<string> PrepareCollocationNames(string[] contents)
+        {
+            if (contents == null || contents.Length == 0)
+                return null;
+
+            var names = new List<string>();
+            foreach (var rawItem in contents.Where(x => !string.IsNullOrEmpty(x))
+                .SelectMany(x => x.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)))
+            {
+                var name = rawItem.Trim();
+                if (string.IsNullOrEmpty(name))
                     continue;
 
                 // Ignore words with tilde or those starting with "-" because they will look meaningless without the context
-                var contentItem = rawItem.Trim();
-                if (contentItem.Contains("~") || contentItem.StartsWith("-"))
+                if (name.Contains("~") || name.StartsWith("-"))
                     continue;
 
                 // Remove garbadge like: ˌ•• ˈ••
-                contentItem = contentItem.Replace("•", string.Empty).Replace("ˌ", string.Empty).Replace("ˈ", string.Empty).Trim();
-                if (string.IsNullOrWhiteSpace(contentItem))
+                name = name.Replace("•", string.Empty).Replace("ˌ", string.Empty).Replace("ˈ", string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(name))
                     continue;
 
-                // Some words contain "₍₎" with some garbidge symbols in the beginning ("South Africa", "trade union")
-                var index = contentItem.IndexOf("₎");
-                if (index >= 0)
-                {
-                    contentItem = contentItem.Remove(0, index + 1).Trim();
-                }
-                if (string.IsNullOrWhiteSpace(contentItem))
+                name = name.Replace("(", "").Replace(")", "");
+                if (string.IsNullOrWhiteSpace(name))
                     continue;
 
-                contentItems.Add(contentItem);
+                names.Add(name);
             }
 
-            return contentItems.Count == 0 ? null : contentItems.ToArray();
+            return names;
         }
     }
 }

@@ -5,20 +5,22 @@ using System.Text;
 
 namespace Pronunciation.Parser
 {
-    class ContentCollector
+    class XmlContentCollector
     {
+        private readonly string _trackedNodeName;
+        private readonly bool _firstOccurrenceOnly;
+        private readonly StringBuilder _collector;
+
+        private List<string> _results;
         private bool _isCollecting;
-        private StringBuilder _collector;
         private int _hitCount;
         private int _nodeLevel;
 
-        private readonly string _trackedNodeName;
-        private readonly bool _firstOccurrenceOnly;
-
-        public ContentCollector(string trackedNodeName, bool firstOccurrenceOnly)
+        public XmlContentCollector(string trackedNodeName, bool firstOccurrenceOnly)
         {
             _trackedNodeName = trackedNodeName;
             _firstOccurrenceOnly = firstOccurrenceOnly;
+            _collector = new StringBuilder();
         }
 
         public void NodeOpened(string nodeName)
@@ -45,6 +47,7 @@ namespace Pronunciation.Parser
                 if (_nodeLevel <= 0)
                 {
                     _isCollecting = false;
+                    FlushCollector();
                 }
             }
         }
@@ -53,17 +56,28 @@ namespace Pronunciation.Parser
         {
             if (_isCollecting)
             {
-                if (_collector == null)
-                {
-                    _collector = new StringBuilder();
-                }
                 _collector.Append(content);
             }
         }
 
-        public string GetContent()
+        public string[] GetContent()
         {
-            return (_collector == null ? null : _collector.ToString());
+            FlushCollector();
+
+            return (_results == null || _results.Count == 0 ? null : _results.ToArray());
+        }
+
+        private void FlushCollector()
+        {
+            if (_collector.Length > 0)
+            {
+                if (_results == null)
+                {
+                    _results = new List<string>();
+                }
+                _results.Add(_collector.ToString());
+                _collector.Clear();
+            }
         }
     }
 }

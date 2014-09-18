@@ -49,11 +49,11 @@ namespace Pronunciation.Parser
                     MWHtmlEntry entry;
                     if (!entries.TryGetValue(keyword, out entry))
                     {
-                        entry = new MWHtmlEntry { Keyword = keyword, Items = new List<MWHtmlEntryEntity>() };
+                        entry = new MWHtmlEntry { Keyword = keyword, Items = new List<MWHtmlEntryItem>() };
                         entries.Add(keyword, entry);
                     }
 
-                    entry.Items.Add(new MWHtmlEntryEntity 
+                    entry.Items.Add(new MWHtmlEntryItem 
                     {
                         DisplayName = keyword,
                         Number = int.Parse(data[1]),

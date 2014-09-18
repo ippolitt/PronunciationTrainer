@@ -8,15 +8,21 @@ namespace Pronunciation.Parser
     public class MWHtmlEntry : IExtraEntry
     {
         public string Keyword { get; set; }
-        public List<MWHtmlEntryEntity> Items { get; set; }
+        public List<MWHtmlEntryItem> Items { get; set; }
+
+        IEnumerable<IExtraEntryItem> IExtraEntry.Items
+        {
+            get { return (IEnumerable<IExtraEntryItem>)Items; }
+        }
     }
 
-    public class MWHtmlEntryEntity
+    public class MWHtmlEntryItem : IExtraEntryItem
     {
-        public int Number;
-        public string DisplayName;
-        public string Transcription;
-        public string PartsOfSpeech;
-        public string[] SoundFiles;
+        public int Number { get; set; }
+        public string DisplayName { get; set; }
+        public string Transcription { get; set; }
+        public string PartsOfSpeech { get; set; }
+        public string[] SoundFiles { get; set; }
+        public object WordForms { get; set; }
     }
 }

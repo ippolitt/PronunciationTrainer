@@ -8,5 +8,13 @@ namespace Pronunciation.Parser
     interface IExtraEntry
     {
         string Keyword { get; }
+        IEnumerable<IExtraEntryItem> Items { get; }
+    }
+
+    interface IExtraEntryItem
+    {
+        int Number { get; set; }
+        string DisplayName { get; set; }
+        string PartsOfSpeech { get; set; }
     }
 }
