@@ -8,17 +8,16 @@ namespace Pronunciation.Parser
     class LDOCEEntry
     {
         public string Keyword;
+        public bool IsDuplicate;
         public List<LDOCEEntryItem> Items;
-        public bool IsDuplicateEntry;
     }
 
     class LDOCEEntryItem
     {
         public string ItemNumber;
-        public string ItemText;
-        public string ItemStressedText;
+        public string ItemKeyword;
+        public string ItemTitle;
         public string AlternativeSpelling;
-        public string AlternativeStressedText;
         public string Transcription;
         public string[] PartsOfSpeech;
         public string Notes;

@@ -190,7 +190,13 @@ namespace Pronunciation.Parser
                     targetItem.PartsOfSpeech = MergePartsOfSpeech(targetItem.PartsOfSpeech, sourceItem.PartsOfSpeech);
                     if (targetItem.DisplayName != sourceItem.DisplayName)
                     {
-                        targetItem.DisplayName += ", " + sourceItem.DisplayName;
+                        string separator = ", ";
+                        if (targetItem.DisplayName.Contains(",") || sourceItem.DisplayName.Contains(","))
+                        {
+                            separator = "; ";
+                        }
+
+                        targetItem.DisplayName += separator + sourceItem.DisplayName;
                     }
                 }
                 else

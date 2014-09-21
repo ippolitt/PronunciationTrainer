@@ -24,7 +24,7 @@ namespace Pronunciation.Parser
                         entry.Keyword, 
                         number,
                         PreparePartsOfSpeech(item.PartsOfSpeech),
-                        PrepareStressedText(item),
+                        item.ItemTitle,
                         GetTranscriptionUK(item.Transcription),
                         GetTranscriptionUS(item.Transcription),
                         item.SoundFileUK,
@@ -93,23 +93,6 @@ namespace Pronunciation.Parser
 
             var parts = transcription.Split('$');
             return parts.Length > 1 ? Trim(parts[1]) : null;
-        }
-
-        private static string PrepareStressedText(LDOCEEntryItem item)
-        {
-            if (string.IsNullOrEmpty(item.AlternativeStressedText))
-                return item.ItemStressedText;
-
-            if (string.IsNullOrEmpty(item.ItemStressedText))
-                return item.AlternativeStressedText;
-
-            string concatenator = ",";
-            if (item.ItemStressedText.Contains(",") || item.AlternativeStressedText.Contains(","))
-            {
-                concatenator = ";";
-            }
-
-            return string.Format("{0}{1} {2}", item.ItemStressedText, concatenator, item.AlternativeStressedText);
         }
 
         private static string Trim(string text)

@@ -114,7 +114,7 @@ namespace Pronunciation.Parser
 
         public void ConvertToHtml(string sourceXml, string htmlFolder, int maxWords, bool isFakeMode, bool deleteExtraWords)
         {
-            File.AppendAllText(_logFile, string.Format("*** Starting conversion {0} ***\r\n\r\n", DateTime.Now));
+            File.WriteAllText(_logFile, string.Format("*** Starting conversion {0} ***\r\n\r\n", DateTime.Now));
 
             List<DicWord> words = ParseFile(sourceXml);
             SplitSynonyms(words);

@@ -58,6 +58,11 @@ namespace Pronunciation.Parser
 
                         item = ParseMainTag(null, text);
                     }
+                    else if (text.StartsWith("/ˌ") || text.StartsWith("([i]"))
+                    {
+                        // Broken items: BR, Little Bear, Male, Daviyani
+                        continue;
+                    }
                     else
                     {
                         if (entry != null)
@@ -68,18 +73,18 @@ namespace Pronunciation.Parser
                                 entries.Add(entry);
                             }
                         }
-                        entry = new LDOCEEntry { Keyword = RemoveExtraText(text), Items = new List<LDOCEEntryItem>() };
+                        entry = new LDOCEEntry { Keyword = PrepareKeyword(text), Items = new List<LDOCEEntryItem>() };
                     }
 
                     if (item != null)
                     {
-                        if (string.IsNullOrEmpty(item.ItemText))
+                        if (string.IsNullOrEmpty(item.ItemKeyword))
                         {
                             //Log("Entry without a text '{0}' {1}       {2}", entry.Keyword, item.ItemNumber, item.RawData);
                             continue;
                         }
 
-                        if (item.ItemText != entry.Keyword && item.AlternativeSpelling != entry.Keyword)
+                        if (item.ItemKeyword != entry.Keyword)
                         {
                             //Log("Entry with a different text '{0}' -> '{1}'", entry.Keyword, item.ItemText);
                             continue;
@@ -106,28 +111,65 @@ namespace Pronunciation.Parser
                 }
             }
 
-            // Group entries by keyword
+            // Group entries by keyword (cut off ", the" ending)
             var finalEntries = new List<LDOCEEntry>();
-            foreach (var group in entries.GroupBy(x => x.Keyword))
+            var finalKeywords = new HashSet<string>();
+            foreach (var group in entries.GroupBy(x => PrepareGroupingKeyword(x.Keyword)))
             {
-                var mainEntry = group.FirstOrDefault(x => !x.IsDuplicateEntry);
-                if (mainEntry == null)
+                var mainEntry = new LDOCEEntry 
+                { 
+                    Keyword = group.Key, 
+                    Items = group.SelectMany(x => x.Items).OrderBy(x => x.ItemKeyword).ToList()
+                };
+
+                int itemNumber = 0;
+                foreach (var item in mainEntry.Items)
                 {
-                    mainEntry = group.FirstOrDefault();
+                    itemNumber++;
+                    item.ItemNumber = itemNumber.ToString();
                 }
 
                 finalEntries.Add(mainEntry);
+                finalKeywords.Add(mainEntry.Keyword);
+            }
+
+            // Add entries with alternative spelling
+            var ignoredItems = new List<LDOCEEntryItem>();
+            var extraItems = finalEntries.SelectMany(x => x.Items)
+                .Where(x => !string.IsNullOrEmpty(x.AlternativeSpelling)).ToArray();
+            foreach (var item in extraItems)
+            {
+                string groupingKeyword = PrepareGroupingKeyword(item.AlternativeSpelling);
+                if (finalKeywords.Contains(groupingKeyword))
+                {
+                    ignoredItems.Add(item);
+                    continue;
+                }
+
+                finalEntries.Add(new LDOCEEntry
+                {
+                    Keyword = groupingKeyword,
+                    IsDuplicate = true,
+                    Items = new List<LDOCEEntryItem> { item }
+                });
+                finalKeywords.Add(groupingKeyword);
             }
 
             int noTranscriptionCount = finalEntries.SelectMany(x => x.Items).Count(x => string.IsNullOrEmpty(x.Transcription));
             Log("Total entries without transcription: {0}", noTranscriptionCount);
 
-            Log(string.Join(Environment.NewLine, finalEntries.Where(x => x.IsDuplicateEntry)
+            Log(string.Join(Environment.NewLine, finalEntries.Where(x => x.IsDuplicate)
                 .SelectMany(x => x.Items)
-                .Select(x => string.Format("Extracted entry '{0}' -> '{1}'", x.AlternativeSpelling, x.ItemText))
+                .Select(x => string.Format("Added new alternative spelling entry '{0}' (original entry '{1}')", 
+                    x.AlternativeSpelling, x.ItemKeyword))
                 .OrderBy(x => x)));
-            int extractedCount = finalEntries.Count(x => x.IsDuplicateEntry);
-            Log("Total entries extracted: {0}", extractedCount);
+            Log("\r\nTotally added {0} alternative spelling entries.\r\n", finalEntries.Count(x => x.IsDuplicate));
+
+            Log(string.Join(Environment.NewLine, ignoredItems
+                .Select(x => string.Format("Ignored alternative spelling entry '{0}' (original entry '{1}')",
+                    x.AlternativeSpelling, x.ItemKeyword))
+                .OrderBy(x => x)));
+            Log("Totally ignored {0} alternative spelling entries.", ignoredItems.Count);
 
             Log("*** Ended parsing ***\r\n");
             File.AppendAllText(_logFile, _log.ToString());
@@ -140,18 +182,6 @@ namespace Pronunciation.Parser
         {
             if (entry == null || entry.Items.Count == 0)
                 return;
-
-            if (entry.Items.Any(x => x.ItemText != entry.Keyword))
-            {
-                if (entry.Items.Count > 1)
-                {
-                    pp += entry.Items.RemoveAll(x => x.ItemText != entry.Keyword);
-                }
-                else
-                {
-                    entry.IsDuplicateEntry = true;
-                }
-            }
 
             var groupsWithTranscription = entry.Items.Where(x => !string.IsNullOrEmpty(x.Transcription))
                 .GroupBy(x => x.Transcription).ToArray();
@@ -263,8 +293,8 @@ namespace Pronunciation.Parser
                 new ClosingTagInfo(tagEnd, "[b][c red]"),
                 new ClosingTagInfo(tagEnd, "[i][c maroon]")}, true))
             {
-                item.ItemStressedText = Trim(PrepareTitle(reader.Content));
-                item.ItemText = Trim(RemoveWordStress(item.ItemStressedText));
+                item.ItemTitle = PrepareTitle(reader.Content);
+                item.ItemKeyword = PrepareKeyword(reader.Content);
             }
 
             item.Transcription = FindTranscription(reader);
@@ -303,7 +333,7 @@ namespace Pronunciation.Parser
                 item.SoundFileUS = Trim(reader.Content);
             }
 
-            AssignAlternativeSpelling(reader, item);
+            ParseAlternativeSpelling(reader, item);
             return item;
         }
 
@@ -326,9 +356,9 @@ namespace Pronunciation.Parser
             return transcription;
         }
 
-        private void AssignAlternativeSpelling(TagReader reader, LDOCEEntryItem item)
+        private void ParseAlternativeSpelling(TagReader reader, LDOCEEntryItem item)
         {
-            if (string.IsNullOrEmpty(item.ItemText))
+            if (string.IsNullOrEmpty(item.ItemKeyword))
                 return;
 
             reader.ResetPosition();
@@ -336,20 +366,37 @@ namespace Pronunciation.Parser
             {
                 if (!reader.IsTagOpen("(", ")"))
                 {
-                    string stressText = PrepareTitle(reader.Content);
-                    string wordText = Trim(RemoveWordStress(stressText));
-                    if (string.IsNullOrEmpty(wordText))
+                    string wordRef = PrepareKeyword(reader.Content);
+                    if (string.IsNullOrEmpty(wordRef))
                         return;
 
+                    string alternativeTitle = PrepareTitle(reader.Content);
                     var transcription = FindTranscription(reader);
                     if (!string.IsNullOrEmpty(item.Transcription) && transcription == item.Transcription
-                        && wordText != item.ItemText)
+                        && wordRef != item.ItemKeyword)
                     {
-                        item.AlternativeSpelling = wordText;
-                        item.AlternativeStressedText = stressText;
+                        item.AlternativeSpelling = wordRef;
+                        item.ItemTitle = MergeItemTitle(item.ItemTitle, alternativeTitle);
                     }
                 }
             }
+        }
+
+        private string MergeItemTitle(string currentTitle, string alternativeTitle)
+        {
+            if (string.IsNullOrEmpty(alternativeTitle))
+                return currentTitle;
+
+            if (string.IsNullOrEmpty(currentTitle))
+                return alternativeTitle;
+
+            string concatenator = ",";
+            if (currentTitle.Contains(",") || alternativeTitle.Contains(","))
+            {
+                concatenator = ";";
+            }
+
+            return string.Format("{0}{1} {2}", currentTitle, concatenator, alternativeTitle);
         }
 
         private string Trim(string text)
@@ -400,29 +447,24 @@ namespace Pronunciation.Parser
             if (result.Contains("[") || result.Contains("]"))
                 throw new ArgumentException();
 
-            result = RemoveExtraText(result);
-            return result;
+            return Trim(result);
         }
 
-        private string RemoveExtraText(string text)
+        private string PrepareKeyword(string itemTitle)
         {
-            if (string.IsNullOrEmpty(text))
-                return text;
+            string result = PrepareTitle(itemTitle);
+            if (string.IsNullOrEmpty(result))
+                return result;
 
-            if (text.ToLower().EndsWith(TheEnding))
-            {
-                text = text.Substring(0, text.Length - TheEnding.Length).Trim();
-            }
-
-            return text;
+            return Trim(result.Replace("ˈ", "").Replace("ˌ", ""));
         }
 
-        private string RemoveWordStress(string text)
+        private string PrepareGroupingKeyword(string keyword)
         {
-            if (string.IsNullOrEmpty(text))
-                return text;
+            if (!keyword.ToLower().EndsWith(TheEnding))
+                return keyword;
 
-            return text.Replace("ˈ", "").Replace("ˌ", "");
+            return Trim(keyword.Substring(0, keyword.Length - TheEnding.Length));
         }
 
         private string PrepareTranscription(string text)
