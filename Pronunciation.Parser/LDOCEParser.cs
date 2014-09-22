@@ -11,6 +11,7 @@ namespace Pronunciation.Parser
         private readonly string _logFile;
         private readonly StringBuilder _log;
         private bool _ignoreLogRequests = false;
+        private int _skippedCount = 0;
 
         public const string TranscriptionNoteOpenTag = "<note>";
         public const string TranscriptionNoteCloseTag = "</note>";
@@ -67,11 +68,7 @@ namespace Pronunciation.Parser
                     {
                         if (entry != null)
                         {
-                            ProcessEntry(entry);
-                            if (entry.Items.Count > 0)
-                            {
-                                entries.Add(entry);
-                            }
+                            ProcessEntry(entry, entries);
                         }
                         entry = new LDOCEEntry { Keyword = PrepareKeyword(text), Items = new List<LDOCEEntryItem>() };
                     }
@@ -104,11 +101,7 @@ namespace Pronunciation.Parser
 
             if (entry != null)
             {
-                ProcessEntry(entry);
-                if (entry.Items.Count > 0)
-                {
-                    entries.Add(entry);
-                }
+                ProcessEntry(entry, entries);
             }
 
             // Group entries by keyword (cut off ", the" ending)
@@ -155,6 +148,8 @@ namespace Pronunciation.Parser
                 finalKeywords.Add(groupingKeyword);
             }
 
+            Log("Skipped entries: {0}", _skippedCount);
+
             int noTranscriptionCount = finalEntries.SelectMany(x => x.Items).Count(x => string.IsNullOrEmpty(x.Transcription));
             Log("Total entries without transcription: {0}", noTranscriptionCount);
 
@@ -177,92 +172,101 @@ namespace Pronunciation.Parser
             return finalEntries.ToArray();
         }
 
-        int pp = 0;
-        private void ProcessEntry(LDOCEEntry entry)
+        private void ProcessEntry(LDOCEEntry entry, List<LDOCEEntry> entries)
         {
             if (entry == null || entry.Items.Count == 0)
-                return;
-
-            var groupsWithTranscription = entry.Items.Where(x => !string.IsNullOrEmpty(x.Transcription))
-                .GroupBy(x => x.Transcription).ToArray();
-            if (groupsWithTranscription.Length > 0)
             {
-                var itemsWithoutTranscription = entry.Items.Where(x => string.IsNullOrEmpty(x.Transcription)).ToArray();
-                foreach (var group in groupsWithTranscription)
+                _skippedCount++;
+                Log("Skipped entry '{0}' because it's empty.", entry.Keyword);
+                return;
+            }
+
+            var items = new List<LDOCEEntryItem>();
+            LDOCEEntryItem lastItem = null;
+            foreach (var item in entry.Items)
+            {
+                if (!item.HasAudio)
                 {
-                    var groupItems = group.ToArray();
-                    var mainItem = groupItems[0];
-
-                    // We merge parts of speech only if the main entry has an explicit part of speech
-                    bool collectPartsOfSpeech = (mainItem.PartsOfSpeech != null && mainItem.PartsOfSpeech.Length > 0);
-                    List<string> partsOfSpeech = collectPartsOfSpeech ? new List<string>() : null;
-                    if (groupItems.Length > 1)
+                    if (string.IsNullOrEmpty(item.Transcription))
                     {
-                        if (collectPartsOfSpeech)
+                        if (lastItem == null)
                         {
-                            partsOfSpeech.AddRange(groupItems.Where((x, i) => i > 0 && x.PartsOfSpeech != null)
-                                .SelectMany(x => x.PartsOfSpeech));
+                            Log("Skipped entry without audio and transcription '{0}' {1}", entry.Keyword, item.ItemNumber);
+                            continue;
                         }
-                        foreach (var item in groupItems.Where((x, i) => i > 0).ToArray())
-                        {
-                            //Log("Skipped duplicate entry '{0}' {1}", entry.Keyword, item.ItemNumber);
-                            entry.Items.Remove(item);
-                        }
+
+                        MergeItems(lastItem, item);
                     }
-
-                    if (collectPartsOfSpeech && itemsWithoutTranscription.Length > 0)
+                    else
                     {
-                        // If there's only one item with transcription then "assign" all items without a transcription to it
-                        if (groupsWithTranscription.Length == 1)
+                        var matchedItem = items.FirstOrDefault(x => x.Transcription == item.Transcription);
+                        if (matchedItem == null)
                         {
-                            partsOfSpeech.AddRange(itemsWithoutTranscription.Where(x => x.PartsOfSpeech != null)
-                                .SelectMany(x => x.PartsOfSpeech));
+                            items.Add(item);
+                            lastItem = item;   
                         }
-                        else if (mainItem.HasAudio)
+                        else
                         {
-                            // Trying to match items without transcription by UK & US pronunciations
-                            partsOfSpeech.AddRange(itemsWithoutTranscription.Where(x => x.PartsOfSpeech != null
-                                    && x.SoundFileUK == mainItem.SoundFileUK && x.SoundFileUS == mainItem.SoundFileUS)
-                                .SelectMany(x => x.PartsOfSpeech));
+                            MergeItems(matchedItem, item);                         
                         }
-                    }
-
-                    if (collectPartsOfSpeech && partsOfSpeech.Count > 0)
-                    {
-                        partsOfSpeech.AddRange(mainItem.PartsOfSpeech);
-                        mainItem.PartsOfSpeech = partsOfSpeech.Distinct().ToArray();
-                    }
-
-                    if (!mainItem.HasAudio)
-                    {
-                        Log("Entry without an audio '{0}' {1}", entry.Keyword, mainItem.ItemNumber);
                     }
                 }
-
-                foreach (var item in itemsWithoutTranscription)
+                else
                 {
-                    entry.Items.Remove(item);
+                    if (lastItem == null)
+                    {
+                        items.Add(item);
+                        lastItem = item;
+                    }
+                    else
+                    {
+                        LDOCEEntryItem matchedItem = items.FirstOrDefault(x =>
+                            x.SoundFileUK == item.SoundFileUK && x.SoundFileUS == item.SoundFileUS
+                            && (x.Transcription == item.Transcription || string.IsNullOrEmpty(item.Transcription)));
+
+                        if (matchedItem == null)
+                        {
+                            items.Add(item);
+                            lastItem = item;
+                        }
+                        else
+                        {
+                            MergeItems(matchedItem, item);
+                        }
+                    }
                 }
             }
-            else
+
+            if (items.Count <= 0)
             {
-                var mainItem = entry.Items[0];
-                if (entry.Items.Count > 1 && mainItem.PartsOfSpeech != null && mainItem.PartsOfSpeech.Length > 0)
-                {
-                    mainItem.PartsOfSpeech = entry.Items.Where(x => x.PartsOfSpeech != null)
-                        .SelectMany(x => x.PartsOfSpeech).Distinct().ToArray();
-                }
+                _skippedCount++;
+                Log("Skipped entry '{0}' because its items are empty.", entry.Keyword);
+                return;
+            }
 
-                Log("Entry without a transcription '{0}' {1}", entry.Keyword, mainItem.ItemNumber);
-                if (!mainItem.HasAudio)
-                {
-                    Log("Entry without an audio '{0}' {1}", entry.Keyword, mainItem.ItemNumber);
-                }
+            entry.Items = items;
+            entries.Add(entry);
+        }
 
-                foreach (var item in entry.Items.Where((x, i) => i > 0).ToArray())
+        private void MergeItems(LDOCEEntryItem target, LDOCEEntryItem source)
+        {
+            if (source == null || target == null)
+                return;
+
+            if (!string.IsNullOrEmpty(source.ItemNumber))
+            {
+                target.ItemNumber += (string.IsNullOrEmpty(target.ItemNumber) ? null : ", ") + source.ItemNumber;
+            }
+
+            if (source.PartsOfSpeech != null)
+            {
+                if (target.PartsOfSpeech == null)
                 {
-                    //Log("Skipped duplicate entry '{0}' {1}", entry.Keyword, item.ItemNumber);
-                    entry.Items.Remove(item);
+                    target.PartsOfSpeech = source.PartsOfSpeech;
+                }
+                else
+                {
+                    target.PartsOfSpeech.AddRange(source.PartsOfSpeech.Where(x => !target.PartsOfSpeech.Contains(x)));
                 }
             }
         }
@@ -404,12 +408,12 @@ namespace Pronunciation.Parser
             return string.IsNullOrEmpty(text) ? text : text.Trim();
         }
 
-        private string[] SplitPartsOfSpeech(string partsOfSpeech)
+        private List<string> SplitPartsOfSpeech(string partsOfSpeech)
         {
             if (string.IsNullOrEmpty(partsOfSpeech))
                 return null;
 
-            return partsOfSpeech.Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).ToArray();
+            return partsOfSpeech.Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).ToList();
         }
 
         private void Log(string text)
@@ -443,7 +447,7 @@ namespace Pronunciation.Parser
             if (string.IsNullOrEmpty(itemTitle))
                 return itemTitle;
 
-            var result = itemTitle.Replace("[b]", "").Replace("[/b]", "").Replace("‧", "").Replace("·", "");
+            var result = itemTitle.Replace("[b]", "").Replace("[/b]", "").Replace("‧", "").Replace("·", "").Replace("’", "'");
             if (result.Contains("[") || result.Contains("]"))
                 throw new ArgumentException();
 

@@ -13,6 +13,7 @@ namespace Pronunciation.Parser
         public WordRanks Ranks;
         public WordUsageInfo PreviousWord;
         public WordUsageInfo NextWord;
+        public bool IsMapped;
     }
 
     public class WordRanks
@@ -76,21 +77,45 @@ namespace Pronunciation.Parser
         public void Initialize(IEnumerable<string> keywords)
         {
             _stats = new StringBuilder();
-            Dictionary<string, WordUsageInfo> wordsWithRank = GroupWords(_usageFile);
+            Dictionary<string, WordUsageInfo> caseSensitiveRanks = GroupWords(_usageFile);
 
             _words = new Dictionary<string, WordUsageInfo>();
+            var unmappedKeywords = new List<string>();
             foreach (var keyword in keywords)
             {
                 WordUsageInfo info;
-                if (wordsWithRank.TryGetValue(keyword, out info))
+                if (caseSensitiveRanks.TryGetValue(keyword, out info))
                 {
                     info.CombinedRank = info.Ranks.CalculateRank();
+                    info.IsMapped = true;
+                    _words.Add(keyword, info);
+                }
+                else
+                {
+                    unmappedKeywords.Add(keyword);
+                }
+            }
+
+            // Perform case insensitive match
+            var caseInsensitiveRanks = new Dictionary<string, WordUsageInfo>(StringComparer.OrdinalIgnoreCase);
+            foreach (var group in caseSensitiveRanks.Values.Where(x => !x.IsMapped).GroupBy(x => x.Keyword.ToLower()))
+            {
+                var groupItems = group.OrderBy(x => x.Ranks.CalculateRank()).ToArray();
+                caseInsensitiveRanks.Add(group.Key, groupItems[0]);
+            }
+            foreach (var keyword in unmappedKeywords)
+            {
+                WordUsageInfo info;
+                if (caseInsensitiveRanks.TryGetValue(keyword, out info))
+                {
+                    info.CombinedRank = info.Ranks.CalculateRank();
+                    info.IsMapped = true;
                     _words.Add(keyword, info);
                 }
             }
 
             int count = 0;
-            foreach (var keyword in wordsWithRank.Keys.Where(x => !_words.ContainsKey(x)).OrderBy(x => x))
+            foreach (var keyword in caseSensitiveRanks.Values.Where(x => !x.IsMapped).Select(x => x.Keyword).OrderBy(x => x))
             {
                 count++;
                 _stats.AppendFormat("Keyword '{0}' is not mapped.\r\n", keyword);

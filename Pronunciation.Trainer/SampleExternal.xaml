@@ -1,0 +1,136 @@
+﻿<controls:UserControlExt 
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Pronunciation.Trainer;assembly=PronunciationTrainer"
+             xmlns:controls="clr-namespace:Pronunciation.Trainer.Controls;assembly=PronunciationTrainer"
+             xmlns:convert="clr-namespace:Pronunciation.Trainer.ValueConverters;assembly=PronunciationTrainer"
+             xmlns:styles="clr-namespace:Pronunciation.Trainer.StyleSelectors;assembly=PronunciationTrainer"
+             xmlns:data="clr-namespace:Pronunciation.Trainer.Database;assembly=PronunciationTrainer"
+             mc:Ignorable="d" 
+             d:DesignHeight="528" d:DesignWidth="826">
+    <UserControl.Resources>
+        <styles:SuggestionsListItemStyleSelector x:Key="suggestionsItemStyleSelector" />
+        <Style x:Key="ToolbarImage" TargetType="Image">
+            <Setter Property="Stretch" Value="None" />
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.5" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="CategoryCell" TargetType="DataGridCell">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style x:Key="CategoryNameCell" TargetType="DataGridCell" BasedOn="{StaticResource CategoryCell}">
+            <Setter Property="ToolTip" Value="{Binding Path=DisplayName}" />
+        </Style>        
+        <Style x:Key="IsAssignedCell" TargetType="DataGridCell" BasedOn="{StaticResource CategoryCell}">
+            <Setter Property="Margin" Value="0,2,0,0"/>
+        </Style>
+    </UserControl.Resources>
+    <DockPanel Name="rootPanel" KeyboardNavigation.TabNavigation="Cycle">
+        <local:AudioPanel DockPanel.Dock="Top" Height="32" x:Name="audioPanel" />
+        <DockPanel DockPanel.Dock="Top" Height="32">
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" HorizontalAlignment="Left">
+                <Border Width="150" Name="borderSearch" Background="White" Height="23" Margin="0,0,0,0">
+                    <DockPanel>
+                        <Image DockPanel.Dock="Left" Source="Resources/SearchWord.png" Stretch="None" />
+                        <Button DockPanel.Dock="Right" Name="btnClearText" HorizontalAlignment="Stretch" Focusable="False" 
+                        Margin="0,0,1,0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Clear [{0}]">
+                            <Image Source="Resources/ClearSearch.png" Stretch="None" />
+                        </Button>
+                        <TextBox Name="txtSearch" BorderThickness="0" TabIndex="10" />
+                    </DockPanel>
+                </Border>
+                <TextBlock Name="textBlock2" Text="Filter by rank:" Margin="10,0,5,0" VerticalAlignment="Center" />
+                <controls:ComboBoxExt Height="23" Width="120" TabIndex="20" x:Name="cboRanks" DisableAltGestures="True" Margin="0,0,5,0" />
+                <TextBlock Name="textBlock3" Text="by category:" Margin="5,0,5,0" VerticalAlignment="Center" />
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" Width="170" Margin="10,0,0,0">
+                <Button Height="23" Width="23" Name="btnBack" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Go back [{0}]">
+                    <Image Source="Resources/ArrowBack.png" Style="{StaticResource ToolbarImage}" />
+                </Button>
+                <Button Height="23" Width="23" Name="btnForward" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Go forward [{0}]">
+                    <Image Source="Resources/ArrowForward.png" Style="{StaticResource ToolbarImage}" />
+                </Button>
+                <Button Height="23" Width="23" Name="btnPrevious" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Previous word in the list [{0}]">
+                    <Image Source="Resources/ArrowUp.png" Style="{StaticResource ToolbarImage}" />
+                </Button>
+                <Button Height="23" Width="23" Name="btnNext" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Next word in the list [{0}]">
+                    <Image Source="Resources/ArrowDown.png" Style="{StaticResource ToolbarImage}" />
+                </Button>
+                <Button Height="23" Width="23" Name="btnSyncPage" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Find current word in the list [{0}]">
+                    <Image Source="Resources/SynchronizeList.png" Style="{StaticResource ToolbarImage}" />
+                </Button>                
+                <controls:OnOffButton Height="23" Width="23" x:Name="btnFavorites" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    StateOnTooltip="Remove the word from favorites [{0}]" StateOffTooltip="Add the word to favorites [{0}]">
+                    <Image>
+                        <Image.Style>
+                            <Style TargetType="Image" BasedOn="{StaticResource ToolbarImage}">
+                                <Setter Property="Source" Value="Resources/Favorites.png" />
+                                <Setter Property="Opacity" Value="0.5" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=btnFavorites, Path=IsOn}" Value="True">
+                                        <Setter Property="Opacity" Value="1" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                </controls:OnOffButton>
+                <Button Height="23" Width="23" Name="btnEditCategories" Focusable="False" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    ToolTip="Edit list of categories">
+                    <Image Source="Resources/EditCategories.png" Style="{StaticResource ToolbarImage}" />
+                </Button>
+            </StackPanel>
+            <controls:ComboBoxExt Height="23" Margin="0,0,0,0" TabIndex="30" x:Name="cboCategories" DisableAltGestures="True" />            
+        </DockPanel>
+        <StatusBar DockPanel.Dock="Bottom" Height="20" 
+                   Background="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}, Path=Background}">
+            <StatusBarItem Padding="0" VerticalContentAlignment="Bottom">
+                <TextBlock Name="lblSessionStats" Text="" />
+            </StatusBarItem>
+        </StatusBar>
+        <controls:SuggestionsList x:Name="lstSuggestions" DockPanel.Dock="Left" Width="150" Margin="0,5,0,0" TabIndex="40"
+            ItemContainerStyleSelector="{StaticResource suggestionsItemStyleSelector}" 
+             />
+        <TabControl Name="tabsHistory" DockPanel.Dock="Right" Width="170" Margin="10,5,0,0" TabStripPlacement="Top" Focusable="False">
+            <controls:TabItemExt Header="Recent words" x:Name="tabRecent" IsTabStop="False">
+                <controls:ListBoxExt x:Name="lstRecentWords" TabIndex="50" BorderThickness="0"  />
+            </controls:TabItemExt>
+            <controls:TabItemExt Header="Categories" x:Name="tabCategories" IsTabStop="False">
+                <DataGrid Name="categoriesDataGrid" AutoGenerateColumns="False" EnableRowVirtualization="True" BorderThickness="0"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HeadersVisibility="None" GridLinesVisibility="None"
+                          CanUserReorderColumns="False" CanUserAddRows="True" CanUserDeleteRows="True" Margin="0,3,0,0" Background="White"
+                          CanUserResizeRows="False" IsReadOnly="False" SelectionMode="Single" SelectionUnit="Cell" 
+                          CellStyle="{StaticResource CategoryCell}" IsTabStop="False" KeyboardNavigation.TabNavigation="None">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn x:Name="displayNameColumn" Binding="{Binding Path=DisplayName, Mode=OneWay}" Width="*" CellStyle="{StaticResource CategoryNameCell}" />
+                        <DataGridCheckBoxColumn x:Name="isAssignedColumn" Binding="{Binding Path=IsAssigned, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=true}" Width="30" CellStyle="{StaticResource IsAssignedCell}" />
+                    </DataGrid.Columns>
+                    <DataGrid.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="White"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black"/>
+                        <!-- in .NET 4.5 there's "InactiveSelectionHighlightBrushKey" -->
+                    </DataGrid.Resources>
+                </DataGrid>
+            </controls:TabItemExt>
+        </TabControl>        
+        <WebBrowser Name="browser" Focusable="False" />
+    </DockPanel>
+</controls:UserControlExt>

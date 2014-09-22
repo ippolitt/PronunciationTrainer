@@ -19,7 +19,7 @@ namespace Pronunciation.Parser
         public string ItemTitle;
         public string AlternativeSpelling;
         public string Transcription;
-        public string[] PartsOfSpeech;
+        public List<string> PartsOfSpeech;
         public string Notes;
         public string SoundFileUK;
         public string SoundFileUS;

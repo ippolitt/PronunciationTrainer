@@ -215,6 +215,9 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <None Include="SampleExternal.xaml">
+      <SubType>Designer</SubType>
+    </None>
     <Page Include="Theory.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -276,7 +279,9 @@
     <Resource Include="Resources\SearchWord.png" />
     <Resource Include="Resources\ArrowForward.png" />
     <Resource Include="Resources\ArrowBack.png" />
-    <Resource Include="Readme.txt" />
+    <None Include="Readme.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Pronunciation.Core\Pronunciation.Core.csproj">

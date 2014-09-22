@@ -107,6 +107,9 @@ namespace Pronunciation.Parser
                 if (!_wordsSet.ReadAbsolute(wordInfo.RecordPosition))
                     throw new IndexOutOfRangeException("Failed to locate word record!");
 
+                if ((string)_wordsSet["Keyword"] != word.Text)
+                    throw new ArgumentException("Words map is corrupted!");
+
                 wordInfo.IsUsed = true;
                 currentWordId = wordInfo.WordId;
                 wordRecord = new DataRecordWrapper(_wordsSet); 
@@ -130,6 +133,11 @@ namespace Pronunciation.Parser
             wordRecord["IsCollocation"] = word.IsCollocation ? true : (bool?)null;
 
             // Word usage statistics
+            wordRecord["UsageRank"] = null;
+            wordRecord["RankLongmanS"] = null;
+            wordRecord["RankLongmanW"] = null;
+            wordRecord["RankMacmillan"] = null;
+            wordRecord["RankCOCA"] = null;
             if (word.UsageInfo != null)
             {
                 if (word.UsageInfo.CombinedRank > 0)
@@ -197,26 +205,29 @@ namespace Pronunciation.Parser
 
             int deleteCount = 0;
             var idsToDelete = new HashSet<int>(_wordIdMap.Values.Where(x => !x.IsUsed).Select(x => x.WordId));
-            bool isRecord = _wordsSet.ReadFirst();
-            while (isRecord)
+            if (idsToDelete.Count > 0)
             {
-                if (idsToDelete.Contains((int)_wordsSet["WordId"]))
+                bool isRecord = _wordsSet.ReadFirst();
+                while (isRecord)
                 {
-                    var keyword = (string)_wordsSet["Keyword"];
-                    try
+                    if (idsToDelete.Contains((int)_wordsSet["WordId"]))
                     {
-                        _wordsSet.Delete();
-                        deleteCount++;
-                        _dbStats.AppendFormat("Deleted extra word '{0}'\r\n", keyword);
+                        var keyword = (string)_wordsSet["Keyword"];
+                        try
+                        {
+                            _wordsSet.Delete();
+                            deleteCount++;
+                            _dbStats.AppendFormat("Deleted extra word '{0}'\r\n", keyword);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("\r\nFAILED to delete extra word: '{0}'. {1}", keyword, ex);
+                            _dbStats.AppendFormat("FAILED to delete extra word '{0}': {1}\r\n", keyword, ex);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("\r\nFAILED to delete extra word: '{0}'. {1}", keyword, ex);
-                        _dbStats.AppendFormat("FAILED to delete extra word '{0}': {1}\r\n", keyword, ex);
-                    }
-                }
 
-                isRecord = _wordsSet.Read();
+                    isRecord = _wordsSet.Read();
+                }
             }
 
             // The map doesn't have a sense anymore because all indexes have changed

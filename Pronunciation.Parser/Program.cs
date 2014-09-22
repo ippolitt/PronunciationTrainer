@@ -55,6 +55,9 @@ namespace Pronunciation.Parser
         {
             try
             {
+                var rootFolder = Path.GetFullPath(Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), RootFolderPath));
+
                 //MigrateRecordingsToDB();
                 //StoreLargeData();
                 //UploadFiles();
@@ -63,10 +66,15 @@ namespace Pronunciation.Parser
                 //MigrateRecordings();
                 //ImportCategories();
                 //TestWordsUpdate();
+               // FindUnmatchedRanks(rootFolder);
+
+                //var topBuilder = new TopWordsBuilder();
+                //topBuilder.MergeTopWords();
+                //topBuilder.FixMacmillan();
+
                 //return;
 
-                var rootFolder = Path.GetFullPath(Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), RootFolderPath));
+
 
                 //var data = File.ReadAllBytes(Path.Combine(HtmlFolderPath, @"Recordings\j\jump.mp3"));
                 //var str = Convert.ToBase64String(data);
@@ -110,7 +118,7 @@ namespace Pronunciation.Parser
                 bool isFakeMode = false;
                 bool preserveSounds = true;
                 int numberOfRecords = -1;
-                bool deleteExtraWords = true;
+                bool deleteExtraWords = false;
                 var generationMode = HtmlBuilder.GenerationMode.Database;
 
                 IFileLoader fileLoader = new FileLoader(
@@ -118,7 +126,7 @@ namespace Pronunciation.Parser
                     Path.Combine(rootFolder, SoundsFolderLDOCE),
                     Path.Combine(rootFolder, SoundsFolderMW),
                     Path.Combine(rootFolder, SoundsCacheFolder),
-                    true);
+                    false);
 
                 //fileLoader = new FileLoaderMock();
 
@@ -166,9 +174,6 @@ namespace Pronunciation.Parser
                 htmlBuilder.ConvertToHtml(
                     Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameLPD),
                     outputHtmlFolder, numberOfRecords, isFakeMode, deleteExtraWords);
-
-                //var topBuilder = new TopWordsBuilder();
-                //topBuilder.MergeTopWords();
             }
             catch (Exception ex)
             {
@@ -535,6 +540,44 @@ VALUES(@id, '8c3d00db-4787-48a5-b807-9d5fd0246e51', @word)", conn);
                     }
                 }
             }
+        }
+
+        private static void FindUnmatchedRanks(string rootFolder)
+        {
+            HashSet<string> keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            using (var connection = new SqlCeConnection(ConnectionString))
+            {
+                connection.Open();
+
+                SqlCeCommand cmdTable = new SqlCeCommand()
+                {
+                    Connection = connection,
+                    CommandType = CommandType.Text
+                };
+
+                cmdTable.CommandText = "select Keyword From DictionaryWord where UsageRank is not null";
+                using (var rdr = cmdTable.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        keywords.Add((string)rdr["Keyword"]);
+                    }
+                }
+            }
+
+            var wordsFile = Path.Combine(rootFolder, DataFolder, TopWordsFileName);
+            var ranks = File.ReadAllLines(wordsFile);
+            List<string> missing = new List<string>();
+            foreach (var rank in ranks)
+            {
+                var word = rank.Split('\t')[0];
+                if (!keywords.Contains(word))
+                {
+                    missing.Add(word);
+                }
+            }
+
+            File.WriteAllText(@"D:\missing.txt", string.Join(Environment.NewLine, missing.OrderBy(x => x)));
         }
 
         private class WordIdInfo

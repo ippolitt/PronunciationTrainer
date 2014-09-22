@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using Pronunciation.Core.Providers.Recording;
 using Pronunciation.Core.Providers.Recording.HistoryPolicies;
 using Pronunciation.Trainer.Dictionary;
+using System.Windows.Input;
 
 namespace Pronunciation.Trainer.AudioContexts
 {
@@ -21,8 +22,6 @@ namespace Pronunciation.Trainer.AudioContexts
         private string _soundKey;
         private string _soundText;
         private DictionarySoundInfo _soundInfo;
-        private const string MWSoundPrefix = "mw_";
-        private const string LDOCESoundPrefix = "ldoce_";
 
         public event AudioContextChangedHandler ContextChanged;
 
@@ -52,6 +51,8 @@ namespace Pronunciation.Trainer.AudioContexts
             if (string.IsNullOrEmpty(soundKey))
                 return;
 
+            bool isCtrlPressed = ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control);
+
             _soundKey = soundKey;
             _soundText = soundText;
             if (string.IsNullOrEmpty(audioData))
@@ -66,7 +67,7 @@ namespace Pronunciation.Trainer.AudioContexts
 
             if (ContextChanged != null)
             {
-                ContextChanged(PlayAudioMode.PlayReference);
+                ContextChanged(isCtrlPressed ? PlayAudioMode.PlayRecorded : PlayAudioMode.PlayReference);
             }
         }
 
@@ -109,12 +110,10 @@ namespace Pronunciation.Trainer.AudioContexts
                 if (_soundInfo == null)
                     return null;
 
-                string dictionaryName = GetDictionaryName(_soundKey);
-
-                return string.Format("Active audio: \"{0}\" {1}{2}",
-                    string.IsNullOrEmpty(_soundText) ? _soundKey : _soundText, 
+                return string.Format("Active audio: \"{0}\" {1} ({2})",
+                    _soundText, 
                     _soundInfo.IsUKAudio ? "UK" : "US",
-                    string.IsNullOrEmpty(dictionaryName) ? null : string.Format(" ({0})", dictionaryName)); 
+                    _soundKey); 
             }
         }
 
@@ -148,16 +147,6 @@ namespace Pronunciation.Trainer.AudioContexts
         public string RegisterRecordedAudio(string recordedFilePath, DateTime recordingDate)
         {
             return _recordingProvider.RegisterNewAudio(_recordingKey, recordingDate, recordedFilePath, _recordingPolicy);
-        }
-
-        private string GetDictionaryName(string soundKey)
-        {
-            if (string.IsNullOrEmpty(soundKey))
-                return null;
-
-            return soundKey.StartsWith(MWSoundPrefix) 
-                ? "Merriam-Webster" 
-                : (soundKey.StartsWith(LDOCESoundPrefix) ? "LDOCE" : null);
         }
     }
 }

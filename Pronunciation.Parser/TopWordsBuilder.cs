@@ -33,9 +33,9 @@ namespace Pronunciation.Parser
 
         public void GroupWords()
         {
-            GroupWords(@"D:\DOCS\Языки\English\Pronunciation\TopWords\TopLongman.txt", SourceType.Longman);
-            GroupWords(@"D:\DOCS\Языки\English\Pronunciation\TopWords\TopMacmillan.txt", SourceType.Macmillan);
-            GroupWords(@"D:\DOCS\Языки\English\Pronunciation\TopWords\TopCOCA.txt", SourceType.COCA);
+            GroupWords(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopLongman.txt", SourceType.Longman);
+            GroupWords(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopMacmillan.txt", SourceType.Macmillan);
+            GroupWords(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopCOCA.txt", SourceType.COCA);
         }
 
         private void GroupWords(string sourceFile, SourceType sourceType)
@@ -64,11 +64,11 @@ namespace Pronunciation.Parser
         {
             var dic = new Dictionary<string, TopWordInfo>();
 
-            MatchFile(@"D:\DOCS\Языки\English\Pronunciation\TopWords\TopLongman.txt", dic, SourceType.Longman);
-            MatchFile(@"D:\DOCS\Языки\English\Pronunciation\TopWords\TopMacmillan.txt", dic, SourceType.Macmillan);
-            MatchFile(@"D:\DOCS\Языки\English\Pronunciation\TopWords\TopCOCA.txt", dic, SourceType.COCA);
+            MatchFile(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopLongman.txt", dic, SourceType.Longman);
+            MatchFile(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopMacmillan.txt", dic, SourceType.Macmillan);
+            MatchFile(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopCOCA.txt", dic, SourceType.COCA);
 
-            using (var dest = new StreamWriter(@"D:\DOCS\Языки\English\Pronunciation\TopWords.txt"))
+            using (var dest = new StreamWriter(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopWords.txt"))
             {
                 foreach (var word in dic.Values.OrderBy(x => x.Word))
                 {
@@ -226,9 +226,9 @@ namespace Pronunciation.Parser
 
         public void BuildTopWords()
         {
-            using (var source = new StreamReader(@"D:\DOCS\Языки\English\Pronunciation\TopWords.txt"))
+            using (var source = new StreamReader(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopWords.txt"))
             {
-                using (var dest = new StreamWriter(@"D:\DOCS\Языки\English\Pronunciation\TopWords1.txt"))
+                using (var dest = new StreamWriter(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopWords1.txt"))
                 {
                     while (!source.EndOfStream)
                     {
@@ -280,6 +280,87 @@ namespace Pronunciation.Parser
             }
         }
 
+        public void FixMacmillan()
+        {
+            var ends = new string[]
+            { 
+                "abbreviation",
+                "adjective", 
+                "adverb", 
+                "conjunction", 
+                "determiner",
+                "interjection",
+                "modal verb",
+                "noun",
+                "number",
+                "predeterminer",
+                "preposition",
+                "pronoun",  
+                "short form",
+                "verb"        
+            };
+
+            var wrongWords = new string [] {"le", "lo", "p", "ple", "re", "spre", "tre" };
+
+            StringBuilder bld = new StringBuilder();
+            foreach (var record in File.ReadAllLines(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopMacmillan_old.txt"))
+            {
+                var parts = record.Split('\t');
+                if (parts.Length != 3)
+                    throw new ArgumentException();
+
+                string keyword;
+                string speechPart;
+                if (string.IsNullOrEmpty(parts[1]))
+                {
+                    keyword = parts[0];
+                    speechPart = null;
+                    if (keyword == "Mr" || keyword == "Mrs" || keyword == "Ms")
+                    {
+                        speechPart = "noun";
+                    }
+                }
+                else
+                {
+                    if (parts[1].Contains(','))
+                    {
+                        keyword = parts[0];
+                        speechPart = parts[1];
+                    }
+                    else
+                    {
+                        var combined = parts[0] + parts[1];
+                        var matchedEndings = ends.Where(x => combined.EndsWith(x, StringComparison.OrdinalIgnoreCase))
+                            .OrderByDescending(x => x.Length).ToList();
+ 
+                        string matchedEnding = "s";
+                        if (matchedEndings.Count == 1)
+                        {
+                            matchedEnding = matchedEndings[0];
+                        }
+                        else if (matchedEndings.Count == 2)
+                        {
+                            matchedEnding = matchedEndings[0];
+                            keyword = combined.Substring(0, combined.Length - matchedEnding.Length);
+                            if (wrongWords.Contains(keyword))
+                            {
+                                matchedEnding = matchedEndings[1];
+                            }
+                        }
+                        else
+                            throw new ArgumentException();
+
+                        keyword = combined.Substring(0, combined.Length - matchedEnding.Length);
+                        speechPart = combined.Substring(keyword.Length);
+                    }
+                }
+
+                bld.AppendFormat("{0}\t{1}\t{2}\r\n", keyword, speechPart, parts[2]);
+            }
+
+            File.WriteAllText(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopMacmillan.txt", bld.ToString());
+        }
+
         public void BuildMacmillan()
         {
             var endsPriority = new List<string> { 
@@ -302,13 +383,13 @@ namespace Pronunciation.Parser
 
             var suffixes = new string[] { "2500", "5000", "7500" };
 
-            using (var dest = new StreamWriter(@"D:\DOCS\Языки\English\Pronunciation\TopMacmillan.txt", false, Encoding.Default))
+            using (var dest = new StreamWriter(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopMacmillan.txt", false, Encoding.Default))
             {
                 var missing = new List<string>();
                 foreach (var suffix in suffixes)
                 {
                     using (var source = new StreamReader(string.Format(
-                        @"D:\DOCS\Языки\English\Pronunciation\TopMac{0}.txt", suffix), Encoding.Default))
+                        @"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopMac{0}.txt", suffix), Encoding.Default))
                     {
                         while (!source.EndOfStream)
                         {
@@ -347,7 +428,7 @@ namespace Pronunciation.Parser
 
                 if (missing.Count > 0)
                 {
-                    File.WriteAllLines(@"D:\DOCS\Языки\English\Pronunciation\TopMissing.txt", missing);
+                    File.WriteAllLines(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopMissing.txt", missing);
                 }
             }
         }
@@ -371,9 +452,9 @@ namespace Pronunciation.Parser
                 {"auxiliary", "auxiliary verb"},
                 {"modal", "modal verb"}};
 
-            using (var source = new StreamReader(@"D:\DOCS\Языки\English\Pronunciation\TopLongman.txt"))
+            using (var source = new StreamReader(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopLongman.txt"))
             {
-                using (var dest = new StreamWriter(@"D:\DOCS\Языки\English\Pronunciation\TopLongman1.txt"))
+                using (var dest = new StreamWriter(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopLongman1.txt"))
                 {
                     while (!source.EndOfStream)
                     {
@@ -418,9 +499,9 @@ namespace Pronunciation.Parser
                 {"e", "pronoun"},
                 {"x", "adverb"}};
 
-            using (var source = new StreamReader(@"D:\DOCS\Языки\English\Pronunciation\TopCOCA.txt", Encoding.Default))
+            using (var source = new StreamReader(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopCOCA.txt", Encoding.Default))
             {
-                using (var dest = new StreamWriter(@"D:\DOCS\Языки\English\Pronunciation\TopCOCA1.txt"))
+                using (var dest = new StreamWriter(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopCOCA1.txt"))
                 {
                     while (!source.EndOfStream)
                     {

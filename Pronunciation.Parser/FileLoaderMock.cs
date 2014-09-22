@@ -33,64 +33,81 @@ namespace Pronunciation.Parser
 
         public byte[] GetRawData(string fileKey)
         {
-            //CheckFileLDOCE(fileKey);
+            //PrepareMissingFile(fileKey);
             //CheckFileMW(fileKey);
             return new byte[1];
         }
 
-        private void CheckFileMW(string fileKey)
+        public static void PrepareMissingFile(string fileKey)
         {
             if (fileKey.StartsWith(SoundManager.MW_SoundKeyPrefix))
             {
-                string fileName = string.Format("{0}.mp3", fileKey.Remove(0, SoundManager.MW_SoundKeyPrefix.Length));
-                string activeFile = Path.Combine(DataFolderMW, "Sounds", fileName);
-                if (File.Exists(activeFile))
-                    return;
+                PrepareFileMW(fileKey);
+            }
+            else if (fileKey.StartsWith(SoundManager.LDOCE_SoundKeyPrefix))
+            {
+                PrepareFileLDOCE(fileKey);
+            }
+        }
 
-                fileName = string.Format("{0}.wav", fileKey.Remove(0, SoundManager.MW_SoundKeyPrefix.Length));
-                string extraFile = Path.Combine(DataFolderMW, "Extra", fileName);
-                if (File.Exists(extraFile))
+        private static void PrepareFileMW(string fileKey)
+        {
+            string fileName = string.Format("{0}.mp3", fileKey.Remove(0, SoundManager.MW_SoundKeyPrefix.Length));
+            string sourceFile = Path.Combine(DataFolderMW, "Sounds", fileName);
+            if (File.Exists(sourceFile))
+                return;
+
+            fileName = string.Format("{0}.wav", fileKey.Remove(0, SoundManager.MW_SoundKeyPrefix.Length));
+            sourceFile = Path.Combine(DataFolderMW, "Extra", fileName);
+            if (File.Exists(sourceFile))
+            {
+                CheckFolder(Path.Combine(DataFolderMW, "Active"));
+                File.Move(sourceFile, Path.Combine(DataFolderMW, "Active", fileName));
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
+        }
+
+        private static void PrepareFileLDOCE(string fileKey)
+        {
+            string fileName = string.Format("{0}.mp3", fileKey.Remove(0, SoundManager.LDOCE_SoundKeyPrefix.Length));
+            string sourceFile = Path.Combine(SourceFolderLDOCE, "SoundsUK", fileName);
+            if (File.Exists(sourceFile))
+                return;
+
+            sourceFile = Path.Combine(SourceFolderLDOCE, "SoundsUS", fileName);
+            if (File.Exists(sourceFile))
+                return;
+
+            fileName = string.Format("{0}.wav", fileKey.Remove(0, SoundManager.LDOCE_SoundKeyPrefix.Length));
+            sourceFile = Path.Combine(SourceFolderLDOCE, "Extra", "SoundsUK", fileName);
+            if (File.Exists(sourceFile))
+            {
+                CheckFolder(Path.Combine(SourceFolderLDOCE, "Active", "SoundsUK"));
+                File.Move(sourceFile, Path.Combine(SourceFolderLDOCE, "Active", "SoundsUK", fileName));
+            }
+            else 
+            {
+                sourceFile = Path.Combine(SourceFolderLDOCE, "Extra", "SoundsUS", fileName);
+                if (File.Exists(sourceFile))
                 {
-                    File.Move(extraFile, Path.Combine(DataFolderMW, "Active", fileName));
+                    CheckFolder(Path.Combine(SourceFolderLDOCE, "Active", "SoundsUS"));
+                    File.Move(sourceFile, Path.Combine(SourceFolderLDOCE, "Active", "SoundsUS", fileName));
                 }
                 else
                 {
                     throw new ArgumentException();
-                }
+                }   
             }
         }
 
-        private void CheckFileLDOCE(string fileKey)
+        private static void CheckFolder(string targetFolder)
         {
-            if (fileKey.StartsWith(SoundManager.LDOCE_SoundKeyPrefix))
+            if (!Directory.Exists(targetFolder))
             {
-                string fileName = string.Format("{0}.mp3", fileKey.Remove(0, SoundManager.LDOCE_SoundKeyPrefix.Length));
-                string sourceFile = Path.Combine(SourceFolderLDOCE, "SoundsUK", fileName);
-                if (File.Exists(sourceFile))
-                    return;
-
-                sourceFile = Path.Combine(SourceFolderLDOCE, "SoundsUS", fileName);
-                if (File.Exists(sourceFile))
-                    return;
-
-                fileName = string.Format("{0}.wav", fileKey.Remove(0, SoundManager.LDOCE_SoundKeyPrefix.Length));
-                sourceFile = Path.Combine(SourceFolderLDOCE, "Extra", "SoundsUK", fileName);
-                if (File.Exists(sourceFile))
-                {
-                    File.Move(sourceFile, Path.Combine(SourceFolderLDOCE, "Active", "SoundsUK", fileName));
-                }
-                else 
-                {
-                    sourceFile = Path.Combine(SourceFolderLDOCE, "Extra", "SoundsUS", fileName);
-                    if (File.Exists(sourceFile))
-                    {
-                        File.Move(sourceFile, Path.Combine(SourceFolderLDOCE, "Active", "SoundsUS", fileName));
-                    }
-                    else
-                    {
-                        throw new ArgumentException();
-                    }   
-                }
+                Directory.CreateDirectory(targetFolder);
             }
         }
     }

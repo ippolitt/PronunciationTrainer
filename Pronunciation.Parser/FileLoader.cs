@@ -152,6 +152,7 @@ namespace Pronunciation.Parser
             if (!File.Exists(sourceFile))
             {
                 Console.WriteLine("\r\nMissing sound file '{0}'", fileKey);
+                //FileLoaderMock.PrepareMissingFile(fileKey);
                 return null;
                 //throw new ArgumentException();
             }
