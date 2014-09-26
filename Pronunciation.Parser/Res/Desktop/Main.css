@@ -59,7 +59,7 @@ iframe
 .entry
 {
     padding-left: 1em;
-    padding-bottom: 1em;
+    padding-bottom: 0.5em;
 }
 .entry .entry_number
 {
@@ -77,7 +77,7 @@ iframe
 {
     font-size: 1.2em;
 }
-.speech_part, .entry_notes
+.speech_part, .entry_note, .form_note
 {
     font-weight: normal;
     font-style: italic;
@@ -94,12 +94,15 @@ iframe
 {
     border-color: green;
 }
-
 .collocations
 {
     border-color: blue;
 }
-.collocation_name
+.forms .pron, .forms .pron_us
+{
+    font-size: 1em;
+}
+.form_name, .collocation_name
 {
     font-weight: bold;
 }
@@ -174,8 +177,13 @@ iframe
     margin-right: 5px;
 }
 
-.ldoce_fragment, .mw_fragment, .ldoce_page, .mw_page
+.ldoce_page, .mw_page
 {
+    margin-bottom: 10px;
+}
+.ldoce_fragment, .mw_fragment
+{
+    margin-top: 1em;
     margin-bottom: 10px;
 }
 .ldoce_fragment .dic_header:before
@@ -195,7 +203,8 @@ iframe
 .dic_content
 {
     margin-left: 1em;
-    padding: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
 }
 .dic_entry .entry_number
 {

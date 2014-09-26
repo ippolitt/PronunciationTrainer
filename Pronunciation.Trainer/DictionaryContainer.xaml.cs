@@ -114,11 +114,11 @@ namespace Pronunciation.Trainer
             _statsCollector.SessionStatisticsChanged += StatsCollector_SessionStatisticsChanged;
 
             //_dictionaryProvider = new LPDFileSystemProvider(AppSettings.Instance.Folders.Dictionary, CallScriptMethod);
-            _dictionaryProvider = new LPDDatabaseProvider(AppSettings.Instance.Folders.Dictionary, 
+            _dictionaryProvider = new DatabaseProvider(AppSettings.Instance.Folders.Dictionary, 
                 AppSettings.Instance.Folders.Database, AppSettings.Instance.Connections.Trainer);
             _dictionaryLoader = new DictionaryInitializer(_mainIndex, _dictionaryProvider);
 
-            _audioContext = new DictionaryAudioContext(_dictionaryProvider, AppSettings.Instance.Recorders.LPD, 
+            _audioContext = new DictionaryAudioContext(_dictionaryProvider, AppSettings.Instance.Recorders.Dictionary, 
                 new AppSettingsBasedRecordingPolicy());
             audioPanel.AttachContext(_audioContext);
             audioPanel.RecordingCompleted += AudioPanel_RecordingCompleted;

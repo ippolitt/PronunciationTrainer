@@ -143,29 +143,53 @@ namespace Pronunciation.Parser
                 return;
             }
 
+            MWHtmlEntry target = word.MWEntry;
+            MergeMWWordForms(target, source);
+
             if (source.Items == null || source.Items.Count == 0)
                 return;
 
-            if (word.MWEntry.Items == null || word.MWEntry.Items.Count == 0)
+            if (target.Items == null || target.Items.Count == 0)
             {
-                word.MWEntry.Items = source.Items;
+                target.Items = source.Items;
                 return;
             }
 
-            MergeEntryItems(word.MWEntry, entry, word.MWEntry.Keyword, "MW",
-                (sourceItem) => word.MWEntry.Items.Add((MWHtmlEntryItem)sourceItem),
+            MergeEntryItems(target, entry, target.Keyword, "MW",
+                (sourceItem) => target.Items.Add((MWHtmlEntryItem)sourceItem),
                 (sourceItem, targetItems) => 
                 {
                     var item = (MWHtmlEntryItem)sourceItem;
-
-                    // We cannot merge word forms
-                    if (item.WordForms != null)
-                        return null;
-
                     var items = (IEnumerable<MWHtmlEntryItem>)targetItems;
                     return items.FirstOrDefault(x => CollectionsEqual(x.SoundFiles, item.SoundFiles)
                         && (x.Transcription == item.Transcription || string.IsNullOrEmpty(item.Transcription)));
                 });
+        }
+
+        private void MergeMWWordForms(MWHtmlEntry target, MWHtmlEntry source)
+        {
+            if (source.WordForms == null || source.WordForms.Count == 0)
+                return;
+
+            if (target.WordForms == null || target.WordForms.Count == 0)
+            {
+                target.WordForms = source.WordForms;
+                return;
+            }
+
+            foreach (var sourceForm in source.WordForms)
+            {
+                var matchingForm = target.WordForms.FirstOrDefault(x => x.Transcription == sourceForm.Transcription
+                    && CollectionsEqual(x.SoundFiles, sourceForm.SoundFiles));
+                if (matchingForm != null)
+                {
+                    matchingForm.FormName = MergeDisplayNames(matchingForm.FormName, sourceForm.FormName);
+                }
+                else
+                {
+                    target.WordForms.Add(sourceForm);
+                }
+            }
         }
 
         private void MergeEntryItems(IExtraEntry target, IExtraEntry source, string keyword, string title, 
@@ -188,16 +212,7 @@ namespace Pronunciation.Parser
                         sourceItem.DisplayName, sourceItem.Number, targetItem.DisplayName, targetItem.Number, title);
 
                     targetItem.PartsOfSpeech = MergePartsOfSpeech(targetItem.PartsOfSpeech, sourceItem.PartsOfSpeech);
-                    if (targetItem.DisplayName != sourceItem.DisplayName)
-                    {
-                        string separator = ", ";
-                        if (targetItem.DisplayName.Contains(",") || sourceItem.DisplayName.Contains(","))
-                        {
-                            separator = "; ";
-                        }
-
-                        targetItem.DisplayName += separator + sourceItem.DisplayName;
-                    }
+                    targetItem.DisplayName = MergeDisplayNames(targetItem.DisplayName, sourceItem.DisplayName);
                 }
                 else
                 {
@@ -218,6 +233,32 @@ namespace Pronunciation.Parser
                     targetItem.Number = i;
                 }
             }
+        }
+
+        private static string MergeDisplayNames(string targetName, string sourceName)
+        {
+            if (targetName == sourceName || string.IsNullOrEmpty(sourceName))
+                return targetName;
+
+            if (string.IsNullOrEmpty(targetName))
+                return sourceName;
+
+            string separator = ", ";
+            if (targetName.Contains(",") || sourceName.Contains(","))
+            {
+                separator = "; ";
+            }
+
+            if (string.Equals(targetName, sourceName, StringComparison.OrdinalIgnoreCase))
+            {
+                if (char.IsLower(targetName[0]) && char.IsUpper(sourceName[0]))
+                {
+                    // Ensure that we join as "Is, is" not as "is, Is"
+                    return sourceName + separator + targetName;
+                }
+            }
+
+            return targetName + separator + sourceName;
         }
 
         private bool CollectionsEqual(ICollection<string> target, ICollection<string> source)

@@ -34,6 +34,9 @@ namespace Pronunciation.Test
                 //TestBigFile();
                 //TestLoadingData();
 
+                string s = @"ale\rt";
+                bool bo = s.Contains(@"\");
+
                 if (args != null && args.Length == 1)
                 {
                     string filePath = args[0];

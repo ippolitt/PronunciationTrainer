@@ -77,7 +77,7 @@ namespace Pronunciation.Parser
                 if (string.IsNullOrEmpty(item.PartsOfSpeech) && !string.IsNullOrEmpty(item.Notes))
                 {
                     bld.AppendFormat(
-@" <span class=""entry_notes"">{0}</span>", item.Notes);
+@" <span class=""entry_note"">{0}</span>", item.Notes);
                 }
 
                 if (!string.IsNullOrEmpty(item.TranscriptionUK))

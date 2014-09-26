@@ -21,12 +21,14 @@ namespace Pronunciation.Parser
                 {
                     number++;
                     bld.Append(string.Join("\t",
-                        entry.Keyword, 
+                        entry.Keyword,
+                        item.ItemTitle,
                         number,
                         item.ItemNumber,
                         PreparePartsOfSpeech(item.PartsOfSpeech),
                         item.Transcription,
-                        PrepareSoundFiles(item.SoundFiles)));
+                        PrepareSoundFiles(item.SoundFiles),
+                        PrepareWordForms(item.WordForms)));
                     bld.AppendLine();
                 }
             }
@@ -42,7 +44,7 @@ namespace Pronunciation.Parser
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 6)
+                    if (data.Length != 8)
                         throw new InvalidOperationException("Source MW file is broken!");
 
                     string keyword = data[0];
@@ -55,12 +57,22 @@ namespace Pronunciation.Parser
 
                     entry.Items.Add(new MWHtmlEntryItem 
                     {
-                        DisplayName = keyword,
-                        Number = int.Parse(data[1]),
-                        PartsOfSpeech = data[3],
-                        Transcription = data[4],
-                        SoundFiles = ParseSoundFiles(data[5])
+                        DisplayName = data[1],
+                        Number = int.Parse(data[2]),
+                        PartsOfSpeech = data[4],
+                        Transcription = data[5],
+                        SoundFiles = ParseSoundFiles(data[6])
                     });
+
+                    var wordForms = ParseWordForms(data[7]);
+                    if (wordForms != null && wordForms.Length > 0)
+                    {
+                        if (entry.WordForms == null)
+                        {
+                            entry.WordForms = new List<MWHtmlWordForm>();
+                        }
+                        entry.WordForms.AddRange(wordForms);
+                    }
                 }
             }
 
@@ -78,6 +90,15 @@ namespace Pronunciation.Parser
             return soundFiles == null ? null : string.Join(", ", soundFiles);
         }
 
+        private static string PrepareWordForms(IEnumerable<MWWordForm> wordForms)
+        {
+            if (wordForms == null)
+                return null;
+
+            return string.Join("||", wordForms.Select(x => string.Format("{0}%%{1}%%{2}%%{3}",
+                x.FormName, x.IsPluralForm ? "plural" : null, x.Transcription, PrepareSoundFiles(x.SoundFiles))));
+        }
+
         private static string[] ParseSoundFiles(string soundFiles)
         {
             if (string.IsNullOrEmpty(soundFiles))
@@ -87,6 +108,31 @@ namespace Pronunciation.Parser
                 .Select(x => Trim(x))
                 .Where(x => !string.IsNullOrEmpty(x))
                 .ToArray();
+        }
+
+        private static MWHtmlWordForm[] ParseWordForms(string wordForms)
+        {
+            if (string.IsNullOrEmpty(wordForms))
+                return null;
+
+            var forms = wordForms.Split(new[] {"||"}, StringSplitOptions.None);
+            var results = new MWHtmlWordForm[forms.Length];
+            for (int i = 0; i < forms.Length; i++)
+            {
+                var parts = forms[i].Split(new[] { "%%" }, StringSplitOptions.None);
+                if (parts.Length != 4)
+                    throw new ArgumentException();
+
+                results[i] = new MWHtmlWordForm 
+                { 
+                    FormName = parts[0],
+                    Note = parts[1],
+                    Transcription = parts[2],
+                    SoundFiles = ParseSoundFiles(parts[3])
+                };
+            }
+
+            return results;
         }
 
         private static string Trim(string text)

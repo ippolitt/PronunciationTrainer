@@ -24,6 +24,8 @@ namespace Pronunciation.Parser
         public const string TranscriptionSeparatorOpenTag = "<sp>";
         public const string TranscriptionSeparatorCloseTag = "</sp>";
 
+        private const string TheEnding = ", the";
+
         public MWParser(string logFile)
         {
             _logFile = logFile;
@@ -36,8 +38,7 @@ namespace Pronunciation.Parser
         public MWEntry[] Parse(string sourceFile)
         {
             Log("*** Started parsing ***\r\n");
-            //var lst = new List<string>();
-            //var lst2 = new List<string>();
+
             var entries = new List<MWEntry>();
             MWEntry entry = null;
             using (var reader = new StreamReader(sourceFile))
@@ -53,25 +54,32 @@ namespace Pronunciation.Parser
 
                     if (text.StartsWith("{{"))
                         break;
-
-                    MWEntryItem item = null;
+  
                     if (text.StartsWith("["))
                     {
                         if (text.StartsWith("[b][c darkslategray]") || text.StartsWith("[s]"))
                         {
-                            item = ParseMainTag(text);
+                            MWEntryItem item = ParseMainTag(text);
+                            if (item != null)
+                            {
+                                item.ItemTitle = entry.Title;
+                                entry.Items.Add(item);
+                            }
                         }
-                        //else if (text.Contains(".wav"))
-                        //{
-                        //    if (text.StartsWith("[com]") || text.StartsWith("[m1]•")
-                        //        // || text.StartsWith("[m2]")
-                        //        //|| text.StartsWith("[i]also") || text.StartsWith("[i]or")
-                        //        )
-                        //    {
-                        //        lst.Add(string.Format("{0}\r\n\t{1}", entry == null ? null : entry.Keyword, text));
-                        //        lst2.Add(text);
-                        //    }
-                        //}
+                        else if (text.StartsWith(@"[com]\"))
+                        {
+                            // It means transcription (usually without audio):
+                            // "distressed" -> [com]\\-ˈstrest\\[/com] [i][c][com]adjective[/com][/c][/i]
+                            // "Abdelkader" -> [com]\\ˌab-ˌdel-ˈkä-dər\\[/com][i]or[/i] [b]Abd al-Qā·dir[/b] [s]bixabd02.wav[/s] [com]\\ˌab-dəl-\\[/com]   
+                            continue;
+                        }
+                        else if (text.StartsWith("[com]"))
+                        {
+                            if (entry.Items.Count > 0)
+                            {
+                                ParseWordForms(entry.Items.Last(), text);
+                            }
+                        }
                         else
                         {
                             continue;
@@ -83,12 +91,12 @@ namespace Pronunciation.Parser
                         {
                             RegisterEntry(entry, entries);
                         }
-                        entry = new MWEntry { Keyword = PrepareKeyword(text), Items = new List<MWEntryItem>() };
-                    }
-
-                    if (item != null)
-                    {
-                        entry.Items.Add(item);  
+                        entry = new MWEntry 
+                        { 
+                            Keyword = PrepareKeyword(text),
+                            Title = PrepareTitle(text),
+                            Items = new List<MWEntryItem>() 
+                        };
                     }
                 }
             }
@@ -98,17 +106,39 @@ namespace Pronunciation.Parser
                 RegisterEntry(entry, entries);
             }
 
-            Log("Skipped entries: {0}", _skippedCount);
-            Log("Valid entries: {0}", entries.Count);
+            // Group entries by keyword (cut off ", the" ending)
+            var finalEntries = new List<MWEntry>();
+            foreach (var group in entries.GroupBy(x => PrepareGroupingKeyword(x.Keyword)))
+            {
+                var groupedItems = group.ToArray();
+                MWEntry mainEntry;
+                if (groupedItems.Length > 1)
+                {
+                    mainEntry = new MWEntry
+                    {
+                        Keyword = group.Key,
+                        Title = group.Key,
+                        Items = groupedItems.SelectMany(x => x.Items).ToList()
+                    };
+                }
+                else
+                {
+                    mainEntry = groupedItems[0];
+                    mainEntry.Keyword = group.Key;
+                }
 
-            int noTranscriptionCount = entries.SelectMany(x => x.Items).Count(x => string.IsNullOrEmpty(x.Transcription));
+                finalEntries.Add(mainEntry);
+            }
+
+            Log("Skipped entries: {0}", _skippedCount);
+            Log("Valid entries: {0}", finalEntries.Count);
+
+            int noTranscriptionCount = finalEntries.SelectMany(x => x.Items).Count(x => string.IsNullOrEmpty(x.Transcription));
             Log("Total entries without transcription: {0}", noTranscriptionCount);
 
             Log("*** Ended parsing ***\r\n");
             File.AppendAllText(_logFile, _log.ToString());
-            //File.WriteAllText(@"D:\test.txt", string.Join(Environment.NewLine, lst.OrderBy(x => x)));
-            //File.WriteAllText(@"D:\test2.txt", string.Join(Environment.NewLine, lst2.GroupBy(x => x.Substring(0, 8))
-            //    .Select(x => x.Key + " " + x.Count()).OrderBy(x => x)));
+
             return entries.ToArray();
         }
 
@@ -131,23 +161,7 @@ namespace Pronunciation.Parser
                 }
             }
 
-            while (reader.LoadTagContent("[s]", "[/s]", false))
-            {
-                string soundFile = Trim(reader.Content);
-                if (string.IsNullOrEmpty(soundFile) || !soundFile.EndsWith(".wav"))
-                    continue;
-
-                if (item.SoundFiles == null)
-                {
-                    // It's important to preserve the order of the sounds (they often match transcriptions order)
-                    // so we use List instead of hashset
-                    item.SoundFiles = new List<string>();
-                }
-                if (!item.SoundFiles.Contains(soundFile))
-                {
-                    item.SoundFiles.Add(soundFile);
-                }
-            }
+            item.SoundFiles = CollectSoundFiles(reader);
 
             if (reader.LoadTagContent(@"[com]\\", @"\\[/com]", true))
             {
@@ -160,6 +174,154 @@ namespace Pronunciation.Parser
             }
 
             return item;
+        }
+
+        // [com]([b]abler[/b] [s]able0002.wav[/s] \\-b(ə-)lər\\ ; [b]ablest[/b] [s]able0003.wav[/s] \\-b(ə-)ləst\\)[/com]
+        // [com]([i]plural[/i] [b]ab·a·tis[/b] [s]abatis03.wav[/s] \\ˈa-bə-ˌtēz \\ ; [i]or[/i] [b]ab·a·tis·es[/b] [s]abatis04.wav[/s] \\ˈa-bə-tə-səz\\)[/com]
+        private void ParseWordForms(MWEntryItem item, string text)
+        {
+            var reader = new TagReader(text);
+            if (!reader.LoadTagContent("[com](", ")[/com]", true))
+                throw new ArgumentException();
+
+            bool isPluralForm = Trim(reader.Content).StartsWith("[i]plural[/i]");
+            string[] forms = reader.Content.Split(new [] {" ; "}, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => Trim(x)).Where(x => !string.IsNullOrEmpty(x)).ToArray();
+            if (forms.Length == 0)
+                throw new ArgumentException();
+
+            if (item.WordForms != null)
+                throw new ArgumentException();
+
+            foreach (var formText in forms)
+            {
+                var form = ParseWordForm(formText);
+                if (form == null)
+                    continue;
+
+                if ((form.SoundFiles == null || form.SoundFiles.Count == 0) && string.IsNullOrEmpty(form.Transcription))
+                    continue;
+
+                form.IsPluralForm = isPluralForm;
+                if (item.WordForms == null)
+                {
+                    item.WordForms = new List<MWWordForm>();
+                }
+                item.WordForms.Add(form);
+            }
+        }
+    
+        private MWWordForm ParseWordForm(string text)
+        {
+            var reader = new TagReader(text, new[] { "[", "]", @"\\" });
+            string formNames = null;
+            string transcription = null;
+            List<string> soundFiles = new List<string>();
+            bool isBeenForm = text.StartsWith("[i]plural[/i] [b]were[/b]");
+            bool isTranscriptionRef = false;
+            // We are searching for the pattern: (note -> name)*N -> sound(s) -> transcription
+            while (true)
+            {
+                reader.LoadTagContent("[i]", "[/i]", false, true);
+                if (!reader.LoadTagContent("[b]", "[/b]", false, true))
+                    break;
+
+                string name = Trim(reader.Content);
+                if (isBeenForm && name == "were")
+                    continue;
+
+                if (!string.IsNullOrEmpty(formNames))
+                {
+                    formNames += ", ";
+                }
+                formNames += PrepareFormName(name);
+
+                while (reader.LoadTagContent("[s]", "[/s]", false, true))
+                {
+                    RegisterSoundFile(reader.Content, soundFiles);
+                }
+
+                // Special case for "Hasid"
+                if (reader.LoadTagContent("[i]", "[/i]", false, true))
+                {
+                    while (reader.LoadTagContent("[s]", "[/s]", false, true))
+                    {
+                        RegisterSoundFile(reader.Content, soundFiles);
+                    }
+                }
+
+                if (reader.LoadTagContent(@"\\", @"\\", true, true))
+                {
+                    if (!string.IsNullOrEmpty(transcription))
+                        throw new ArgumentException();
+
+                    // Special case for "neckerchief"
+                    isTranscriptionRef = Trim(reader.Content).StartsWith("[i]see[/i]");
+                    if (!isTranscriptionRef)
+                    {
+                        transcription = PrepareTranscription(Trim(reader.Content));
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(formNames))
+                return null;
+
+            var form = new MWWordForm 
+            { 
+                FormName = formNames, 
+                Transcription = transcription,
+                SoundFiles = soundFiles.Count > 0 ? soundFiles : null
+            };
+            
+            // Ensure that we haven't skipped any sounds
+            reader.ResetPosition();
+            var allSounds = CollectSoundFiles(reader);
+            if ((allSounds == null ? 0 : allSounds.Count) != (form.SoundFiles == null ? 0 : form.SoundFiles.Count))
+                throw new ArgumentException();
+
+            // Ensure that we haven't skipped a transcription
+            if (!isTranscriptionRef)
+            {
+                transcription = null;
+                reader.ResetPosition();
+                while (reader.LoadTagContent(@"\\", @"\\", true))
+                {
+                    if (!string.IsNullOrEmpty(transcription))
+                        throw new ArgumentException();
+
+                    transcription = PrepareTranscription(Trim(reader.Content));
+                }
+                if (form.Transcription != transcription)
+                    throw new ArgumentException();
+            }
+
+            return form;
+        }
+
+        private List<string> CollectSoundFiles(TagReader reader)
+        {
+            var soundFiles = new List<string>();
+            while (reader.LoadTagContent("[s]", "[/s]", false))
+            {
+                RegisterSoundFile(reader.Content, soundFiles);
+            }
+
+            return soundFiles.Count == 0 ? null : soundFiles;
+        }
+
+        private void RegisterSoundFile(string content, List<string> soundFiles)
+        {
+            string soundFile = Trim(content);
+            if (string.IsNullOrEmpty(soundFile) || !soundFile.EndsWith(".wav"))
+                return;
+
+            // It's important to preserve the order of the sounds (they often match transcriptions order)
+            // so we use List instead of hashset
+            if (!soundFiles.Contains(soundFile))
+            {
+                soundFiles.Add(soundFile);
+            }
         }
 
         private void RegisterEntry(MWEntry entry, List<MWEntry> entries)
@@ -181,34 +343,23 @@ namespace Pronunciation.Parser
                     item.Transcription = PrepareTranscription(item.Transcription);
                 }
 
+                MWEntryItem matchedItem = null;
                 if (!item.HasSounds)
                 {
-                    if (lastItem == null)
-                        continue;
-
                     if (string.IsNullOrEmpty(item.Transcription))
                     {
-                        MergeItems(lastItem, item);
+                        if (lastItem == null)
+                            continue;
+
+                        matchedItem = lastItem;
                     }
                     else
                     {
-                        var matchedItem = items.FirstOrDefault(x => x.Transcription == item.Transcription);
-                        if (matchedItem != null)
-                        {
-                            MergeItems(matchedItem, item);
-                        }
+                        matchedItem = items.FirstOrDefault(x => x.Transcription == item.Transcription);
                     }
                 }
                 else
                 {
-                    if (lastItem == null)
-                    {
-                        items.Add(item);
-                        lastItem = item;
-                        continue;
-                    }
-
-                    MWEntryItem matchedItem;
                     if (string.IsNullOrEmpty(item.Transcription))
                     {
                         matchedItem = items.FirstOrDefault(x => SoundsEqual(x.SoundFiles, item.SoundFiles));
@@ -217,16 +368,16 @@ namespace Pronunciation.Parser
                     {
                         matchedItem = items.FirstOrDefault(x => x.Transcription == item.Transcription);
                     }
+                }
 
-                    if (matchedItem == null)
-                    {
-                        items.Add(item);
-                        lastItem = item;
-                    }
-                    else
-                    {
-                        MergeItems(matchedItem, item);
-                    }
+                if (matchedItem == null)
+                {
+                    items.Add(item);
+                    lastItem = item;
+                }
+                else
+                {
+                    MergeItems(matchedItem, item);
                 }
             }
 
@@ -286,6 +437,10 @@ namespace Pronunciation.Parser
             if (string.IsNullOrEmpty(text))
                 return text;
 
+            // Used in word forms
+            if (text == "[i]same[/i]")
+                return null;
+
             string result = ReplaceTranscriptionDashes(text);
             result = result
                 .Replace("[ref]", TranscriptionRefOpenTag)
@@ -344,6 +499,17 @@ namespace Pronunciation.Parser
 
         private string PrepareKeyword(string text)
         {
+            var title = PrepareTitle(text);
+            if (!string.IsNullOrEmpty(title))
+            {
+                title = title.Replace("<sub>", "").Replace("</sub>", "");
+            }
+
+            return title;
+        }
+
+        private string PrepareTitle(string text)
+        {
             if (string.IsNullOrEmpty(text))
                 return text;
 
@@ -351,6 +517,18 @@ namespace Pronunciation.Parser
                 .Replace(@"\", "")
                 .Replace("{[sub]}", "<sub>")
                 .Replace("{[/sub]}", "</sub>");
+        }
+
+        private string PrepareFormName(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            text = text.Replace("·", "");
+            if (text.Contains("[") || text.Contains(@"\") || text.Contains("|"))
+                throw new ArgumentException();
+
+            return text;
         }
 
         private List<string> PrepareParstOfSpeech(string partsOfSpeech)
@@ -393,7 +571,7 @@ namespace Pronunciation.Parser
                 }
             }
 
-            if (source.SoundFiles != null)
+            if (source.SoundFiles != null && source.SoundFiles.Count > 0)
             {
                 if (target.SoundFiles == null)
                 {
@@ -402,6 +580,18 @@ namespace Pronunciation.Parser
                 else
                 {
                     target.SoundFiles.AddRange(source.SoundFiles.Where(x => !target.SoundFiles.Contains(x)));
+                }
+            }
+
+            if (source.WordForms != null && source.WordForms.Count > 0)
+            {
+                if (target.WordForms == null)
+                {
+                    target.WordForms = source.WordForms;
+                }
+                else
+                {
+                    target.WordForms.AddRange(source.WordForms);
                 }
             }
         }
@@ -425,6 +615,14 @@ namespace Pronunciation.Parser
             {
                 return (source == null && target == null);
             }
+        }
+
+        private string PrepareGroupingKeyword(string keyword)
+        {
+            if (!keyword.ToLower().EndsWith(TheEnding))
+                return keyword;
+
+            return Trim(keyword.Substring(0, keyword.Length - TheEnding.Length));
         }
 
         private string Trim(string text)

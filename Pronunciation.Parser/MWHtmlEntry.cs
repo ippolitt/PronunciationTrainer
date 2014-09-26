@@ -9,6 +9,7 @@ namespace Pronunciation.Parser
     {
         public string Keyword { get; set; }
         public List<MWHtmlEntryItem> Items { get; set; }
+        public List<MWHtmlWordForm> WordForms { get; set; }
 
         IEnumerable<IExtraEntryItem> IExtraEntry.Items
         {
@@ -23,6 +24,13 @@ namespace Pronunciation.Parser
         public string Transcription { get; set; }
         public string PartsOfSpeech { get; set; }
         public string[] SoundFiles { get; set; }
-        public object WordForms { get; set; }
+    }
+
+    public class MWHtmlWordForm
+    {
+        public string FormName;
+        public string Note;
+        public string Transcription;
+        public string[] SoundFiles;
     }
 }

@@ -10,7 +10,7 @@ using Pronunciation.Core.Providers.Recording;
 
 namespace Pronunciation.Core.Providers.Dictionary
 {
-    public class LPDFileSystemProvider : IDictionaryProvider
+    public class FileSystemProvider : IDictionaryProvider
     {
         private readonly string _baseFolder;
         private readonly string _dictionaryFolder;
@@ -22,7 +22,7 @@ namespace Pronunciation.Core.Providers.Dictionary
 
         public delegate string CallScriptMethodHandler(string methodName, object[] methodArgs);
 
-        public LPDFileSystemProvider(string baseFolder, CallScriptMethodHandler scriptMethodInvoker)
+        public FileSystemProvider(string baseFolder, CallScriptMethodHandler scriptMethodInvoker)
         {
             _baseFolder = baseFolder;
             _dictionaryFolder = Path.Combine(baseFolder, DictionaryFolderName);

@@ -11,6 +11,7 @@ namespace Pronunciation.Parser
 
         public const string XmlElementCollocationName = "col_name";
         public const string XmlElementEntryName = "entry_name";
+        private const string XmlElementFormName = "form_name";
 
         public XmlReplaceMap()
         {
@@ -23,6 +24,7 @@ namespace Pronunciation.Parser
 
             AddMap(XmlElementEntryName, ReplacementType.ReplaceOldTag, "span", "class=\"entry_name\"");
             AddMap(XmlElementCollocationName, ReplacementType.ReplaceOldTag, "span", "class=\"collocation_name\"");
+            AddMap(XmlElementFormName, ReplacementType.ReplaceOldTag, "span", "class=\"form_name\"");
             AddMap(XmlBuilder.ElementComment, ReplacementType.ReplaceOldTag, "div", "class=\"comment\"");
             AddMap("pron", ReplacementType.ReplaceOldTag, "span", "class=\"pron\"");
             AddMap("pron_us", ReplacementType.ReplaceOldTag, "span", "class=\"pron_us\"");

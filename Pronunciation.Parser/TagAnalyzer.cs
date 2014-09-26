@@ -44,6 +44,7 @@ namespace Pronunciation.Parser
         private const string StrongTag = "strong";
         private const string EntryNameTag = "entry_name";
         private const string CollocationNameTag = "col_name";
+        private const string WordFormNameTag = "form_name";
 
         private string _activeWord;
 
@@ -387,6 +388,10 @@ namespace Pronunciation.Parser
             else if (entry == EntryType.Collocation)
             {
                 result = ReplaceItemName(result, CollocationNameTag, false);
+            }
+            else if (entry == EntryType.WordForm)
+            {
+                result = ReplaceItemName(result, WordFormNameTag, false);
             }
 
             return result;

@@ -29,17 +29,24 @@ namespace Pronunciation.Parser
     {
         private readonly string _text;
         private readonly int _textLength;
+        private readonly string[] _tagSymbols;
         private int _currentIndex;
 
         public string Content { get; private set; }
 
-        public TagReader(string text)
+        public TagReader(string text) 
+            : this(text, new[] { "[", "]" })
+        {
+        }
+
+        public TagReader(string text, string[] tagSymbols)
         {
             _text = text;
             _textLength = text.Length;
             _currentIndex = 0;
+            _tagSymbols = tagSymbols;
         }
-
+        
         public bool IsEndOfText
         {
             get { return _currentIndex >= _textLength; }
@@ -76,15 +83,25 @@ namespace Pronunciation.Parser
 
         public bool LoadTagContent(string openingTag, string closingTag, bool allowInternalTags)
         {
-            return LoadTagContent(openingTag, new[] { new ClosingTagInfo(closingTag) }, allowInternalTags);
+            return LoadTagContent(openingTag, new[] { new ClosingTagInfo(closingTag) }, allowInternalTags, false);
         }
 
         public bool LoadTagContent(string openingTag, string[] closingTags, bool allowInternalTags)
         {
-            return LoadTagContent(openingTag, closingTags.Select(x => new ClosingTagInfo(x)).ToArray(), allowInternalTags);
+            return LoadTagContent(openingTag, closingTags.Select(x => new ClosingTagInfo(x)).ToArray(), allowInternalTags, false);
         }
 
         public bool LoadTagContent(string openingTag, ClosingTagInfo[] closingTags, bool allowInternalTags)
+        {
+            return LoadTagContent(openingTag, closingTags, allowInternalTags, false);
+        }
+
+        public bool LoadTagContent(string openingTag, string closingTag, bool allowInternalTags, bool noTagsInSkippedText)
+        {
+            return LoadTagContent(openingTag, new[] { new ClosingTagInfo(closingTag) }, allowInternalTags, noTagsInSkippedText);
+        }
+
+        public bool LoadTagContent(string openingTag, ClosingTagInfo[] closingTags, bool allowInternalTags, bool noTagsInSkippedText)
         {
             if (closingTags == null || closingTags.Length <= 0)
                 throw new ArgumentNullException();
@@ -97,6 +114,13 @@ namespace Pronunciation.Parser
             if (openingTagIndex < 0)
                 return false;
 
+            if (noTagsInSkippedText)
+            {
+                string skippedText = GetSubstring(_currentIndex, openingTagIndex - _currentIndex);
+                if (ContainsTags(skippedText))
+                    return false;
+            }
+
             int currentIndex = openingTagIndex + openingTag.Length;
             foreach (var closingTag in closingTags)
             {
@@ -104,7 +128,7 @@ namespace Pronunciation.Parser
                 if (closingTagIndex >= 0)
                 {
                     string tagContent = GetSubstring(currentIndex, closingTagIndex - currentIndex);
-                    if (!allowInternalTags && tagContent != null && (tagContent.Contains("[") || tagContent.Contains("]")))
+                    if (!allowInternalTags && ContainsTags(tagContent))
                         throw new Exception("Tag content has internal tags inside!");
 
                     Content = tagContent;
@@ -184,6 +208,11 @@ namespace Pronunciation.Parser
             }
 
             return _text.Substring(startingIndex, length);
+        }
+
+        private bool ContainsTags(string text)
+        {
+            return string.IsNullOrEmpty(text) ? false : _tagSymbols.Any(x => text.Contains(x));
         }
     }
 }

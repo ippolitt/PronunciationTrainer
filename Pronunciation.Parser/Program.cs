@@ -34,9 +34,9 @@ namespace Pronunciation.Parser
         private const string TopWordsFileName = "TopWords.txt";
 
         private const string TrainerFolder = @"D:\LEARN\English\Pronunciation\Trainer\";
-        private const string HtmlFolderDB = TrainerFolder + "LPD";
-        private const string HtmlFolderFiles = TrainerFolder + "LPD";
-        private const string HtmlFolderIphone = TrainerFolder + "LPD_iPhone";
+        private const string HtmlFolderDB = TrainerFolder + "Dictionary";
+        private const string HtmlFolderFiles = TrainerFolder + "Dic_Files";
+        private const string HtmlFolderIphone = TrainerFolder + "Dic_iPhone";
         private const string DATFolder = TrainerFolder + "Database";
         private const string ConnectionString = "Data Source=" + TrainerFolder + @"Database\PronunciationTrainer.sdf;Max Database Size=2000;";
 
@@ -118,7 +118,7 @@ namespace Pronunciation.Parser
                 bool isFakeMode = false;
                 bool preserveSounds = true;
                 int numberOfRecords = -1;
-                bool deleteExtraWords = false;
+                bool deleteExtraWords = true;
                 var generationMode = HtmlBuilder.GenerationMode.Database;
 
                 IFileLoader fileLoader = new FileLoader(

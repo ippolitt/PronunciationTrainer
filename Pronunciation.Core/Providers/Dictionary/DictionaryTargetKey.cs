@@ -9,21 +9,21 @@ using Pronunciation.Core.Providers.Recording.Providers;
 
 namespace Pronunciation.Core.Providers.Dictionary
 {
-    public class LPDTargetKey : IDatabaseTargetKey, IFileSystemTargetKey
+    public class DictionaryTargetKey : IDatabaseTargetKey, IFileSystemTargetKey
     {
         public string SoundKey { get; private set; }
 
         private const string DatabaseKeyPrefix = "lpd|";
-        private const string FileSystemRecordingFolder = "LPD";
+        private const string FileSystemRecordingFolder = "Dictionary";
 
-        public LPDTargetKey(string soundKey)
+        public DictionaryTargetKey(string soundKey)
         {
             SoundKey = soundKey;
         }
 
         int IDatabaseTargetKey.TargetTypeId
         {
-            get { return (int)AudioTargetType.LPD; }
+            get { return (int)AudioTargetType.Dictionary; }
         }
 
         string IDatabaseTargetKey.TargetKey

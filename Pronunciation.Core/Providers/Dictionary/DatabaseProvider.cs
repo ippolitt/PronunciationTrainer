@@ -13,7 +13,7 @@ using Pronunciation.Core.Utility;
 
 namespace Pronunciation.Core.Providers.Dictionary
 {
-    public class LPDDatabaseProvider : IDictionaryProvider
+    public class DatabaseProvider : IDictionaryProvider
     {
         private readonly string _baseFolder;
         private readonly string _connectionString;
@@ -24,7 +24,7 @@ namespace Pronunciation.Core.Providers.Dictionary
         private const string PageTemplateFileName = "PageTemplate.html";
         private const string IndexFileName = "Index.txt";
 
-        public LPDDatabaseProvider(string baseFolder, string databaseFolder, string connectionString)
+        public DatabaseProvider(string baseFolder, string databaseFolder, string connectionString)
         {
             _baseFolder = baseFolder;
             _connectionString = connectionString;

@@ -121,7 +121,7 @@
     <Compile Include="Providers\Categories\DictionaryCategoryListItem.cs" />
     <Compile Include="Providers\Dictionary\DictionaryDATReader.cs" />
     <Compile Include="Providers\Dictionary\DictionarySoundInfo.cs" />
-    <Compile Include="Providers\Dictionary\LPDTargetKey.cs" />
+    <Compile Include="Providers\Dictionary\DictionaryTargetKey.cs" />
     <Compile Include="Providers\Exercise\ExerciseTargetKey.cs" />
     <Compile Include="Providers\Recording\RecordedAudioListItem.cs" />
     <Compile Include="Providers\Recording\HistoryPolicies\AlwaysAddRecordingPolicy.cs" />
@@ -140,8 +140,8 @@
     <Compile Include="Providers\Training\QuickRecorderTargetKey.cs" />
     <Compile Include="Providers\Dictionary\IDictionaryProvider.cs" />
     <Compile Include="Providers\Dictionary\IndexEntry.cs" />
-    <Compile Include="Providers\Dictionary\LPDDatabaseProvider.cs" />
-    <Compile Include="Providers\Dictionary\LPDFileSystemProvider.cs" />
+    <Compile Include="Providers\Dictionary\DatabaseProvider.cs" />
+    <Compile Include="Providers\Dictionary\FileSystemProvider.cs" />
     <Compile Include="Providers\Exercise\MultipartName.cs" />
     <Compile Include="Providers\Dictionary\PageInfo.cs" />
     <Compile Include="Providers\Training\TrainingTargetKey.cs" />

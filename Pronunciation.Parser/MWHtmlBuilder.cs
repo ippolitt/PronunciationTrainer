@@ -52,7 +52,6 @@ namespace Pronunciation.Parser
 ",
                 isFragment ? "mw_fragment" : "mw_page");
 
-            bool isMainAudioSet = false;
             bool addNumber = entry.Items.Count > 1;
             foreach (var item in entry.Items)
             {
@@ -85,40 +84,25 @@ namespace Pronunciation.Parser
 
                 if (item.SoundFiles != null && item.SoundFiles.Length > 0)
                 {
-                    int soundNumber = 0;
-                    bool isSingleAudio = item.SoundFiles.Length == 1;
-                    foreach (var soundFile in item.SoundFiles)
+                    var sounds = new List<SoundInfo>();
+                    string entryNumber = addNumber ? item.Number.ToString() : null;
+
+                    // If there's only one item with one audio then put audio button on the word level, not on the item level
+                    if (!isFragment && entry.Items.Count == 1 && item.SoundFiles.Length == 1)
                     {
-                        soundNumber++;
-                        string soundKey = GetAudioKey(soundFile);
+                        wordAudio = PrepareWordAudio(item.SoundFiles[0], sounds, entry.Keyword, entryNumber);
+                    }
+                    else
+                    {
+                        PrepareSounds(item.SoundFiles, sounds, bld, entry.Keyword, entryNumber);
+                    }
 
-                        // If there's only one item with one audio then put audio button on the word level, not on the item level
-                        bool isWordAudio = entry.Items.Count == 1 && !isFragment && isSingleAudio;
-                        string buttonText = _buttonBuilder.BuildHtml(
-                            isWordAudio ? AudioButtonStyle.BigUS : AudioButtonStyle.SmallUS, 
-                            soundKey,
-                            entry.Keyword,
-                            addNumber ? item.Number.ToString() : null,
-                            isSingleAudio ? 0 : soundNumber);
-                        if (isWordAudio)
+                    if (wordDescription != null && sounds.Count > 0)
+                    {
+                        wordDescription.Sounds.AddRange(sounds);
+                        if (!isFragment && string.IsNullOrEmpty(wordDescription.SoundKeyUS))
                         {
-                            wordAudio = new HtmlBuilder.WordAudio();
-                            wordAudio.SoundTextUS = buttonText;
-                        }
-                        else
-                        {
-                            bld.Append(buttonText);
-                        }
-
-                        if (wordDescription != null)
-                        {
-                            if (!isFragment && !isMainAudioSet)
-                            {
-                                wordDescription.SoundKeyUS = soundKey;
-                                isMainAudioSet = true;
-                            }
-
-                            wordDescription.Sounds.Add(new SoundInfo(soundKey, false));
+                            wordDescription.SoundKeyUS = sounds[0].SoundKey;
                         }
                     }
                 }
@@ -129,12 +113,88 @@ namespace Pronunciation.Parser
 ");
             }
 
+            if (entry.WordForms != null && entry.WordForms.Count > 0)
+            {
+                bld.Append(
+@"          <div class=""forms"">
+");
+                foreach (var form in entry.WordForms)
+                {
+                    bld.AppendFormat(
+@"              <div class=""form"">{0}</div>
+",
+                        PrepareWordForm(form, wordDescription));
+                }
+
+                bld.Append(
+@"          </div>");
+            }
+
             bld.Append(
 @"      </div>
     </div>
 ");
 
             return bld.ToString();
+        }
+
+        private string PrepareWordForm(MWHtmlWordForm form, WordDescription wordDescription)
+        {
+            var bld = new StringBuilder();
+            bld.AppendFormat(
+@"<span class=""form_name"">{0}</span>", form.FormName);
+
+            if (!string.IsNullOrEmpty(form.Note))
+            {
+                bld.AppendFormat(
+@" <span class=""form_note"">{0}</span>", form.Note);
+            }
+
+            if (!string.IsNullOrEmpty(form.Transcription))
+            {
+                bld.AppendFormat(
+@" <span class=""pron"">{0}</span>", PrepareTranscriptionHtml(form.Transcription));
+            }
+
+            if (form.SoundFiles != null && form.SoundFiles.Length > 0)
+            {
+                var sounds = new List<SoundInfo>();
+                PrepareSounds(form.SoundFiles, sounds, bld, form.FormName, null);
+                if (wordDescription != null && sounds.Count > 0)
+                {
+                    wordDescription.Sounds.AddRange(sounds);
+                }
+            }
+
+            return bld.ToString();
+        }
+
+        private HtmlBuilder.WordAudio PrepareWordAudio(string soundFile, List<SoundInfo> sounds, 
+            string targetWord, string entryNumber)
+        {
+            string soundKey = GetAudioKey(soundFile);
+            sounds.Add(new SoundInfo(soundKey, false));
+
+            return new HtmlBuilder.WordAudio 
+            { 
+                SoundTextUS =  _buttonBuilder.BuildHtml(AudioButtonStyle.BigUS, soundKey, targetWord, entryNumber, 0)
+            };
+        }
+
+        private void PrepareSounds(string[] soundFiles, List<SoundInfo> sounds, StringBuilder bld, 
+            string targetWord, string entryNumber)
+        {
+            int soundNumber = 0;
+            foreach (var soundFile in soundFiles)
+            {
+                soundNumber++;
+                string soundKey = GetAudioKey(soundFile);
+                sounds.Add(new SoundInfo(soundKey, false));
+
+                string buttonText = _buttonBuilder.BuildHtml(AudioButtonStyle.SmallUS, soundKey, targetWord, entryNumber,
+                    soundFiles.Length == 1 ? 0 : soundNumber);
+                bld.Append(buttonText);
+            }
         }
 
         private string PrepareTranscriptionHtml(string transcription)

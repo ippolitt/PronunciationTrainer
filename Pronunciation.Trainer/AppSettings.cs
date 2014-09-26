@@ -116,7 +116,7 @@ namespace Pronunciation.Trainer
 
             private const string AudioFolderName = "RecordedAudio";
             private const string RecordingsFolderName = "Recordings";
-            private const string DictionaryFolderName = "LPD";
+            private const string DictionaryFolderName = "Dictionary";
             private const string ExercisesFolderName = "Exercises";
             private const string DatabaseFolderName = "Database";
             private const string TheoryFolderName = "Theory";
@@ -195,14 +195,14 @@ namespace Pronunciation.Trainer
         {
             public IRecordingProvider<TrainingTargetKey> Training { get; private set; }
             public IRecordingProvider<QuickRecorderTargetKey> QuickRecorder { get; private set; }
-            public IRecordingProvider<LPDTargetKey> LPD { get; private set; }
+            public IRecordingProvider<DictionaryTargetKey> Dictionary { get; private set; }
             public IRecordingProvider<ExerciseTargetKey> Exercise { get; private set; }
 
             public RecordingProviders(string connectionString, string recordingsFolder, string tempFolder)
             {
                 Training = new DatabaseRecordingProvider<TrainingTargetKey>(connectionString, tempFolder); 
                 QuickRecorder = new DatabaseRecordingProvider<QuickRecorderTargetKey>(connectionString, tempFolder);
-                LPD = new DatabaseRecordingProvider<LPDTargetKey>(connectionString, tempFolder);
+                Dictionary = new DatabaseRecordingProvider<DictionaryTargetKey>(connectionString, tempFolder);
                 Exercise = new DatabaseRecordingProvider<ExerciseTargetKey>(connectionString, tempFolder);
             }
         }

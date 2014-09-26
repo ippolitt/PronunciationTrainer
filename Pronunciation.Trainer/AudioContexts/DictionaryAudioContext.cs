@@ -16,9 +16,9 @@ namespace Pronunciation.Trainer.AudioContexts
     public class DictionaryAudioContext : IAudioContext
     {
         private readonly IDictionaryProvider _dictionaryProvider;
-        private readonly IRecordingProvider<LPDTargetKey> _recordingProvider;
+        private readonly IRecordingProvider<DictionaryTargetKey> _recordingProvider;
         private readonly IRecordingHistoryPolicy _recordingPolicy;
-        private LPDTargetKey _recordingKey;
+        private DictionaryTargetKey _recordingKey;
         private string _soundKey;
         private string _soundText;
         private DictionarySoundInfo _soundInfo;
@@ -26,7 +26,7 @@ namespace Pronunciation.Trainer.AudioContexts
         public event AudioContextChangedHandler ContextChanged;
 
         public DictionaryAudioContext(IDictionaryProvider dictionaryProvider,
-            IRecordingProvider<LPDTargetKey> recordingProvider, IRecordingHistoryPolicy recordingPolicy)
+            IRecordingProvider<DictionaryTargetKey> recordingProvider, IRecordingHistoryPolicy recordingPolicy)
         {
             _dictionaryProvider = dictionaryProvider;
             _recordingProvider = recordingProvider;
@@ -38,7 +38,7 @@ namespace Pronunciation.Trainer.AudioContexts
             _soundKey = soundKey;
             _soundText = soundText;
             _soundInfo = playImmediately ? _dictionaryProvider.GetAudio(_soundKey) : null;
-            _recordingKey = string.IsNullOrEmpty(_soundKey) ? null : new LPDTargetKey(_soundKey);
+            _recordingKey = string.IsNullOrEmpty(_soundKey) ? null : new DictionaryTargetKey(_soundKey);
 
             if (ContextChanged != null)
             {
@@ -63,7 +63,7 @@ namespace Pronunciation.Trainer.AudioContexts
             {
                 _soundInfo = _dictionaryProvider.GetAudioFromScriptData(soundKey, audioData);
             }
-            _recordingKey = new LPDTargetKey(soundKey);
+            _recordingKey = new DictionaryTargetKey(soundKey);
 
             if (ContextChanged != null)
             {
@@ -81,7 +81,7 @@ namespace Pronunciation.Trainer.AudioContexts
             if (_recordingKey == null)
                 throw new InvalidOperationException();
 
-            return new RecordingProviderWithTargetKey<LPDTargetKey>(
+            return new RecordingProviderWithTargetKey<DictionaryTargetKey>(
                 _recordingProvider, _recordingKey, new AlwaysAddRecordingPolicy()); 
         }
 
