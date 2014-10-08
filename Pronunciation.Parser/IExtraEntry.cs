@@ -14,7 +14,7 @@ namespace Pronunciation.Parser
     interface IExtraEntryItem
     {
         int Number { get; set; }
-        string DisplayName { get; set; }
+        DisplayName Title { get; set; }
         string PartsOfSpeech { get; set; }
     }
 }

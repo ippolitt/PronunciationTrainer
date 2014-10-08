@@ -22,9 +22,10 @@ namespace Pronunciation.Parser
                     number++;
                     bld.Append(string.Join("\t",
                         entry.Keyword, 
+                        entry.Language,
                         number,
                         PreparePartsOfSpeech(item.PartsOfSpeech),
-                        item.ItemTitle,
+                        item.ItemTitle.Serialize(),
                         GetTranscriptionUK(item.Transcription),
                         GetTranscriptionUS(item.Transcription),
                         item.SoundFileUK,
@@ -45,7 +46,7 @@ namespace Pronunciation.Parser
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 9)
+                    if (data.Length != 10)
                         throw new InvalidOperationException("Source LDOCE file is broken!");
 
                     string keyword = data[0];
@@ -53,19 +54,23 @@ namespace Pronunciation.Parser
                     if (!entries.TryGetValue(keyword, out entry))
                     {
                         entry = new LDOCEHtmlEntry { Keyword = keyword, Items = new List<LDOCEHtmlEntryItem>() };
+                        if (!string.IsNullOrEmpty(data[1]))
+                        {
+                            entry.Language = (EnglishVariant)Enum.Parse(typeof(EnglishVariant), data[1]);
+                        }
                         entries.Add(keyword, entry);
                     }
 
                     entry.Items.Add(new LDOCEHtmlEntryItem 
                     { 
-                        Number = int.Parse(data[1]),
-                        PartsOfSpeech = data[2],
-                        DisplayName = data[3],
-                        TranscriptionUK = data[4],
-                        TranscriptionUS = data[5],
-                        SoundFileUK = data[6],
-                        SoundFileUS = data[7],
-                        Notes = data[8]
+                        Number = int.Parse(data[2]),
+                        PartsOfSpeech = data[3],
+                        Title = DisplayName.Deserialize(data[4]),
+                        TranscriptionUK = data[5],
+                        TranscriptionUS = data[6],
+                        SoundFileUK = data[7],
+                        SoundFileUS = data[8],
+                        Notes = data[9]
                     });
                 }
             }

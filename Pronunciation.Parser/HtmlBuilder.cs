@@ -521,6 +521,14 @@ namespace Pronunciation.Parser
                 pageBuilder.Append(GenerateUsageInfoHtml(wordDescription.UsageInfo));
             }
 
+            if (word.Language != null)
+            {
+                pageBuilder.AppendFormat(
+@"      <div class=""lang_variant"">{0}</div>
+",
+                    PrepareLanguageVariant(word.Language.Value));
+            }
+
             if (wordAudio != null && !wordAudio.IsEmpty)
             {
                 pageBuilder.AppendFormat(
@@ -565,6 +573,27 @@ namespace Pronunciation.Parser
                     previousRank == 0 ? null : string.Format(@"<span class=""word_usage_from"">{0}</span>", previousRank),
                     string.Format(@"<span class=""word_usage_to"">{0}</span>", rank.CombinedRank));
             }
+        }
+
+        private string PrepareLanguageVariant(EnglishVariant language)
+        {
+            string result;
+            switch (language)
+            {
+                case EnglishVariant.British:
+                    result = "British";
+                    break;
+                case EnglishVariant.American:
+                    result = "American";
+                    break;
+                case EnglishVariant.Australian:
+                    result = "Australian";
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
+
+            return result + " English";
         }
 
         private string GenerateLPDHtml(string keyword, List<DicEntry> entries, WordDescription wordDescription,

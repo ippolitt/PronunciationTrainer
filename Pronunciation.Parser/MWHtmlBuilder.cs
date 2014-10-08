@@ -60,14 +60,14 @@ namespace Pronunciation.Parser
 ");
                 bld.AppendFormat(
 @"              <span class=""entry_name"">{0}</span>",
-                    item.DisplayName);
+                    item.Title);
 
                 if (addNumber)
                 {
                     // Ensure there's no space before <span>
-                    bld.AppendFormat(
-@"<span class=""entry_number""><sup>{0}</sup></span>",
-                        item.Number);
+//                    bld.AppendFormat(
+//@"<span class=""entry_number""><sup>{0}</sup></span>",
+//                        item.Number);
 
                     if (!string.IsNullOrEmpty(item.PartsOfSpeech))
                     {
@@ -142,7 +142,7 @@ namespace Pronunciation.Parser
         {
             var bld = new StringBuilder();
             bld.AppendFormat(
-@"<span class=""form_name"">{0}</span>", form.FormName);
+@"<span class=""form_name"">{0}</span>", form.Title == null ? null : form.Title.ToString());
 
             if (!string.IsNullOrEmpty(form.Note))
             {
@@ -159,7 +159,7 @@ namespace Pronunciation.Parser
             if (form.SoundFiles != null && form.SoundFiles.Length > 0)
             {
                 var sounds = new List<SoundInfo>();
-                PrepareSounds(form.SoundFiles, sounds, bld, form.FormName, null);
+                PrepareSounds(form.SoundFiles, sounds, bld, form.Title == null ? null : form.Title.ToString(), null);
                 if (wordDescription != null && sounds.Count > 0)
                 {
                     wordDescription.Sounds.AddRange(sounds);

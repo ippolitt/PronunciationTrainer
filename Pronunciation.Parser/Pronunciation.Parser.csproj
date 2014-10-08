@@ -45,6 +45,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AudioButtonHtmlBuilder.cs" />
+    <Compile Include="DisplayName.cs" />
+    <Compile Include="EnglishVariant.cs" />
+    <Compile Include="StringHelper.cs" />
+    <Compile Include="TraceHelper.cs" />
+    <Compile Include="UppercaseFirstComparer.cs" />
     <Compile Include="XmlContentCollector.cs" />
     <Compile Include="HtmlHelper.cs" />
     <Compile Include="MWEntry.cs" />

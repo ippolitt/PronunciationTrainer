@@ -46,7 +46,12 @@ namespace Pronunciation.Parser
             _currentIndex = 0;
             _tagSymbols = tagSymbols;
         }
-        
+
+        public int CurrentIndex
+        {
+            get { return _currentIndex; }
+        }
+
         public bool IsEndOfText
         {
             get { return _currentIndex >= _textLength; }
@@ -69,6 +74,11 @@ namespace Pronunciation.Parser
 
             _currentIndex = tagIndex + tag.Length;
             return true;
+        }
+
+        public bool IsInParentheses
+        {
+            get { return IsTagOpen("(", ")"); }
         }
 
         public bool IsTagOpen(string openingTag, string closingTag)
@@ -122,19 +132,27 @@ namespace Pronunciation.Parser
             }
 
             int currentIndex = openingTagIndex + openingTag.Length;
+            int minClosingTagIndex = -1;
+            ClosingTagInfo minClosingTag = null;
             foreach (var closingTag in closingTags)
             {
                 int closingTagIndex = FindTag(currentIndex, closingTag.TagName);
-                if (closingTagIndex >= 0)
+                if (closingTagIndex >= 0 && (minClosingTagIndex < 0 || closingTagIndex < minClosingTagIndex))
                 {
-                    string tagContent = GetSubstring(currentIndex, closingTagIndex - currentIndex);
-                    if (!allowInternalTags && ContainsTags(tagContent))
-                        throw new Exception("Tag content has internal tags inside!");
-
-                    Content = tagContent;
-                    _currentIndex = closingTagIndex + closingTag.TagName.Length + closingTag.PositionCorrection;
-                    return true;
+                    minClosingTagIndex = closingTagIndex;
+                    minClosingTag = closingTag;
                 }
+            }
+
+            if (minClosingTagIndex >= 0)
+            {
+                string tagContent = GetSubstring(currentIndex, minClosingTagIndex - currentIndex);
+                if (!allowInternalTags && ContainsTags(tagContent))
+                    throw new Exception("Tag content has internal tags inside!");
+
+                Content = tagContent;
+                _currentIndex = minClosingTagIndex + minClosingTag.TagName.Length + minClosingTag.PositionCorrection;
+                return true;
             }
 
             return false;
@@ -155,15 +173,26 @@ namespace Pronunciation.Parser
             return true;
         }
 
-        public bool LoadRemainingText()
+        public string RemainingText
         {
-            Content = null;
-            if (IsEndOfText)
-                return false;
+            get
+            {
+                if (IsEndOfText)
+                    return null;
 
-            Content = _text.Substring(_currentIndex);
-            _currentIndex = _text.Length;
-            return true;
+                return _text.Substring(_currentIndex);
+            }
+        }
+
+        public string SkippedText
+        {
+            get
+            {
+                if (_currentIndex <= 0)
+                    return null;
+
+                return _text.Substring(0, _currentIndex);
+            }
         }
 
         private int FindTag(int startingIndex, string tag)

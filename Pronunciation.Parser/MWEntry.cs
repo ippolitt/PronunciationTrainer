@@ -8,18 +8,22 @@ namespace Pronunciation.Parser
     class MWEntry
     {
         public string Keyword;
-        public string Title;
+        public DisplayName Title;
+        public bool IsDerived;
+        public bool IsVariant;
         public List<MWEntryItem> Items;
     }
 
     class MWEntryItem
     {
-        public string ItemTitle;
+        public DisplayName ItemTitle;
         public string ItemNumber;
         public string Transcription;
+        public bool IsRawTranscription;
         public List<string> PartsOfSpeech;
         public List<string> SoundFiles;
         public List<MWWordForm> WordForms;
+        public List<MWEntry> Variants;
 
         public string RawData;
 
@@ -31,7 +35,7 @@ namespace Pronunciation.Parser
 
     class MWWordForm
     {
-        public string FormName;
+        public DisplayName Title;
         public bool IsPluralForm;
         public string Transcription;
         public List<string> SoundFiles;

@@ -22,7 +22,7 @@ namespace Pronunciation.Parser
                     number++;
                     bld.Append(string.Join("\t",
                         entry.Keyword,
-                        item.ItemTitle,
+                        item.ItemTitle.Serialize(),
                         number,
                         item.ItemNumber,
                         PreparePartsOfSpeech(item.PartsOfSpeech),
@@ -57,7 +57,7 @@ namespace Pronunciation.Parser
 
                     entry.Items.Add(new MWHtmlEntryItem 
                     {
-                        DisplayName = data[1],
+                        Title = DisplayName.Deserialize(data[1]),
                         Number = int.Parse(data[2]),
                         PartsOfSpeech = data[4],
                         Transcription = data[5],
@@ -96,7 +96,7 @@ namespace Pronunciation.Parser
                 return null;
 
             return string.Join("||", wordForms.Select(x => string.Format("{0}%%{1}%%{2}%%{3}",
-                x.FormName, x.IsPluralForm ? "plural" : null, x.Transcription, PrepareSoundFiles(x.SoundFiles))));
+                x.Title.Serialize(), x.IsPluralForm ? "plural" : null, x.Transcription, PrepareSoundFiles(x.SoundFiles))));
         }
 
         private static string[] ParseSoundFiles(string soundFiles)
@@ -125,7 +125,7 @@ namespace Pronunciation.Parser
 
                 results[i] = new MWHtmlWordForm 
                 { 
-                    FormName = parts[0],
+                    Title = DisplayName.Deserialize(parts[0]),
                     Note = parts[1],
                     Transcription = parts[2],
                     SoundFiles = ParseSoundFiles(parts[3])

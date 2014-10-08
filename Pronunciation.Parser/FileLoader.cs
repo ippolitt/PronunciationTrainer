@@ -130,7 +130,7 @@ namespace Pronunciation.Parser
         private byte[] GetFileContent(string fileKey)
         {
             string sourceFile;
-            if (fileKey.StartsWith(SoundManager.LDOCE_SoundKeyPrefix))
+            if (fileKey.StartsWith(SoundManager.LDOCE_SoundKeyPrefix))  
             {
                 string fileName = string.Format("{0}.mp3", fileKey.Remove(0, SoundManager.LDOCE_SoundKeyPrefix.Length));
                 sourceFile = Path.Combine(_sourceFolderLDOCE, LDOCEFolderUK, fileName);

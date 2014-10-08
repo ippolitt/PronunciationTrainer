@@ -20,7 +20,7 @@ namespace Pronunciation.Parser
     public class MWHtmlEntryItem : IExtraEntryItem
     {
         public int Number { get; set; }
-        public string DisplayName { get; set; }
+        public DisplayName Title { get; set; }
         public string Transcription { get; set; }
         public string PartsOfSpeech { get; set; }
         public string[] SoundFiles { get; set; }
@@ -28,7 +28,7 @@ namespace Pronunciation.Parser
 
     public class MWHtmlWordForm
     {
-        public string FormName;
+        public DisplayName Title;
         public string Note;
         public string Transcription;
         public string[] SoundFiles;

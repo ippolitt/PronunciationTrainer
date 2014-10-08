@@ -9,6 +9,7 @@ namespace Pronunciation.Parser
     public class LDOCEHtmlEntry : IExtraEntry
     {
         public string Keyword { get; set; }
+        public EnglishVariant? Language { get; set; }
         public List<LDOCEHtmlEntryItem> Items { get; set; }
 
         IEnumerable<IExtraEntryItem> IExtraEntry.Items
@@ -20,7 +21,7 @@ namespace Pronunciation.Parser
     public class LDOCEHtmlEntryItem : IExtraEntryItem
     {
         public int Number { get; set; }
-        public string DisplayName { get; set; }
+        public DisplayName Title { get; set; }
         public string TranscriptionUK { get; set; }
         public string TranscriptionUS { get; set; }
         public string PartsOfSpeech { get; set; }

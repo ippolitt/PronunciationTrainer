@@ -45,6 +45,7 @@ namespace Pronunciation.Parser
                 (entry) => new DicWord 
                     { 
                         Keyword = entry.Keyword, 
+                        Language = ((LDOCEHtmlEntry)entry).Language,
                         LDOCEEntry = (LDOCEHtmlEntry)entry, 
                         IsLDOCEEntry = true
                     },
@@ -107,6 +108,11 @@ namespace Pronunciation.Parser
         private void MergeLDOCEEntry(DicWord word, IExtraEntry entry)
         {
             LDOCEHtmlEntry source = (LDOCEHtmlEntry)entry;
+            if (word.Keyword == source.Keyword)
+            {
+                word.Language = source.Language;
+            }
+
             if (word.LDOCEEntry == null)
             {
                 word.LDOCEEntry = source;
@@ -179,15 +185,24 @@ namespace Pronunciation.Parser
 
             foreach (var sourceForm in source.WordForms)
             {
-                var matchingForm = target.WordForms.FirstOrDefault(x => x.Transcription == sourceForm.Transcription
-                    && CollectionsEqual(x.SoundFiles, sourceForm.SoundFiles));
+                var matchingForm = target.WordForms.FirstOrDefault(x => x.Note == sourceForm.Note
+                    && x.Title.IsEqual(sourceForm.Title) && x.Transcription == sourceForm.Transcription);
                 if (matchingForm != null)
                 {
-                    matchingForm.FormName = MergeDisplayNames(matchingForm.FormName, sourceForm.FormName);
+                    matchingForm.SoundFiles = MergeSoundFiles(matchingForm.SoundFiles, sourceForm.SoundFiles); 
                 }
                 else
                 {
-                    target.WordForms.Add(sourceForm);
+                    matchingForm = target.WordForms.FirstOrDefault(x => x.Transcription == sourceForm.Transcription
+                        && CollectionsEqual(x.SoundFiles, sourceForm.SoundFiles));
+                    if (matchingForm != null)
+                    {
+                        matchingForm.Title = MergeDisplayNames(matchingForm.Title, sourceForm.Title);
+                    }
+                    else
+                    {
+                        target.WordForms.Add(sourceForm);
+                    }
                 }
             }
         }
@@ -209,15 +224,15 @@ namespace Pronunciation.Parser
                 if (targetItem != null)
                 {
                     _stats.AppendFormat("Merged {4} item '{0} {1}' with item '{2} {3}'.\r\n",
-                        sourceItem.DisplayName, sourceItem.Number, targetItem.DisplayName, targetItem.Number, title);
+                        sourceItem.Title, sourceItem.Number, targetItem.Title, targetItem.Number, title);
 
                     targetItem.PartsOfSpeech = MergePartsOfSpeech(targetItem.PartsOfSpeech, sourceItem.PartsOfSpeech);
-                    targetItem.DisplayName = MergeDisplayNames(targetItem.DisplayName, sourceItem.DisplayName);
+                    targetItem.Title = MergeDisplayNames(targetItem.Title, sourceItem.Title);
                 }
                 else
                 {
                     _stats.AppendFormat("Merged {3} item '{0} {1}' with entry '{2}'.\r\n",
-                        sourceItem.DisplayName, sourceItem.Number, keyword, title);
+                        sourceItem.Title, sourceItem.Number, keyword, title);
 
                     actionAdd(sourceItem);
                     resetNumbers = true;
@@ -235,30 +250,33 @@ namespace Pronunciation.Parser
             }
         }
 
-        private static string MergeDisplayNames(string targetName, string sourceName)
+        private static DisplayName MergeDisplayNames(DisplayName target, DisplayName source)
         {
-            if (targetName == sourceName || string.IsNullOrEmpty(sourceName))
-                return targetName;
+            if (source == null)
+                return target;
 
-            if (string.IsNullOrEmpty(targetName))
-                return sourceName;
+            if (target == null)
+                return source.Clone();
 
-            string separator = ", ";
-            if (targetName.Contains(",") || sourceName.Contains(","))
+            target.Merge(source);
+            return target;
+        }
+
+        private string[] MergeSoundFiles(string[] target, string[] source)
+        {
+            if (source == null)
+                return target;
+
+            if (target == null)
+                return source;
+
+            var result = new List<string>(target);
+            result.AddRange(source.Where(x => !result.Contains(x)));
+
+            if (result.Count != target.Length)
             {
-                separator = "; ";
             }
-
-            if (string.Equals(targetName, sourceName, StringComparison.OrdinalIgnoreCase))
-            {
-                if (char.IsLower(targetName[0]) && char.IsUpper(sourceName[0]))
-                {
-                    // Ensure that we join as "Is, is" not as "is, Is"
-                    return sourceName + separator + targetName;
-                }
-            }
-
-            return targetName + separator + sourceName;
+            return result.ToArray();
         }
 
         private bool CollectionsEqual(ICollection<string> target, ICollection<string> source)

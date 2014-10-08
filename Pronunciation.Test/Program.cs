@@ -34,8 +34,8 @@ namespace Pronunciation.Test
                 //TestBigFile();
                 //TestLoadingData();
 
-                string s = @"ale\rt";
-                bool bo = s.Contains(@"\");
+                string s = @"alˌ52";
+                bool bo = s.StartsWith("al", StringComparison.Ordinal);
 
                 if (args != null && args.Length == 1)
                 {

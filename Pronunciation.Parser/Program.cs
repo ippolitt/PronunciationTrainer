@@ -74,8 +74,6 @@ namespace Pronunciation.Parser
 
                 //return;
 
-
-
                 //var data = File.ReadAllBytes(Path.Combine(HtmlFolderPath, @"Recordings\j\jump.mp3"));
                 //var str = Convert.ToBase64String(data);
                 //File.WriteAllText(Path.Combine(RootFolderPath, "mp3.txt"), str);
@@ -107,6 +105,21 @@ namespace Pronunciation.Parser
                 //    Path.Combine(rootFolder, DataFolderLDOCE, SourceFileNameLDOCE),
                 //    Path.Combine(rootFolder, AnalysisFolderLDOCE, ResultsFileNameLDOCE),
                 //    Path.Combine(rootFolder, AnalysisFolderLDOCE, ConvertLogFileName));
+                //return;
+
+                //var items1 = LDOCEProcessor.LoadParsedData(@"D:\WORK\NET\PronunciationTrainer\Analysis\LDOCE\Results.txt");
+                //var items2 = LDOCEProcessor.LoadParsedData(@"D:\WORK\NET\PronunciationTrainer\Data\ResultsLDOCE.txt");
+
+                //var hash1 = new HashSet<string>(items1.Select(x => x.Keyword));
+                //var hash2 = new HashSet<string>(items2.Select(x => x.Keyword));
+                ////var hash1 = new HashSet<string>(items1.SelectMany(x => x.Items).Where(x =>
+                ////    string.IsNullOrEmpty(x.TranscriptionUK) && string.IsNullOrEmpty(x.TranscriptionUS))
+                ////    .Select(x => x.Title.ToString()));
+                ////var hash2 = new HashSet<string>(items2.SelectMany(x => x.Items).Where(x =>
+                ////    string.IsNullOrEmpty(x.TranscriptionUK) && string.IsNullOrEmpty(x.TranscriptionUS))
+                ////    .Select(x => x.Title.ToString()));
+                //var missing1 = hash2.Where(x => !hash1.Contains(x)).ToArray();
+                //var missing2 = hash1.Where(x => !hash2.Contains(x)).ToArray();
 
                 //MWProcessor.ParseDictionary(
                 //    Path.Combine(rootFolder, DataFolderMW, SourceFileNameMW),

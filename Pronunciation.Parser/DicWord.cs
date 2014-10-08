@@ -12,6 +12,7 @@ namespace Pronunciation.Parser
         private int? _dictionaryId;
 
         public bool IsLPDCollocation;
+        public EnglishVariant? Language;
         public List<DicEntry> LPDEntries;
         public LDOCEHtmlEntry LDOCEEntry;
         public MWHtmlEntry MWEntry;

@@ -246,6 +246,11 @@ input
     font-style:italic;
     color: green;
 }
+.lang_variant 
+{
+    font-style:italic;
+    font-size: 0.9em;
+}
 
 .sample 
 {

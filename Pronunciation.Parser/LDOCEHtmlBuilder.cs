@@ -59,13 +59,13 @@ namespace Pronunciation.Parser
 @"      <div class=""dic_entry"">
 ");
                 bld.AppendFormat(
-@"          <span class=""entry_name"">{0}</span>", PrepareDisplayNameHtml(item.DisplayName));
+@"          <span class=""entry_name"">{0}</span>", PrepareDisplayNameHtml(item.Title));
 
                 if (addNumber)
                 {
                     // Ensure there's no space before <span>
-                    bld.AppendFormat(
-@"<span class=""entry_number""><sup>{0}</sup></span>", item.Number);
+//                    bld.AppendFormat(
+//@"<span class=""entry_number""><sup>{0}</sup></span>", item.Number);
 
                     if (!string.IsNullOrEmpty(item.PartsOfSpeech))
                     {
@@ -161,8 +161,9 @@ namespace Pronunciation.Parser
             return bld.ToString();
         }
 
-        private string PrepareDisplayNameHtml(string displayName)
+        private string PrepareDisplayNameHtml(DisplayName title)
         {
+            string displayName = title == null ? null : title.ToString();
             if (string.IsNullOrEmpty(displayName))
                 return displayName;
 
