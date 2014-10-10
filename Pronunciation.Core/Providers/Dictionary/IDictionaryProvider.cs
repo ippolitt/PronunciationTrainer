@@ -9,7 +9,9 @@ namespace Pronunciation.Core.Providers.Dictionary
     public interface IDictionaryProvider
     {
         List<IndexEntry> GetWordsIndex(int[] dictionaryIds);
-        ArticlePage PrepareArticlePage(string articleKey);
+        DictionaryWordInfo GetWordInfo(int wordId);
+        void UpdateFavoriteSound(int wordId, string favoriteSoundKey);
+        ArticlePage PrepareArticlePage(IndexEntry index);
         PageInfo PrepareGenericPage(Uri pageUrl);
         DictionarySoundInfo GetAudio(string soundKey);
         DictionarySoundInfo GetAudioFromScriptData(string soundKey, string scriptData);

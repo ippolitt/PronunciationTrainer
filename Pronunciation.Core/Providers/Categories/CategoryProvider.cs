@@ -95,39 +95,37 @@ WHERE WordId = @wordId", conn);
             return categoryIds.ToArray();
         }
 
-        public int RemoveWordFromCategories(int wordId, HashSet<Guid> categoryIds)
+        public bool RemoveWordFromCategory(int wordId, Guid categoryId)
         {
-            string idString = string.Join(", ", categoryIds.Select(x => string.Format("'{0}'", x)));
             using (SqlCeConnection conn = new SqlCeConnection(_connectionString))
             {
                 conn.Open();
 
-                SqlCeCommand cmd = new SqlCeCommand(string.Format(
+                SqlCeCommand cmd = new SqlCeCommand(
 @"DELETE DictionaryCategoryWord
-WHERE WordId = @wordId AND CategoryId IN ({0})", idString), conn);
+WHERE CategoryId = @categoryId AND WordId = @wordId", 
+                    conn);
+                cmd.Parameters.AddWithValue("@categoryId", categoryId);
                 cmd.Parameters.AddWithValue("@wordId", wordId);
 
-                return cmd.ExecuteNonQuery();
+                return cmd.ExecuteNonQuery() > 0;
             }
         }
 
-        public void AssignWordToCategories(int wordId, HashSet<Guid> categoryIds)
+        public bool AddWordToCategory(int wordId, Guid categoryId)
         {
             using (SqlCeConnection conn = new SqlCeConnection(_connectionString))
             {
                 conn.Open();
 
-                var cmd = new SqlCeCommand(
-@"INSERT DictionaryCategoryWord(CategoryId, WordId)
-VALUES(@categoryId, @wordId)", conn);
-                cmd.Parameters.AddWithValue("@wordId", wordId);
-                var parmCategory = cmd.Parameters.Add("@categoryId", SqlDbType.UniqueIdentifier);
+                var cmd = new SqlCeCommand(string.Format(
+@"INSERT INTO DictionaryCategoryWord (CategoryId, WordId)
+SELECT '{0}' AS CategoryId, {1} AS WordId
+WHERE NOT EXISTS (SELECT * FROM DictionaryCategoryWord WHERE CategoryId = '{0}' AND WordId = '{1}')", 
+                    categoryId, wordId), conn);
+                // For some reason, SQL CE doesn't understand parameters in SELECT statement
 
-                foreach (var categoryId in categoryIds)
-                {
-                    parmCategory.Value = categoryId;
-                    cmd.ExecuteNonQuery();
-                }
+                return cmd.ExecuteNonQuery() > 0;
             }
         }
     }

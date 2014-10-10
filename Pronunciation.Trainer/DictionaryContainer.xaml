@@ -78,7 +78,7 @@
                     ToolTip="Find current word in the list [{0}]">
                     <Image Source="Resources/SynchronizeList.png" Style="{StaticResource ToolbarImage}" />
                 </Button>                
-                <controls:OnOffButton Height="23" Width="23" x:Name="btnFavorites" Focusable="False" 
+                <!--<controls:OnOffButton Height="23" Width="23" x:Name="btnFavorites" Focusable="False" 
                     Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                     StateOnTooltip="Remove the word from favorites [{0}]" StateOffTooltip="Add the word to favorites [{0}]">
                     <Image>
@@ -94,7 +94,7 @@
                             </Style>
                         </Image.Style>
                     </Image>
-                </controls:OnOffButton>
+                </controls:OnOffButton>-->
                 <Button Height="23" Width="23" Name="btnEditCategories" Focusable="False" Click="btnEditCategories_Click" 
                     Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                     ToolTip="Edit list of categories">

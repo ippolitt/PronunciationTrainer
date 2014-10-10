@@ -34,13 +34,10 @@ namespace Pronunciation.Core.Providers.Dictionary
             // Do nothing
         }
 
-        public ArticlePage PrepareArticlePage(string articleKey)
+        public ArticlePage PrepareArticlePage(IndexEntry index)
         {
-            Uri fileUrl = BuildWordPath(articleKey);
-            if (!File.Exists(fileUrl.LocalPath))
-                throw new ArgumentException(string.Format("Dictionary article '{0}' doesn't exist!", articleKey));
-
-            return new ArticlePage(articleKey, fileUrl);
+            string articleKey = index.Word.ArticleKey;
+            return new ArticlePage(articleKey, PreparePageUrl(articleKey), index);
         }
 
         // This method is called for all hyperlinks inside a dictionary page
@@ -55,7 +52,7 @@ namespace Pronunciation.Core.Providers.Dictionary
             if (isArticle)
             {
                 string pageKey = Path.GetFileNameWithoutExtension(HttpUtility.UrlDecode(segments[segments.Length - 1]));
-                return PrepareArticlePage(pageKey); 
+                return new ArticlePage(pageKey, PreparePageUrl(pageKey), null); 
             }
             else
             {
@@ -109,17 +106,37 @@ namespace Pronunciation.Core.Providers.Dictionary
                         continue;
 
                     words.Add(new IndexEntry(
-                        data[1], 
                         data[0], 
-                        string.IsNullOrEmpty(data[2]) ? (int?)null : int.Parse(data[2]), 
-                        data[3], 
-                        data[4],
-                        dictionaryId,
-                        null));
+                        string.IsNullOrEmpty(data[2]) ? (int?)null : int.Parse(data[2]),
+                        dictionaryId, 
+                        new DictionaryWordInfo(
+                            data[1], 
+                            data[3], 
+                            data[4],
+                            null)));
                 }
             }
 
             return words;
+        }
+
+        public DictionaryWordInfo GetWordInfo(int wordId)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void UpdateFavoriteSound(int wordId, string favoriteSoundKey)
+        {
+            // do nothing
+        }
+
+        private Uri PreparePageUrl(string pageKey)
+        {
+            Uri fileUrl = BuildWordPath(pageKey);
+            if (!File.Exists(fileUrl.LocalPath))
+                throw new ArgumentException(string.Format("Dictionary article '{0}' doesn't exist!", pageKey));
+
+            return fileUrl;
         }
 
         private Uri BuildWordPath(string pageKey)

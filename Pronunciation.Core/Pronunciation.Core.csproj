@@ -116,12 +116,13 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Providers\Dictionary\ArticleInfo.cs" />
+    <Compile Include="Providers\Dictionary\ArticlePage.cs" />
     <Compile Include="Providers\Categories\CategoryProvider.cs" />
     <Compile Include="Providers\Categories\DictionaryCategoryListItem.cs" />
     <Compile Include="Providers\Dictionary\DictionaryDATReader.cs" />
     <Compile Include="Providers\Dictionary\DictionarySoundInfo.cs" />
     <Compile Include="Providers\Dictionary\DictionaryTargetKey.cs" />
+    <Compile Include="Providers\Dictionary\DictionaryWordInfo.cs" />
     <Compile Include="Providers\Exercise\ExerciseTargetKey.cs" />
     <Compile Include="Providers\Recording\RecordedAudioListItem.cs" />
     <Compile Include="Providers\Recording\HistoryPolicies\AlwaysAddRecordingPolicy.cs" />

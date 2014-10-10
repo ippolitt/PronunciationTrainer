@@ -29,5 +29,8 @@ namespace Pronunciation.Core.Contexts
 
         string ContextDescription { get; }
         event AudioContextChangedHandler ContextChanged;
+
+        bool SuportsFavoriteAudio { get; }
+        bool? IsFavoriteAudio { get; set; }
     }
 }

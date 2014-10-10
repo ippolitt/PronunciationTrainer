@@ -9,10 +9,8 @@ namespace Pronunciation.Trainer.Dictionary
 {
     public class IndexEntryImitation : IndexEntry, ISuggestionItemInfo
     {
-        private const string ImmitationEntryKey = "@";
-
         public IndexEntryImitation(string entryText)
-            : base(ImmitationEntryKey, entryText, null, null, null, null, null)
+            : base(entryText, null, null, 1)
         {
         }
 

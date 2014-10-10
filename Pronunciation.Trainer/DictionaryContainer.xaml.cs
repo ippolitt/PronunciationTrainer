@@ -91,7 +91,6 @@ namespace Pronunciation.Trainer
         private ExecuteActionCommand _commandClearText;
         private ExecuteActionCommand _commandPrevious;
         private ExecuteActionCommand _commandNext;
-        private ExecuteActionCommand _commandFavorites;
         private ExecuteActionCommand _commandSyncPage;
 
         private const int MaxNumberOfSuggestions = 100;
@@ -108,7 +107,7 @@ namespace Pronunciation.Trainer
             _mainIndex = new DictionaryIndex();
             _searchIndex = _mainIndex;
 
-            _categoryManager = new CategoryManager(AppSettings.Instance.Connections.Trainer, ProcessWordCategoriesChanged);
+            _categoryManager = new CategoryManager(AppSettings.Instance.Connections.Trainer, ProcessWordCategoryChanged);
             _categoryTracker = new WordCategoryStateTracker(_categoryManager);
             _statsCollector = new SessionStatisticsCollector();
             _statsCollector.SessionStatisticsChanged += StatsCollector_SessionStatisticsChanged;
@@ -116,6 +115,7 @@ namespace Pronunciation.Trainer
             //_dictionaryProvider = new LPDFileSystemProvider(AppSettings.Instance.Folders.Dictionary, CallScriptMethod);
             _dictionaryProvider = new DatabaseProvider(AppSettings.Instance.Folders.Dictionary, 
                 AppSettings.Instance.Folders.Database, AppSettings.Instance.Connections.Trainer);
+            IndexEntry.ActiveProvider = _dictionaryProvider;
             _dictionaryLoader = new DictionaryInitializer(_mainIndex, _dictionaryProvider);
 
             _audioContext = new DictionaryAudioContext(_dictionaryProvider, AppSettings.Instance.Recorders.Dictionary, 
@@ -135,7 +135,7 @@ namespace Pronunciation.Trainer
             _commandClearText = new ExecuteActionCommand(ClearText, true);
             _commandPrevious = new ExecuteActionCommand(GoPreviousItem, false);
             _commandNext = new ExecuteActionCommand(GoNextItem, false);
-            _commandFavorites = new ExecuteActionCommand(SetFavorite, false);
+            
             _commandSyncPage = new ExecuteActionCommand(SynchronizeSuggestions, false);
 
             this.InputBindings.Add(new KeyBinding(_commandBack, KeyGestures.NavigateBack));
@@ -143,7 +143,6 @@ namespace Pronunciation.Trainer
             this.InputBindings.Add(new KeyBinding(_commandClearText, KeyGestures.ClearText));
             this.InputBindings.Add(new KeyBinding(_commandPrevious, KeyGestures.PreviousWord));
             this.InputBindings.Add(new KeyBinding(_commandNext, KeyGestures.NextWord));
-            this.InputBindings.Add(new KeyBinding(_commandFavorites, KeyGestures.Favorites));
             this.InputBindings.Add(new KeyBinding(_commandSyncPage, KeyGestures.SyncWord));
 
             btnBack.Command = _commandBack;
@@ -152,11 +151,7 @@ namespace Pronunciation.Trainer
             btnPrevious.Command = _commandPrevious;
             btnNext.Command = _commandNext;
             btnSyncPage.Command = _commandSyncPage;
-            btnFavorites.Command = _commandFavorites;
 
-            btnFavorites.StateOnTooltipArgs = new object[] { KeyGestures.Favorites.DisplayString };
-            btnFavorites.StateOffTooltipArgs = btnFavorites.StateOnTooltipArgs;
-            btnFavorites.RefreshTooltip();
             lblSessionStats.Text = string.Format(StatisticsTemplate, 0, 0);
 
             using (var region = _ignoreEvents.Start())
@@ -251,15 +246,7 @@ namespace Pronunciation.Trainer
                     string pageKey = ((ArticlePage)_currentPage.Page).ArticleKey;
                     _statsCollector.RegisterViewedPage(pageKey);
 
-                    if (sourceIndex != null)
-                    {
-                        _currentPage.WordIndex = sourceIndex;
-                    }
-                    else
-                    {
-                        _currentPage.WordIndex = _mainIndex.GetWordByPageKey(pageKey);
-                    }
-
+                    _currentPage.WordIndex = ((ArticlePage)_currentPage.Page).PageIndex;
                     if (_currentPage.WordIndex != null)
                     {
                         if (sourceAction == NavigationSource.HistoryNavigation)
@@ -316,9 +303,8 @@ namespace Pronunciation.Trainer
 
         private void RefreshAudioContext(IndexEntry index)
         {
-            _audioContext.RefreshContext(
-                AppSettings.Instance.StartupMode == StartupPlayMode.British ? index.SoundKeyUK : index.SoundKeyUS,
-                index.EntryText,
+            _audioContext.RefreshContext(index,
+                AppSettings.Instance.StartupMode == StartupPlayMode.British,
                 AppSettings.Instance.StartupMode != StartupPlayMode.None);
         }
 
@@ -355,18 +341,12 @@ namespace Pronunciation.Trainer
             if (wordId == null)
             {
                 _categoryTracker.ResetWord();
-
-                _commandFavorites.UpdateState(false);
                 categoriesDataGrid.IsEnabled = false;
             }
             else
             {
-                WordCategoryInfo info = _categoryManager.GetWordCategories(wordId.Value);
-                _categoryTracker.RegisterWord(wordId.Value, info == null ? null : info.Categories);
-
-                _commandFavorites.UpdateState(true);
+                _categoryTracker.RegisterWord(wordId.Value);
                 categoriesDataGrid.IsEnabled = true;
-                btnFavorites.IsStateOn = info != null && info.IsInFavorites;
             }
         }
 
@@ -401,23 +381,6 @@ namespace Pronunciation.Trainer
             if (entry != null)
             {
                 NavigateWord(entry, NavigationSource.ListNavigation);
-            }
-        }
-
-        private void SetFavorite()
-        {
-            if (_currentPage == null || _currentPage.WordId == null)
-                return;
-
-            if (btnFavorites.IsStateOn)
-            {
-                _categoryManager.RemoveFromFavorites(_currentPage.WordId.Value);
-                btnFavorites.IsStateOn = false;
-            }
-            else
-            {
-                _categoryManager.AddToFavorites(_currentPage.WordId.Value);
-                btnFavorites.IsStateOn = true;
             }
         }
 
@@ -477,15 +440,14 @@ namespace Pronunciation.Trainer
             }
         }
 
-        private void ProcessWordCategoriesChanged(int wordId, Guid[] addedCategoryIds, Guid[] removedCategoryIds)
+        private void ProcessWordCategoryChanged(int wordId, Guid categoryId, bool isRemoved)
         {
             var category = cboCategories.SelectedItem as DictionaryCategoryListItem;
             if (category == null || category.IsServiceItem)
                 return;
 
-            // If current category matches one of the modified we should refresh suggestions list
-            if ((addedCategoryIds != null && addedCategoryIds.Contains(category.CategoryId))
-                || (removedCategoryIds != null && removedCategoryIds.Contains(category.CategoryId)))
+            // If current category matches the modified one we should refresh suggestions list
+            if (categoryId == category.CategoryId)
             {
                 int initialPosition = lstSuggestions.SelectedIndex;
                 bool restoreFocus = lstSuggestions.IsKeyboardFocusWithin;
@@ -691,9 +653,19 @@ namespace Pronunciation.Trainer
 
         private void lstSuggestions_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
+            switch (e.Key)
             {
-                NavigateSelectedItem(lstSuggestions, NavigationSource.SuggestionsList);
+                case Key.Enter:
+                    NavigateSelectedItem(lstSuggestions, NavigationSource.SuggestionsList);
+                    break;
+
+                case Key.Delete:
+                    ChangeWordCategory(true);
+                    break;
+
+                case Key.Insert:
+                    ChangeWordCategory(false);
+                    break;
             }
         }
 
@@ -792,7 +764,7 @@ namespace Pronunciation.Trainer
                 return;
 
             var article = _currentPage == null ? null : (_currentPage.Page as ArticlePage);
-            if (article != null && article.ArticleKey == selectedItem.ArticleKey)
+            if (article != null && article.ArticleKey == selectedItem.Word.ArticleKey)
             {
                 // The same page - just play the sound without reloading the page
                 RefreshAudioContext(selectedItem);
@@ -810,8 +782,7 @@ namespace Pronunciation.Trainer
                 Logger.Info("Preparing article page...");
             }
 
-            ArticlePage article = _dictionaryProvider.PrepareArticlePage(sourceIndex.ArticleKey);
-
+            ArticlePage article = _dictionaryProvider.PrepareArticlePage(sourceIndex);
             if (_isFirstPageLoad)
             {
                 Logger.Info("Article page prepared. Navigating...");
@@ -854,6 +825,29 @@ namespace Pronunciation.Trainer
             }
 
             return pageUrl;
+        }
+
+        private void ChangeWordCategory(bool isRemove)
+        {
+            var selectedItem = lstSuggestions.SelectedItem as IndexEntry;
+            if (selectedItem == null || selectedItem.WordId == null)
+                return;
+
+            var category = cboCategories.SelectedItem as DictionaryCategoryListItem;
+            if (category == null || category.IsServiceItem)
+                return;
+
+            int wordId = selectedItem.WordId.Value;
+            bool isChanged = isRemove 
+                ? _categoryManager.RemoveCategory(wordId, category.CategoryId)
+                : _categoryManager.AddCategory(wordId, category.CategoryId);
+            if (isChanged)
+            {
+                if (_categoryTracker.CurrentWordId == wordId)
+                {
+                    _categoryTracker.RefreshCategoryState(category.CategoryId, !isRemove);
+                }
+            }
         }
 
         private string CallScriptMethod(string methodName, object[] methodArgs)

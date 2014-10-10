@@ -86,9 +86,7 @@
     <Compile Include="Dictionary\IndexPositionTracker.cs" />
     <Compile Include="Controls\SuggestionsList.cs" />
     <Compile Include="Dictionary\SessionStatisticsCollector.cs" />
-    <Compile Include="Dictionary\WordCategoryInfo.cs" />
     <Compile Include="Dictionary\CategoryManager.cs" />
-    <Compile Include="Dictionary\WordCategoriesCollection.cs" />
     <Compile Include="Dictionary\WordCategoryStateTracker.cs" />
     <Compile Include="EditCategories.xaml.cs">
       <DependentUpon>EditCategories.xaml</DependentUpon>

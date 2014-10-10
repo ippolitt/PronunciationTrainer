@@ -59,6 +59,7 @@ namespace Pronunciation.Trainer
         private ExecuteActionCommand _stopCommand;
         private ExecuteActionCommand _showWaveformCommand;
         private ExecuteActionCommand _showHistoryCommand;
+        private ExecuteActionCommand _setFavoriteAudioCommand;
 
         private const string RecordProgressTemplate = "Recording, {0} seconds left..";
         private const int DelayedPlayIntervalMs = 500;
@@ -83,6 +84,7 @@ namespace Pronunciation.Trainer
             _stopCommand = new ExecuteActionCommand(() => StopAction(true), false);
             _showWaveformCommand = new ExecuteActionCommand(ShowWaveformsDialog, false);
             _showHistoryCommand = new ExecuteActionCommand(ShowHistoryDialog, false);
+            _setFavoriteAudioCommand = new ExecuteActionCommand(SetFavoriteAudio, false);
 
             btnShowWaveforms.Command = _showWaveformCommand;
             btnShowHistory.Command = _showHistoryCommand;
@@ -114,6 +116,7 @@ namespace Pronunciation.Trainer
                 container.InputBindings.Add(new KeyBinding(_stopCommand, KeyGestures.StopAudio));
                 container.InputBindings.Add(new KeyBinding(_showWaveformCommand, KeyGestures.ShowWaveform));
                 container.InputBindings.Add(new KeyBinding(_showHistoryCommand, KeyGestures.ShowHistory));
+                container.InputBindings.Add(new KeyBinding(_setFavoriteAudioCommand, KeyGestures.Favorites));
 
                 container.PreviewKeyDown += container_PreviewKeyDown;
 
@@ -176,6 +179,7 @@ namespace Pronunciation.Trainer
             _audioContext.ContextChanged -= AudioContext_ContextChanged;
             _audioContext.ContextChanged += AudioContext_ContextChanged;
 
+            InitFavoriteButton(_audioContext.SuportsFavoriteAudio);
             RefreshControls();
         }
 
@@ -213,6 +217,36 @@ namespace Pronunciation.Trainer
             if (_activeAction != null)
             {
                 _activeAction.RequestAbort(isSoftAbort);
+            }
+        }
+
+        private void InitFavoriteButton(bool isVisible)
+        {
+            if (isVisible)
+            {
+                btnFavorite.Visibility = Visibility.Visible;
+                btnFavorite.Command = _setFavoriteAudioCommand;
+                btnFavorite.StateOnTooltipArgs = new object[] { KeyGestures.Favorites.DisplayString };
+                btnFavorite.StateOffTooltipArgs = btnFavorite.StateOnTooltipArgs;
+                btnFavorite.RefreshTooltip();
+            }
+            else
+            {
+                btnFavorite.Visibility =  Visibility.Collapsed;
+            }
+        }
+
+        private void SetFavoriteAudio()
+        {
+            if (btnFavorite.IsStateOn)
+            {
+                _audioContext.IsFavoriteAudio = false;
+                btnFavorite.IsStateOn = false;
+            }
+            else
+            {
+                _audioContext.IsFavoriteAudio = true;
+                btnFavorite.IsStateOn = true;
             }
         }
 
@@ -327,8 +361,24 @@ namespace Pronunciation.Trainer
             _playReferenceCommand.UpdateState(btnPlayReference.IsEnabled);
             _playRecordedCommand.UpdateState(btnPlayRecorded.IsEnabled);
             _startRecordingCommand.UpdateState(btnRecord.IsEnabled);
+
+            if (btnFavorite.Visibility == Visibility.Visible)
+            {
+                bool? isFavorite = _audioContext.IsFavoriteAudio;
+                if (isFavorite == null)
+                {
+                    _setFavoriteAudioCommand.UpdateState(false);
+                }
+                else
+                {
+                    _setFavoriteAudioCommand.UpdateState(true);
+                    btnFavorite.IsStateOn = isFavorite == true;
+                }
+            }
+
             // At least one audio must exist (either reference or recording one)
             _showWaveformCommand.UpdateState(btnPlayReference.IsEnabled || btnPlayRecorded.IsEnabled);
+
             // Allow recordings history dialog if at least one recording exists
             _showHistoryCommand.UpdateState(_audioContext.CanShowRecordingsHistory && btnPlayRecorded.IsEnabled);
 

@@ -113,5 +113,16 @@ namespace Pronunciation.Trainer.AudioContexts
         {
             return _recordingProvider.RegisterNewAudio(_recordingKey, recordingDate, recordedFilePath, _recordingPolicy);
         }
+
+        public bool SuportsFavoriteAudio
+        {
+            get { return false; }
+        }
+
+        public bool? IsFavoriteAudio
+        {
+            get { throw new NotImplementedException(); }
+            set { throw new NotImplementedException(); }
+        }
     }
 }

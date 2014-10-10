@@ -22,6 +22,7 @@ namespace Pronunciation.Trainer.AudioContexts
         private string _soundKey;
         private string _soundText;
         private DictionarySoundInfo _soundInfo;
+        private IndexEntry _index;
 
         public event AudioContextChangedHandler ContextChanged;
 
@@ -33,10 +34,13 @@ namespace Pronunciation.Trainer.AudioContexts
             _recordingPolicy = recordingPolicy;
         }
 
-        public void RefreshContext(string soundKey, string soundText, bool playImmediately)
+        public void RefreshContext(IndexEntry index, bool useBritishSound, bool playImmediately)
         {
-            _soundKey = soundKey;
-            _soundText = soundText;
+            _index = index;
+            _soundKey = string.IsNullOrEmpty(index.Word.FavoriteSoundKey)
+                ? (useBritishSound ? index.Word.SoundKeyUK : index.Word.SoundKeyUS)
+                : index.Word.FavoriteSoundKey;
+            _soundText = index.DisplayName;
             _soundInfo = playImmediately ? _dictionaryProvider.GetAudio(_soundKey) : null;
             _recordingKey = string.IsNullOrEmpty(_soundKey) ? null : new DictionaryTargetKey(_soundKey);
 
@@ -147,6 +151,31 @@ namespace Pronunciation.Trainer.AudioContexts
         public string RegisterRecordedAudio(string recordedFilePath, DateTime recordingDate)
         {
             return _recordingProvider.RegisterNewAudio(_recordingKey, recordingDate, recordedFilePath, _recordingPolicy);
+        }
+
+        public bool SuportsFavoriteAudio
+        {
+            get { return true; }
+        }
+
+        public bool? IsFavoriteAudio
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_soundKey) || _index == null || _index.WordId == null)
+                    return null;
+
+                return _index.Word.FavoriteSoundKey == _soundKey;
+            }
+            set
+            {
+                if (value == null || string.IsNullOrEmpty(_soundKey) || _index == null || _index.WordId == null)
+                    throw new ArgumentNullException();
+
+                string soundKey = (value == true) ? _soundKey : null;
+                _dictionaryProvider.UpdateFavoriteSound(_index.WordId.Value, soundKey);
+                _index.Word.FavoriteSoundKey = soundKey;
+            }
         }
     }
 }

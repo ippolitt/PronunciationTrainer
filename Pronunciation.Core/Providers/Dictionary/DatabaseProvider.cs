@@ -64,26 +64,16 @@ namespace Pronunciation.Core.Providers.Dictionary
                 cmd.Connection = conn;
 
                 // Load words
-                var wordIndexes = new Dictionary<int, string>();
                 cmd.CommandText =
-@"SELECT WordId, Keyword, HtmlIndex, UsageRank, SoundKeyUK, SoundKeyUS, DictionaryId  
+@"SELECT WordId, Keyword, UsageRank, DictionaryId  
 FROM DictionaryWord";
                 using (SqlCeDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        string htmlIndex = reader["HtmlIndex"] as string;
-                        if (!string.IsNullOrEmpty(htmlIndex))
-                        {
-                            wordIndexes[(int)reader["WordId"]] = htmlIndex;
-                        }
-
                         index.Add(new IndexEntry(
-                            htmlIndex,
                             reader["Keyword"] as string,
                             reader["UsageRank"] as int?,
-                            reader["SoundKeyUK"] as string,
-                            reader["SoundKeyUS"] as string,
                             reader["DictionaryId"] as int?,
                             (int)reader["WordId"]));
                     }
@@ -93,13 +83,14 @@ FROM DictionaryWord";
             return index;
         }
 
-        public ArticlePage PrepareArticlePage(string articleKey)
+        public ArticlePage PrepareArticlePage(IndexEntry index)
         {
-            if (string.IsNullOrEmpty(articleKey))
-                throw new ArgumentNullException();
-
+            string articleKey = index.Word.ArticleKey;
             var data = _datReader.GetHtmlData(articleKey);
-            return new ArticlePage(articleKey, BuildPageHtml(articleKey, Encoding.UTF8.GetString(data)));
+
+            return new ArticlePage(articleKey,
+                BuildPageHtml(articleKey, Encoding.UTF8.GetString(data)),
+                index);
         }
 
         // May be called if a page contains a hyperlink to some external resource
@@ -144,6 +135,59 @@ WHERE SoundKey = @soundKey", conn);
             return new DictionarySoundInfo(new PlaybackData(data), isUKAudio);
         }
 
+        public DictionaryWordInfo GetWordInfo(int wordId)
+        {
+            DictionaryWordInfo word = null;
+            using (SqlCeConnection conn = new SqlCeConnection(_connectionString))
+            {
+                conn.Open();
+
+                SqlCeCommand cmd = new SqlCeCommand();
+                cmd.Connection = conn;
+                cmd.CommandText =
+@"SELECT HtmlIndex, SoundKeyUK, SoundKeyUS, FavoriteSoundKey
+FROM DictionaryWord
+WHERE WordId = @wordId";
+                cmd.Parameters.AddWithValue("@wordId", wordId);
+
+                using (SqlCeDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        word = new DictionaryWordInfo(
+                            reader["HtmlIndex"] as string,
+                            reader["SoundKeyUK"] as string,
+                            reader["SoundKeyUS"] as string,
+                            reader["FavoriteSoundKey"] as string);
+                        break;
+                    }
+                }
+            }
+
+            return word;
+        }
+
+        public void UpdateFavoriteSound(int wordId, string favoriteSoundKey)
+        {
+            using (SqlCeConnection conn = new SqlCeConnection(_connectionString))
+            {
+                conn.Open();
+
+                SqlCeCommand cmd = new SqlCeCommand();
+                cmd.Connection = conn;
+                cmd.CommandText =
+@"UPDATE DictionaryWord
+SET FavoriteSoundKey = @soundKey
+WHERE WordId = @wordId";
+                cmd.Parameters.AddWithValue("@wordId", wordId);
+                var parm = cmd.Parameters.Add("@soundKey", System.Data.SqlDbType.NVarChar);
+                parm.Value = string.IsNullOrEmpty(favoriteSoundKey) ? (object)DBNull.Value : (object)favoriteSoundKey;
+
+                if (cmd.ExecuteNonQuery() <= 0)
+                    throw new ArgumentException("Favorite sound for the word hasn't been updated!");
+            }
+        }
+
         public DictionarySoundInfo GetAudioFromScriptData(string soundKey, string scriptData)
         {
             throw new NotSupportedException();
@@ -165,9 +209,8 @@ WHERE SoundKey = @soundKey", conn);
             var bld = new StringBuilder();
             foreach (var entry in index)
             {
-                bld.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}",
-                    entry.EntryText, entry.ArticleKey, entry.UsageRank,
-                    entry.SoundKeyUK, entry.SoundKeyUS, entry.DictionaryId, entry.WordId));
+                bld.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}", 
+                    entry.DisplayName, entry.UsageRank, entry.WordId, entry.DictionaryId));
             }
 
             File.WriteAllText(_indexFilePath, bld.ToString(), Encoding.UTF8);
@@ -182,20 +225,17 @@ WHERE SoundKey = @soundKey", conn);
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 7)
+                    if (data.Length != 4)
                         throw new InvalidOperationException("Index file is broken!");
 
-                    int? dictionaryId = string.IsNullOrEmpty(data[5]) ? (int?)null : int.Parse(data[5]);
+                    int? dictionaryId = string.IsNullOrEmpty(data[3]) ? (int?)null : int.Parse(data[3]);
                     if (checkDictionaryId && !dictionaryIds.Contains(dictionaryId ?? 0))
                         continue;
 
-                    words.Add(new IndexEntry(data[1], 
-                        data[0], 
-                        string.IsNullOrEmpty(data[2]) ? (int?)null : int.Parse(data[2]), 
-                        data[3], 
-                        data[4],
-                        dictionaryId,
-                        string.IsNullOrEmpty(data[6]) ? (int?)null : int.Parse(data[6])));
+                    words.Add(new IndexEntry(data[0], 
+                        string.IsNullOrEmpty(data[1]) ? (int?)null : int.Parse(data[1]),
+                        dictionaryId, 
+                        int.Parse(data[2])));
                 }
             }
 

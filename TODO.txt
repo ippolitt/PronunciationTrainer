@@ -1,14 +1,16 @@
 ﻿Top:
 - Try installing video card, then try giving more memory to video adapter
 --
-- Delete a word from category with DEL (not Backspace, remove Backspace also from Recordings list) 
-- Add ability to add notes for a word (or my prefered pronunciation)
-- Somehow remember the last word I learned in the dictionary
-- LPD: add ability to specify which transcription does the word actually relates to
-- Add records count and current number to the suggestions list
-- Don't delete a word if there's custom information there (custom notes etc.)
+- How to mark favorite recordings if word has several meanings (I, II etc.)?
+- Add ability to add notes for a word (or my prefered pronunciation. Remember, that there could be different pronunciations for a word)
 - Add auto list: word with several recordings. Mark such words in the list somehow
-- Search: we must also match items with accented characters (e.g. à la carte, Ælfric)
+- Somehow remember the last word I learned in the dictionary
+- Add a "Favorite audio" button to audio panel (what about words with multiple pronunciations?)
+- Ranks: map "etc" and "ie" from Ranks to dictionary entries. Find other entries that might have been missed. Generated more accurate list of missing ranks.
+- LPD: add ability to specify which transcription does the sound actually relates to
+- Add records count and current number to the suggestions list
+- Search: we must also match items with accented characters (e.g. à la carte, Ælfric). But we still must be able to search by accented characters.
+- Add "Play recorded" optiion to play my recordings on startup
 - Use small audio buttons (except iPhone), put them after part of speech as in LPD. Test words with several meanings
 - Add total statistics (recorded N words over Y days). Move statistics from status bar to a dedicated tab.
 - Change index logic: use only "text + rank + wordId" and load other info (isFavorite, htmlIndex, sounds, wordnote) from DB. Measure speed drop. Measure the reduce of memory usage (by 12MB?)
@@ -19,11 +21,17 @@
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 Dictionary:
 	- Import
-		- Map "etc" and "ie" from Ranks to dictionary entries. Find other entries that might have been missed. Generated more accurate list of missing ranks.
+		- Don't delete a word if there's custom information there (custom notes etc.)
+		- MW: group by transcription only and join sounds
+		- MW: "an" is joined incorrectly
+		- LDOCE: group by transcription only and join sounds. Get transcription from previous item if missing. 
+			- Display audio only if it differs from LPD (or do not display at all?). This will also reduce size on iPhone
+			- Check "eye" or "Express, the"
 		- LDOCE: entries like "-meter": maybe show two keywords and allow to see two articles?
 		- LPD: Fix "candidate", "Halley" errors: AmE pronunciation is not separated
 		- LPD: "detail", "direct"- preference poll attached to word form (same in the original entry)
 		- Resolve references in LPD ("am" -> see "I'm", except ... -> ... (ref) ), also (go -> "See gonna") and MW
+		- Get word forms from LPD and - in case if it exists as a separate entry in other dictionaries - generate a hypelink to the base form
 		- MW: generate hyperlink for [ref] in transcription and other places (both in file system and database)
 		- MW: extract some word forms as a dedicated word (e.g. forms of "to be")?
 		- MW: add a ref to parent entry for variants (word forms? extra items?) because thranscription is often incomplete.

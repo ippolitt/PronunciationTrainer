@@ -23,6 +23,11 @@ namespace Pronunciation.Trainer.Dictionary
             _categories = new List<WordCategoryListItem>();
         }
 
+        public int? CurrentWordId
+        {
+            get { return _currentWordId; }
+        }
+
         public void SynchronizeCategories(IEnumerable<DictionaryCategoryListItem> categories)
         {
             using (var region = _ignoreEvents.Start())
@@ -55,19 +60,20 @@ namespace Pronunciation.Trainer.Dictionary
             return new ObservableCollection<WordCategoryListItem>(_categories);
         }
 
-        public void RegisterWord(int wordId, IEnumerable<Guid> categoryIds)
+        public void RegisterWord(int wordId)
         {
             _currentWordId = wordId;
+            Guid[] wordCategoryIds = _categoryManager.GetWordCategoryIds(wordId);
+
             using (var region = _ignoreEvents.Start())
             {
-                if (categoryIds == null)
+                if (wordCategoryIds == null || wordCategoryIds.Length == 0)
                 {
                     _categories.ForEach(x => x.IsAssigned = false);
                 }
                 else
                 {
-                    var distinctIds = new HashSet<Guid>(categoryIds);
-                    _categories.ForEach(x => x.IsAssigned = distinctIds.Contains(x.CategoryId));
+                    _categories.ForEach(x => x.IsAssigned = wordCategoryIds.Contains(x.CategoryId));
                 }
             }
         }
@@ -79,6 +85,23 @@ namespace Pronunciation.Trainer.Dictionary
             {
                 _categories.ForEach(x => x.IsAssigned = false);
             }
+        }
+
+        public bool RefreshCategoryState(Guid categoryId, bool isAssigned)
+        {
+            var category = _categories.SingleOrDefault(x => x.CategoryId == categoryId);
+            if (category == null)
+                return false;
+
+            if (category.IsAssigned == isAssigned)
+                return true;
+
+            using (var region = _ignoreEvents.Start())
+            {
+                category.IsAssigned = isAssigned;
+            }
+
+            return true;
         }
 
         private void WordCategory_PropertyChanged(object sender, PropertyChangedEventArgs e)

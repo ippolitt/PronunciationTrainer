@@ -19,107 +19,120 @@
             </Style.Triggers>
         </Style>      
     </UserControl.Resources>
-    <Grid Name="gridPanel">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="29" />
-            <ColumnDefinition Width="29" />
-            <ColumnDefinition Width="29" />
-            <ColumnDefinition Width="29" />
-            <ColumnDefinition Width="29" />
-            <ColumnDefinition Width="29" />
-            <ColumnDefinition Width="293*" />
-        </Grid.ColumnDefinitions>
-        <!-- For some reason action button, when clicked, locks keyboard focus -->
-        <controls:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnPlayReference" Grid.Column="0"
-            Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-            ToolTip="{Binding Path=DynamicTooltip}" 
-            DefaultTooltip="Play reference audio [{0}]" RunningTooltip="Pause [Spacebar] or Stop [{0}]" PausedTooltip="Resume [Spacebar] or Stop [{0}]" >
-            <Image>
-                <Image.Style>
-                    <Style TargetType="Image" BasedOn="{StaticResource AudioImage}">
-                        <Setter Property="Source" Value="Resources/AudioPlayRef.png" />
+    <DockPanel Name="rootPanel">
+        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" HorizontalAlignment="Left">
+            <!-- For some reason action button, when clicked, locks keyboard focus so we set Focusable="False" -->
+            <controls:ActionButton Height="23" Width="29" Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" x:Name="btnPlayReference"
+                Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                ToolTip="{Binding Path=DynamicTooltip}" 
+                DefaultTooltip="Play reference audio [{0}]" RunningTooltip="Pause [Spacebar] or Stop [{0}]" PausedTooltip="Resume [Spacebar] or Stop [{0}]" >
+                <Image>
+                    <Image.Style>
+                        <Style TargetType="Image" BasedOn="{StaticResource AudioImage}">
+                            <Setter Property="Source" Value="Resources/AudioPlayRef.png" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=ButtonState}" Value="Running">
+                                    <Setter Property="Source" Value="Resources/AudioPause.png" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=ButtonState}" Value="Paused">
+                                    <Setter Property="Source" Value="Resources/AudioPlay.png" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+            </controls:ActionButton>
+            <controls:ActionButton Height="23" Width="29" Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" x:Name="btnPlayRecorded"
+                Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                ToolTip="{Binding Path=DynamicTooltip}" 
+                DefaultTooltip="Play recorded audio [{0}]" RunningTooltip="Pause [Spacebar] or Stop [{0}]" PausedTooltip="Resume [Spacebar] or Stop [{0}]" >
+                <Image>
+                    <Image.Style>
+                        <Style TargetType="Image" BasedOn="{StaticResource AudioImage}">
+                            <Setter Property="Source" Value="Resources/AudioPlayRec.png" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=ButtonState}" Value="Running">
+                                    <Setter Property="Source" Value="Resources/AudioPause.png" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=ButtonState}" Value="Paused">
+                                    <Setter Property="Source" Value="Resources/AudioPlay.png" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+            </controls:ActionButton>
+            <controls:ActionButton Height="23" Width="29" Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" x:Name="btnRecord"             
+                Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                ToolTip="{Binding Path=DynamicTooltip}" 
+                DefaultTooltip="Start recording audio [{0}]" RunningTooltip="Stop [Spacebar] or [{0}]" >
+                <Image>
+                    <Image.Style>
+                        <Style TargetType="Image" BasedOn="{StaticResource AudioImage}">
+                            <Setter Property="Source" Value="Resources/AudioStartRecording.png" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=ButtonState}" Value="Running">
+                                    <Setter Property="Source" Value="Resources/AudioStopRecording.png" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+            </controls:ActionButton>
+            <Button Height="23" Width="29" Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" 
+                x:Name="btnShowHistory" Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                ToolTip="Show recordings history [{0}]">
+                <Image Source="Resources/AudioHistory.png" Style="{StaticResource AudioImage}" />
+            </Button>
+            <Button Height="23" Width="29" Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center"  
+                x:Name="btnShowWaveforms" Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                ToolTip="Show waveforms [{0}]">
+                <Image Source="Resources/AudioWaveform.png" Style="{StaticResource AudioImage}" />
+            </Button>
+            <Button Height="23" Width="29" Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" x:Name="btnShowSlider"
+                Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                ToolTip="Show/hide slider" Click="btnShowSlider_Click">
+                <Image Source="Resources/AudioSlider.png" Style="{StaticResource AudioImage}" />
+            </Button>            
+            <controls:OnOffButton Height="23" Width="29" Focusable="False" x:Name="btnFavorite" HorizontalAlignment="Stretch" VerticalAlignment="Center" 
+                    Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                    StateOnTooltip="Unassign favorite audio from the current word [{0}]" 
+                    StateOffTooltip="Assign the audio as the favorite one for the current word [{0}]">
+                <Image>
+                    <Image.Style>
+                        <Style TargetType="Image" BasedOn="{StaticResource AudioImage}">
+                            <Setter Property="Source" Value="Resources/Favorites.png" />
+                            <Setter Property="Opacity" Value="0.5" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ElementName=btnFavorite, Path=IsOn}" Value="True">
+                                    <Setter Property="Opacity" Value="1" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+            </controls:OnOffButton>
+        </StackPanel>
+        <UniformGrid>
+            <Slider Margin="10,5,0,0" Name="sliderPlay" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ValueChanged="sliderPlay_ValueChanged" IsMoveToPointEnabled="True" />
+            <TextBlock Margin="5,0,5,0" Name="lblStatus" VerticalAlignment="Center" FontStyle="Italic">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Text" Value="{Binding ElementName=AudioPanelControl, Path=ContextDescription}" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding Path=ButtonState}" Value="Running">
-                                <Setter Property="Source" Value="Resources/AudioPause.png" />
+                            <DataTrigger Binding="{Binding ElementName=btnRecord, Path=ButtonState}" Value="Running">
+                                <Setter Property="Text" Value="Recording..." />
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding Path=ButtonState}" Value="Paused">
-                                <Setter Property="Source" Value="Resources/AudioPlay.png" />
-                            </DataTrigger>
+                            <DataTrigger Binding="{Binding ElementName=btnPlayRecorded, Path=ButtonState}" Value="Paused">
+                                <Setter Property="Text" Value="Paused..." />
+                            </DataTrigger>     
+                            <DataTrigger Binding="{Binding ElementName=btnPlayReference, Path=ButtonState}" Value="Paused">
+                                <Setter Property="Text" Value="Paused..." />
+                            </DataTrigger>                         
                         </Style.Triggers>
                     </Style>
-                </Image.Style>
-            </Image>
-        </controls:ActionButton>
-        <controls:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23"  x:Name="btnPlayRecorded" Grid.Column="1"
-            Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-            ToolTip="{Binding Path=DynamicTooltip}" 
-            DefaultTooltip="Play recorded audio [{0}]" RunningTooltip="Pause [Spacebar] or Stop [{0}]" PausedTooltip="Resume [Spacebar] or Stop [{0}]" >
-            <Image>
-                <Image.Style>
-                    <Style TargetType="Image" BasedOn="{StaticResource AudioImage}">
-                        <Setter Property="Source" Value="Resources/AudioPlayRec.png" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Path=ButtonState}" Value="Running">
-                                <Setter Property="Source" Value="Resources/AudioPause.png" />
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding Path=ButtonState}" Value="Paused">
-                                <Setter Property="Source" Value="Resources/AudioPlay.png" />
-                            </DataTrigger>                            
-                        </Style.Triggers>
-                    </Style>
-                </Image.Style>
-            </Image>
-        </controls:ActionButton>
-        <controls:ActionButton Focusable="False" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnRecord" Grid.Column="2"                  
-            Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-            ToolTip="{Binding Path=DynamicTooltip}" 
-            DefaultTooltip="Start recording audio [{0}]" RunningTooltip="Stop [Spacebar] or [{0}]" >                            
-            <Image>
-                <Image.Style>
-                    <Style TargetType="Image" BasedOn="{StaticResource AudioImage}">
-                        <Setter Property="Source" Value="Resources/AudioStartRecording.png" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Path=ButtonState}" Value="Running">
-                                <Setter Property="Source" Value="Resources/AudioStopRecording.png" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Image.Style>
-            </Image>
-        </controls:ActionButton>
-        <Button Focusable="False" Grid.Column="3"  HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" 
-            x:Name="btnShowHistory" Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-            ToolTip="Show recordings history [{0}]">
-            <Image Source="Resources/AudioHistory.png" Style="{StaticResource AudioImage}" />
-        </Button>
-        <Button Focusable="False" Grid.Column="4"  HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" 
-            x:Name="btnShowWaveforms" Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-            ToolTip="Show waveforms [{0}]">
-            <Image Source="Resources/AudioWaveform.png" Style="{StaticResource AudioImage}" />
-        </Button>
-        <Button Focusable="False" Grid.Column="5"  HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="23" x:Name="btnShowSlider"
-            Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-            ToolTip="Show/hide slider" Click="btnShowSlider_Click">
-            <Image Source="Resources/AudioSlider.png" Style="{StaticResource AudioImage}" />
-        </Button>
-        <Slider Grid.Column="6" Margin="10,5,0,0" Name="sliderPlay" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ValueChanged="sliderPlay_ValueChanged" IsMoveToPointEnabled="True" />
-        <TextBlock Grid.Column="6" Margin="5,0,5,0" Name="lblStatus" VerticalAlignment="Center" FontStyle="Italic">
-            <TextBlock.Style>
-                <Style TargetType="TextBlock">
-                    <Setter Property="Text" Value="{Binding ElementName=AudioPanelControl, Path=ContextDescription}" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding ElementName=btnRecord, Path=ButtonState}" Value="Running">
-                            <Setter Property="Text" Value="Recording..." />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding ElementName=btnPlayRecorded, Path=ButtonState}" Value="Paused">
-                            <Setter Property="Text" Value="Paused..." />
-                        </DataTrigger>     
-                        <DataTrigger Binding="{Binding ElementName=btnPlayReference, Path=ButtonState}" Value="Paused">
-                            <Setter Property="Text" Value="Paused..." />
-                        </DataTrigger>                         
-                    </Style.Triggers>
-                </Style>
-            </TextBlock.Style>         
-        </TextBlock>
-    </Grid>
+                </TextBlock.Style>
+            </TextBlock>
+        </UniformGrid>
+    </DockPanel>
 </controls:UserControlExt>

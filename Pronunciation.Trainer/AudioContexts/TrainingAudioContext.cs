@@ -83,5 +83,16 @@ namespace Pronunciation.Trainer.AudioContexts
         {
             return _recordingProvider.GetRecordingSettings();
         }
+
+        public bool SuportsFavoriteAudio
+        {
+            get { return false; }
+        }
+
+        public bool? IsFavoriteAudio
+        {
+            get { throw new NotImplementedException(); }
+            set { throw new NotImplementedException(); }
+        }
     }
 }

@@ -49,7 +49,6 @@ namespace Pronunciation.Trainer.Controls
                     break;
 
                 case Key.Delete:
-                case Key.Back:
                     if (this.SelectedItems.Count > 0 && RecordingsDeleteRequested != null)
                     {
                         RecordingsDeleteRequested(this, null);

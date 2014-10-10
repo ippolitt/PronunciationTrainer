@@ -8,17 +8,20 @@ namespace Pronunciation.Core.Providers.Dictionary
     public class ArticlePage : PageInfo
     {
         public string ArticleKey { get; private set; }
+        public IndexEntry PageIndex { get; private set; }
 
-        public ArticlePage(string articleKey, Uri pageUrl) 
+        public ArticlePage(string articleKey, Uri pageUrl, IndexEntry pageIndex) 
             : base(pageUrl)
         {
             ArticleKey = articleKey;
+            PageIndex = pageIndex;
         }
 
-        public ArticlePage(string articleKey, string pageHtml)
+        public ArticlePage(string articleKey, string pageHtml, IndexEntry pageIndex)
             : base(pageHtml)
         {
             ArticleKey = articleKey;
+            PageIndex = pageIndex;
         }
 
         public override bool Equals(object obj)

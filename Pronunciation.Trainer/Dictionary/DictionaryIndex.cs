@@ -19,7 +19,7 @@ namespace Pronunciation.Trainer.Dictionary
                 return;
 
             // Build index for StartsWith match
-            _entries = entries.OrderBy(x => x.EntryText).ToArray();
+            _entries = entries.OrderBy(x => x.DisplayName).ToArray();
 
             // Build index for token-based match (split a phrase into words, each word can be searched using StartsWith)
             _tokens = BuildTokensIndex(_entries);
@@ -42,15 +42,7 @@ namespace Pronunciation.Trainer.Dictionary
             if (!_isInitialized)
                 return null;
 
-            return _entries.FirstOrDefault(x => x.EntryText == wordName);
-        }
-
-        public IndexEntry GetWordByPageKey(string pageKey)
-        {
-            if (!_isInitialized)
-                return null;
-
-            return _entries.FirstOrDefault(x => x.ArticleKey == pageKey);
+            return _entries.FirstOrDefault(x => x.DisplayName == wordName);
         }
 
         public IndexEntry GetEntryByPosition(int entryPosition)
@@ -85,11 +77,11 @@ namespace Pronunciation.Trainer.Dictionary
             IEnumerable<IndexEntry> mainQuery;
             if (isExactMatch)
             {
-                mainQuery = _entries.Where(x => string.Equals(x.EntryText, searchText, StringComparison.OrdinalIgnoreCase));
+                mainQuery = _entries.Where(x => string.Equals(x.DisplayName, searchText, StringComparison.OrdinalIgnoreCase));
             }
             else
             {
-                mainQuery = _entries.Where(x => x.EntryText.StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
+                mainQuery = _entries.Where(x => x.DisplayName.StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
             }
             if (maxItems >= 0)
             {
@@ -107,7 +99,7 @@ namespace Pronunciation.Trainer.Dictionary
                     tokensQuery = tokensQuery.Take(maxItems - entries.Count);
                 }
 
-                var tokenEntries = tokensQuery.OrderBy(x => x.Rank).ThenBy(x => x.Entry.EntryText).Select(x => x.Entry).ToList();
+                var tokenEntries = tokensQuery.OrderBy(x => x.Rank).ThenBy(x => x.Entry.DisplayName).Select(x => x.Entry).ToList();
                 if (tokenEntries.Count > 0)
                 {
                     // Add only those entries that don't already present in the list
@@ -127,7 +119,7 @@ namespace Pronunciation.Trainer.Dictionary
                 int rank = 0;
                 int position = 0;
                 bool isTokenStart = false;
-                foreach (char ch in entry.EntryText)
+                foreach (char ch in entry.DisplayName)
                 {
                     if (ch == ' ' || ch == '-' || ch == ',' || ch == '/' || ch == '(' || ch == ')')
                     {
@@ -143,7 +135,7 @@ namespace Pronunciation.Trainer.Dictionary
 
                             // Add the whole remaining string as a token to enable multi-words match: 
                             // e.g. match "lot car" in "parking lot car"
-                            string token = entry.EntryText.Substring(position);
+                            string token = entry.DisplayName.Substring(position);
 
                             // Don't add 1-symbol tokens
                             if (token.Length > 1)
@@ -164,7 +156,7 @@ namespace Pronunciation.Trainer.Dictionary
                 }
             }
 
-            return tokens.OrderBy(x => x.Rank).ThenBy(x => x.Entry.EntryText).ToArray();
+            return tokens.OrderBy(x => x.Rank).ThenBy(x => x.Entry.DisplayName).ToArray();
         }
 
         private class TokenizedIndexEntry
@@ -188,18 +180,18 @@ namespace Pronunciation.Trainer.Dictionary
                 int result;
                 if (x != null && y != null)
                 {
-                    result = string.Compare(x.EntryText, y.EntryText);
+                    result = string.Compare(x.DisplayName, y.DisplayName);
                     if (result != 0)
                     {
                         // Check if they differ only by case and ensure that case-sensitive match with the search text 
                         // is higher than case-insensitive one. So if search text is "A", then we display: "A, a" 
-                        if (string.Equals(x.EntryText, y.EntryText, StringComparison.OrdinalIgnoreCase))
+                        if (string.Equals(x.DisplayName, y.DisplayName, StringComparison.OrdinalIgnoreCase))
                         {
-                            if (x.EntryText.StartsWith(_searchText))
+                            if (x.DisplayName.StartsWith(_searchText))
                             {
                                 result = -1;
                             }
-                            else if (y.EntryText.StartsWith(_searchText))
+                            else if (y.DisplayName.StartsWith(_searchText))
                             {
                                 result = 1;
                             }

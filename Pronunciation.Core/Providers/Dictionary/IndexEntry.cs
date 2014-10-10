@@ -7,29 +7,54 @@ namespace Pronunciation.Core.Providers.Dictionary
 {
     public class IndexEntry
     {
-        public int? WordId { get; private set; }
-        public string ArticleKey { get; private set; }
-        public string EntryText { get; private set; }
+        public string DisplayName { get; private set; }
         public int? UsageRank { get; private set; }
-        public string SoundKeyUK { get; private set; }
-        public string SoundKeyUS { get; private set; }
         public int? DictionaryId { get; private set; }
+        public int? WordId { get; private set; }
+
+        // Use static property to avoid storing reference in each instance of index entry
+        public static IDictionaryProvider ActiveProvider { get; set; }
+
+        private DictionaryWordInfo _word;
 
         public override string ToString()
         {
-            return EntryText;
+            return DisplayName;
         }
 
-        public IndexEntry(string articleKey, string entryText, int? usageRank,
-            string soundKeyUK, string soundKeyUS, int? dictionaryId, int? wordId)
+        public IndexEntry(string displayName, int? usageRank, int? dictionaryId, int wordId)
         {
-            ArticleKey = articleKey;
-            EntryText = entryText;
+            DisplayName = displayName;
             UsageRank = usageRank;
-            SoundKeyUK = soundKeyUK;
-            SoundKeyUS = soundKeyUS;
             DictionaryId = dictionaryId;
             WordId = wordId;
+        }
+
+        public IndexEntry(string displayName, int? usageRank, int? dictionaryId, DictionaryWordInfo word)
+        {
+            if (word == null)
+                throw new ArgumentNullException();
+
+            DisplayName = displayName;
+            UsageRank = usageRank;
+            DictionaryId = dictionaryId;
+            _word = word;
+        }
+
+        public DictionaryWordInfo Word
+        {
+            get 
+            {
+                if (_word == null)
+                {
+                    if (WordId == null)
+                        throw new ArgumentNullException();
+
+                    _word = ActiveProvider.GetWordInfo(WordId.Value);
+                }
+
+                return _word;
+            }
         }
     }
 }
