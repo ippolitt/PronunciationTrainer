@@ -39,6 +39,22 @@ namespace Pronunciation.Parser
             _sounds = new Dictionary<string, RegisteredSound>(StringComparer.OrdinalIgnoreCase);
         }
 
+        public static int? GetDictionaryId(string soundKey)
+        {
+            if (soundKey.StartsWith(LDOCE_SoundKeyPrefix))
+            {
+                return DicWord.DictionaryIdLDOCE;
+            }
+            else if (soundKey.StartsWith(MW_SoundKeyPrefix))
+            {
+                return DicWord.DictionaryIdMW;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public bool RegisterSound(SoundInfo soundInfo, out RegisteredSound registeredSound)
         {
             string soundKey = soundInfo.SoundKey;
@@ -73,11 +89,11 @@ namespace Pronunciation.Parser
                 // If we find corresponding LDOCE (e.g. uk_test -> bre_test) we consider that audio is the same
                 if (soundKey.StartsWith(LPD_OriginalPrefixUK))
                 {
-                    alternativeKey = LDOCE_OriginalPrefixUK + soundKey.Remove(0, LPD_OriginalPrefixUK.Length);
+                    alternativeKey = LDOCE_SoundKeyPrefix + LDOCE_OriginalPrefixUK + soundKey.Remove(0, LPD_OriginalPrefixUK.Length);
                 }
                 else if (soundKey.StartsWith(LPD_OriginalPrefixUS))
                 {
-                    alternativeKey = LDOCE_OriginalPrefixUS + soundKey.Remove(0, LPD_OriginalPrefixUS.Length);
+                    alternativeKey = LDOCE_SoundKeyPrefix + LDOCE_OriginalPrefixUS + soundKey.Remove(0, LPD_OriginalPrefixUS.Length);
                 }
             }
 
@@ -87,11 +103,6 @@ namespace Pronunciation.Parser
                 {
                     _sounds.Add(soundKey, registeredSound);
                     ReusedKeysCount++;
-                    if (Stats != null)
-                    {
-                        Stats.AppendFormat("Sound key '{0}' was mapped to audio for key '{1}'.\r\n",
-                            soundKey, alternativeKey);
-                    }
 
                     return true;
                 }

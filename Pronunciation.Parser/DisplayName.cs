@@ -138,6 +138,11 @@ namespace Pronunciation.Parser
             return GetStringWithoutStress() == title.GetStringWithoutStress();
         }
 
+        public bool ContainsStress
+        {
+            get { return _titles.Any(x => x.Contains("ˈ") || x.Contains("ˌ")); }
+        }
+
         private string RemoveStress(string title)
         {
             if (string.IsNullOrEmpty(title))

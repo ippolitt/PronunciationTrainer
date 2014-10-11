@@ -45,6 +45,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AudioButtonHtmlBuilder.cs" />
+    <Compile Include="DATFileReader.cs" />
+    <Compile Include="DATIndexBuilder.cs" />
+    <Compile Include="DATIndexReader.cs" />
     <Compile Include="DisplayName.cs" />
     <Compile Include="EnglishVariant.cs" />
     <Compile Include="StringHelper.cs" />

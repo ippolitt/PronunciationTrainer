@@ -12,20 +12,6 @@ namespace Pronunciation.Parser
         private const string SourceFolderLDOCE = BaseFolder + @"LDOCE\Sounds";
         private const string DataFolderMW = BaseFolder + @"MW";
 
-        public bool FlushCache()
-        {
-            return false;
-        }
-
-        public bool LoadCache(string cacheKey)
-        {
-            return false;
-        }
-
-        public void ClearCache()
-        {
-        }
-
         public string GetBase64Content(string fileKey)
         {
             return "t";
@@ -109,6 +95,10 @@ namespace Pronunciation.Parser
             {
                 Directory.CreateDirectory(targetFolder);
             }
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

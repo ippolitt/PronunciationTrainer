@@ -17,8 +17,8 @@ namespace Pronunciation.Parser
         public LDOCEHtmlEntry LDOCEEntry;
         public MWHtmlEntry MWEntry;
 
-        private const int DictionaryIdLDOCE = 1;
-        private const int DictionaryIdMW = 2;
+        public const int DictionaryIdLDOCE = 1;
+        public const int DictionaryIdMW = 2;
 
         public string Keyword
         {

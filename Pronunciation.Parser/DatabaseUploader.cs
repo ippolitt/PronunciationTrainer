@@ -27,7 +27,6 @@ namespace Pronunciation.Parser
         private Dictionary<string, WordIdInfo> _wordIdMap;
 
         private SqlCeResultSet _wordsSet;
-        private SqlCeResultSet _soundsSet;
         private SqlCeConnection _connection;
 
         public StringBuilder DbStats
@@ -59,12 +58,6 @@ namespace Pronunciation.Parser
 
             cmdTable.CommandText = "DictionaryWord";
             _wordsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable | ResultSetOptions.Scrollable);
-
-            if (!_preserveSounds)
-            {
-                cmdTable.CommandText = "DictionarySound";
-                _soundsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable);
-            }
         }
 
         public void StoreWord(WordDescription word, string html)
@@ -72,25 +65,6 @@ namespace Pronunciation.Parser
             if (_wordIdMap == null)
             {
                 _wordIdMap = BuildWordIdMap();
-            }
-
-            // Sounds
-            if (!_preserveSounds && word.Sounds != null)
-            {
-                foreach (var soundInfo in word.Sounds)
-                {
-                    SoundManager.RegisteredSound registeredSound;
-                    if (!_soundManager.RegisterSound(soundInfo, out registeredSound))
-                        continue;
-
-                    var soundRecord = _soundsSet.CreateRecord();
-                    soundRecord["SoundKey"] = soundInfo.SoundKey;
-                    soundRecord["IsUKSound"] = soundInfo.IsUKSound;
-                    soundRecord["SourceFileId"] = registeredSound.DATFileId;
-                    soundRecord["SoundIndex"] = registeredSound.SoundIndex;
-
-                    _soundsSet.Insert(soundRecord);
-                }
             }
 
             // Word
@@ -177,6 +151,48 @@ namespace Pronunciation.Parser
             }
         }
 
+        public int StoreSounds(List<SoundInfo> sounds)
+        {
+            if (_preserveSounds)
+                return 0;
+
+            SqlCeCommand cmdTable = new SqlCeCommand()
+            {
+                Connection = _connection,
+                CommandType = CommandType.TableDirect
+            };
+            cmdTable.CommandText = "DictionarySound";
+
+            int cnt = 0;
+            using (SqlCeResultSet soundsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable))
+            {
+                // It's important to process LPD sounds first so that LDOCE sound key could be remapped to them 
+                // (but not vice versa)
+                foreach (var soundInfo in sounds.OrderBy(x => x.DictionaryId).ThenBy(x => x.SoundKey))
+                {
+                    SoundManager.RegisteredSound registeredSound;
+                    if (!_soundManager.RegisterSound(soundInfo, out registeredSound))
+                        continue;
+
+                    var soundRecord = soundsSet.CreateRecord();
+                    soundRecord["SoundKey"] = soundInfo.SoundKey;
+                    soundRecord["IsUKSound"] = soundInfo.IsUKSound;
+                    soundRecord["SourceFileId"] = registeredSound.DATFileId;
+                    soundRecord["SoundIndex"] = registeredSound.SoundIndex;
+
+                    soundsSet.Insert(soundRecord);
+                    cnt++;
+
+                    if (cnt % 10000 == 0)
+                    {
+                        Console.WriteLine("Processed {0} sounds...", cnt);
+                    }
+                }
+            }
+
+            return cnt;
+        }
+
         private Dictionary<string, WordIdInfo> BuildWordIdMap()
         {
             var wordIdMap = new Dictionary<string, WordIdInfo>();
@@ -248,13 +264,7 @@ namespace Pronunciation.Parser
         public void Dispose()
         {
             _wordIdMap = null;
-
             _wordsSet.Dispose();
-            if (_soundsSet != null)
-            {
-                _soundsSet.Dispose();
-            }
-
             _connection.Dispose();
         }
     }

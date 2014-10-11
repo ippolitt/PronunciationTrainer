@@ -24,10 +24,6 @@ namespace Pronunciation.Parser
         private const string AnalysisFolderMW = AnalysisFolder + @"MW\";
 
         // Used for generation
-        private const string SoundsFolderLPD = DataFolderLPD + "Sounds";
-        private const string SoundsFolderLDOCE = DataFolderLDOCE + "Sounds";
-        private const string SoundsFolderMW = DataFolderMW + "Sounds";
-        private const string SoundsCacheFolder = DataFolder + "SoundsCache";
         private const string HtmlSourceFileNameLPD = "ResultsLPD.xml";
         private const string HtmlSourceFileNameLDOCE = "ResultsLDOCE.txt";
         private const string HtmlSourceFileNameMW = "ResultsMW.txt";
@@ -53,6 +49,7 @@ namespace Pronunciation.Parser
 
         static void Main(string[] args)
         {
+            IFileLoader fileLoader = null;
             try
             {
                 var rootFolder = Path.GetFullPath(Path.Combine(
@@ -95,6 +92,8 @@ namespace Pronunciation.Parser
                 //    Path.Combine(rootFolder, DataFolderMW, SourceFileNameMW),
                 //    Path.Combine(rootFolder, AnalysisFolderMW, NormalizedFileName));
 
+                // PrepareSounds();
+
                 //var builder = new XmlBuilder(Path.Combine(rootFolder, AnalysisFolderLPD, ConvertLogFileName));
                 //builder.ConvertToXml(
                 //    Path.Combine(rootFolder, DataFolderLPD, SourceFileNameLPD),
@@ -105,7 +104,6 @@ namespace Pronunciation.Parser
                 //    Path.Combine(rootFolder, DataFolderLDOCE, SourceFileNameLDOCE),
                 //    Path.Combine(rootFolder, AnalysisFolderLDOCE, ResultsFileNameLDOCE),
                 //    Path.Combine(rootFolder, AnalysisFolderLDOCE, ConvertLogFileName));
-                //return;
 
                 //var items1 = LDOCEProcessor.LoadParsedData(@"D:\WORK\NET\PronunciationTrainer\Analysis\LDOCE\Results.txt");
                 //var items2 = LDOCEProcessor.LoadParsedData(@"D:\WORK\NET\PronunciationTrainer\Data\ResultsLDOCE.txt");
@@ -134,24 +132,16 @@ namespace Pronunciation.Parser
                 bool deleteExtraWords = true;
                 var generationMode = HtmlBuilder.GenerationMode.Database;
 
-                IFileLoader fileLoader = new FileLoader(
-                    Path.Combine(rootFolder, SoundsFolderLPD),
-                    Path.Combine(rootFolder, SoundsFolderLDOCE),
-                    Path.Combine(rootFolder, SoundsFolderMW),
-                    Path.Combine(rootFolder, SoundsCacheFolder),
-                    false);
+                fileLoader = new FileLoader(
+                    Path.Combine(rootFolder, DataFolderLPD),
+                    Path.Combine(rootFolder, DataFolderLDOCE),
+                    Path.Combine(rootFolder, DataFolderMW));
 
                 //fileLoader = new FileLoaderMock();
 
                 DatabaseUploader dbUploader = null;
                 if (generationMode == HtmlBuilder.GenerationMode.Database)
                 {
-                    if (preserveSounds)
-                    {
-                        // To avoid loading/flushing cache
-                        fileLoader = new FileLoaderMock();
-                    }
-
                     if (!isFakeMode)
                     {
                         CleanDatabase(preserveSounds);
@@ -168,20 +158,21 @@ namespace Pronunciation.Parser
                 string outputHtmlFolder = generationMode == HtmlBuilder.GenerationMode.Database
                     ? HtmlFolderDB
                     : (generationMode == HtmlBuilder.GenerationMode.FileSystem ? HtmlFolderFiles : HtmlFolderIphone);
+                var buttonBuilder = new AudioButtonHtmlBuilder(generationMode, fileLoader);
 
                 var ldoceBuilder = new LDOCEHtmlBuilder(
                     generationMode,
                     LDOCEProcessor.LoadParsedData(Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameLDOCE)),
-                    new AudioButtonHtmlBuilder(generationMode, fileLoader));
+                    buttonBuilder);
 
                 var mwBuilder = new MWHtmlBuilder(
                     generationMode,
                     MWProcessor.LoadParsedData(Path.Combine(rootFolder, DataFolder, HtmlSourceFileNameMW)),
-                    new AudioButtonHtmlBuilder(generationMode, fileLoader));
+                    buttonBuilder);
 
                 var usageBuilder = new WordUsageBuilder(Path.Combine(rootFolder, DataFolder, TopWordsFileName));
                 var htmlBuilder = new HtmlBuilder(
-                    generationMode, dbUploader, fileLoader, ldoceBuilder, mwBuilder, usageBuilder,
+                    generationMode, dbUploader, buttonBuilder, ldoceBuilder, mwBuilder, usageBuilder,
                     Path.Combine(rootFolder, AnalysisFolder, ImportLogFileName));
 
                 htmlBuilder.ConvertToHtml(
@@ -194,6 +185,11 @@ namespace Pronunciation.Parser
             }
             finally
             {
+                if (fileLoader != null)
+                {
+                    fileLoader.Dispose();
+                }
+
                 Console.WriteLine("Finished");
                 Console.ReadLine();
             }
@@ -211,6 +207,31 @@ namespace Pronunciation.Parser
                     }
                 }
             }
+        }
+
+        private static void PrepareSounds()
+        {
+            //DATIndexBuilder indexBuilder = new DATIndexBuilder(
+            //    Path.Combine(rootFolder, DataFolderLDOCE, SoundsDATFileName),
+            //    Path.Combine(rootFolder, DataFolderLDOCE, SoundsIndexFileName));
+            //indexBuilder.WriteFiles(Path.Combine(rootFolder, DataFolderLDOCE, @"Sounds\SoundsUK"));
+            //indexBuilder.AppendFiles(Path.Combine(rootFolder, DataFolderLDOCE, @"Sounds\SoundsUS"));
+            //indexBuilder.AppendFiles(Path.Combine(rootFolder, DataFolderLDOCE, @"Sounds\Extra\SoundsUK"));
+            //indexBuilder.AppendFiles(Path.Combine(rootFolder, DataFolderLDOCE, @"Sounds\Extra\SoundsUS"));
+
+            //DATIndexBuilder indexBuilder = new DATIndexBuilder(
+            //    Path.Combine(rootFolder, DataFolderLPD, SoundsDATFileName),
+            //    Path.Combine(rootFolder, DataFolderLPD, SoundsIndexFileName));
+            //indexBuilder.WriteFiles(Path.Combine(rootFolder, DataFolderLPD, @"Sounds\Active"));
+
+            //DATIndexBuilder indexBuilder = new DATIndexBuilder(
+            //    Path.Combine(rootFolder, DataFolderMW, SoundsDATFileName),
+            //    Path.Combine(rootFolder, DataFolderMW, SoundsIndexFileName));
+            //indexBuilder.WriteFiles(Path.Combine(rootFolder, DataFolderMW, @"Sounds\Active"));
+            //indexBuilder.AppendFiles(Path.Combine(rootFolder, DataFolderMW, @"Sounds\Extra"));
+            //indexBuilder.AppendFiles(Path.Combine(rootFolder, DataFolderMW, @"Sounds\Obsolete"));
+
+            //indexBuilder.ValidateIndex();
         }
 
         private static void CheckFiles()

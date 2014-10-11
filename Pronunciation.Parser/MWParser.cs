@@ -923,36 +923,27 @@ namespace Pronunciation.Parser
                 }
 
                 MWEntryItem matchedItem = null;
-                if (!item.HasSounds)
+                if (string.IsNullOrEmpty(item.Transcription))
                 {
-                    if (string.IsNullOrEmpty(item.Transcription))
+                    if (!item.HasSounds)
                     {
-                        if (lastItem == null)
+                        matchedItem = items.LastOrDefault();
+                        if (matchedItem == null)
                             continue;
-
-                        matchedItem = lastItem;
                     }
                     else
                     {
-                        matchedItem = items.FirstOrDefault(x => x.Transcription == item.Transcription);
+                        matchedItem = items.FirstOrDefault(x => SoundsEqual(x.SoundFiles, item.SoundFiles));
                     }
                 }
                 else
                 {
-                    if (string.IsNullOrEmpty(item.Transcription))
-                    {
-                        matchedItem = items.FirstOrDefault(x => SoundsEqual(x.SoundFiles, item.SoundFiles));
-                    }
-                    else
-                    {
-                        matchedItem = items.FirstOrDefault(x => x.Transcription == item.Transcription);
-                    }
+                    matchedItem = items.FirstOrDefault(x => x.Transcription == item.Transcription);
                 }
 
                 if (matchedItem == null)
                 {
                     items.Add(item);
-                    lastItem = item;
                 }
                 else
                 {
@@ -1250,7 +1241,13 @@ namespace Pronunciation.Parser
             if (target == null)
                 return source;
 
-            target.AddRange(source.Where(x => !target.Contains(x)));
+            // Do not actually merge sounds because they order often matches the transcription
+            // so we just get either target or source sounds.
+            if (target.Count == 0 && source.Count > 0)
+            {
+                target.AddRange(source);
+            }
+
             return target;
         }
 

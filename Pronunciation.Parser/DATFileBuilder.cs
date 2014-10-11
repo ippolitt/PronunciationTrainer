@@ -9,17 +9,24 @@ namespace Pronunciation.Parser
     class DATFileBuilder : IDATFileBuilder
     {
         private readonly string _targetFile;
+        private readonly bool _isAppend;
         private readonly Dictionary<string, DataIndex> _indexes;
         private readonly List<byte> _flushBuffer;
         private bool _isInitialized;
         private long _flushBufferOffset;
 
-        private const byte EntitySeparator = 0xAA;
+        public const byte EntitySeparator = 0xAA;
         private const int AutoFlushLimit = 1000000; // 1MB
 
         public DATFileBuilder(string targetFile)
+            : this(targetFile, false)
+        {
+        }
+
+        public DATFileBuilder(string targetFile, bool isAppend)
         {
             _targetFile = targetFile;
+            _isAppend = isAppend;
             _indexes = new Dictionary<string, DataIndex>();
             _flushBuffer = new List<byte>();
         }
@@ -40,8 +47,15 @@ namespace Pronunciation.Parser
 
             if (!_isInitialized)
             {
-                File.WriteAllBytes(_targetFile, new byte[] { EntitySeparator});
-                _flushBufferOffset = 1;
+                if (_isAppend && File.Exists(_targetFile))
+                {
+                    _flushBufferOffset = new FileInfo(_targetFile).Length;
+                }
+                else
+                {
+                    File.WriteAllBytes(_targetFile, new byte[] { EntitySeparator });
+                    _flushBufferOffset = 1;
+                }
                 _isInitialized = true;
             }
 

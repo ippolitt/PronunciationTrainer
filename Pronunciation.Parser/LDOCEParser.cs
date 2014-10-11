@@ -134,8 +134,8 @@ namespace Pronunciation.Parser
             {
                 var mainEntry = new LDOCEEntry 
                 { 
-                    Keyword = group.Key, 
-                    Items = group.SelectMany(x => x.Items).OrderBy(x => x.ItemKeyword).ToList()
+                    Keyword = group.Key,
+                    Items = MergeGroupedItems(group)
                 };
 
                 int itemNumber = 0;
@@ -242,7 +242,7 @@ namespace Pronunciation.Parser
 
             Log("*** Ended parsing ***\r\n");
             File.AppendAllText(_logFile, _log.ToString());
-
+            
             return finalEntries.ToArray();
         }
 
@@ -258,52 +258,84 @@ namespace Pronunciation.Parser
             var items = new List<LDOCEEntryItem>();
             foreach (var item in entry.Items)
             {
-                MatchItem(item, items, true);
+                LDOCEEntryItem matchedItem = null;
+                if (string.IsNullOrEmpty(item.Transcription))
+                {
+                    matchedItem = items.LastOrDefault(x => string.IsNullOrEmpty(x.Transcription));
+                    if (matchedItem != null)
+                    {
+                        if ((item.SoundFileUK != matchedItem.SoundFileUK || item.SoundFileUS != matchedItem.SoundFileUS)
+                            && DifferByStress(item.ItemTitle, matchedItem.ItemTitle))
+                        {
+                            matchedItem = null;
+                        }
+                    }
+                }
+                else
+                {
+                    matchedItem = items.FirstOrDefault(x => x.Transcription == item.Transcription);
+                }
+
+                if (matchedItem == null)
+                {
+                    items.Add(item);
+                }
+                else
+                {
+                    MergeItems(matchedItem, item);
+                }
             }
 
             entry.Items = items;
             entries.Add(entry);
         }
 
-        private bool MatchItem(LDOCEEntryItem item, List<LDOCEEntryItem> items, bool titlesMustMatch)
+        private List<LDOCEEntryItem> MergeGroupedItems(IEnumerable<LDOCEEntry> groupedEntries)
         {
-            LDOCEEntryItem matchedItem = null;
-            if (!item.HasAudio)
-            {
-                if (string.IsNullOrEmpty(item.Transcription))
-                    throw new ArgumentNullException();
+            var entries = groupedEntries.ToArray();
+            if (entries.Length == 1)
+                return entries[0].Items;
 
-                matchedItem = items.FirstOrDefault(x => x.Transcription == item.Transcription);
-            }
-            else
+            List<LDOCEEntryItem> items = new List<LDOCEEntryItem>();
+            foreach (var groupedEntry in entries.OrderBy(x => x.Keyword))
             {
-                matchedItem = items.FirstOrDefault(x =>
-                    x.SoundFileUK == item.SoundFileUK && x.SoundFileUS == item.SoundFileUS
-                    && (x.Transcription == item.Transcription || string.IsNullOrEmpty(item.Transcription)));
+                if (items.Count == 0)
+                {
+                    items.AddRange(groupedEntry.Items);
+                }
+                else
+                {
+                    foreach (var item in groupedEntry.Items)
+                    {
+                        var matchedItem = items.FirstOrDefault(x => 
+                            item.SoundFileUK == x.SoundFileUK && item.SoundFileUS == x.SoundFileUS
+                            && item.Transcription == x.Transcription);
+                        if (matchedItem == null)
+                        {
+                            items.Add(item);
+                        }
+                        else
+                        {
+                            MergeItems(matchedItem, item);
+                        }
+                    }
+                }
             }
 
-            if (matchedItem == null || (titlesMustMatch && !TitlesAreEqual(item.ItemTitle, matchedItem.ItemTitle)))
-            {
-                items.Add(item);
-                return false;
-            }
-            else
-            {
-                MergeItems(matchedItem, item);
-                return true;
-            }
+            return items;
         }
 
-        private bool TitlesAreEqual(DisplayName target, DisplayName source)
+        private bool DifferByStress(DisplayName target, DisplayName source)
         {
-            if (target != null && source != null)
+            if (target == null || source == null)
+                return false;
+
+            if (target.ContainsStress && source.ContainsStress)
             {
-                return target.IsEqual(source);
+                return !string.Equals(target.ToString(), source.ToString(), StringComparison.OrdinalIgnoreCase); 
             }
-            else
-            {
-                return target == null && source == null;
-            }
+
+            return false;
         }
 
         private void MergeItems(LDOCEEntryItem target, LDOCEEntryItem source)
@@ -329,6 +361,19 @@ namespace Pronunciation.Parser
             }
 
             MergeTitles(target, source.ItemTitle);
+
+            if (source.AlternativeSpellings != null && source.AlternativeSpellings.Count > 0)
+            {
+                if (target.AlternativeSpellings == null)
+                {
+                    target.AlternativeSpellings = new List<LDOCEAlternativeSpelling>(source.AlternativeSpellings);
+                }
+                else
+                {
+                    target.AlternativeSpellings.AddRange(source.AlternativeSpellings
+                        .Where(x => !target.AlternativeSpellings.Any(y => y.Keyword == x.Keyword)));
+                }
+            }
         }
 
         private LDOCEEntryItem ParseNumberedItem(string text, LDOCEEntryItem previousItem)
@@ -444,9 +489,14 @@ namespace Pronunciation.Parser
                 }
             }
 
+            if (string.IsNullOrEmpty(item.Transcription) && previousItem != null)
+            {
+                item.Transcription = previousItem.Transcription;
+            }
+
             return item;
         }
-
+        
         private void ParseSoundFile(TagReader reader, LDOCEEntryItem item)
         {
             string lang = Trim(reader.Content);
@@ -659,10 +709,10 @@ namespace Pronunciation.Parser
             }
             else
             {
-                // If alternative entry has a dedicated transcription it means this is not alternative spelling 
-                // but rather a different word
                 if (!string.IsNullOrEmpty(item.Transcription))
                 {
+                    // If alternative entry has a dedicated transcription it means this is not alternative spelling 
+                    // but rather a different word
                     _altWithTranscriptions.Add(string.Format("Second check: {0} -> {1}",
                         item.ItemKeyword, string.Join("; ", allSpellings.Select(x => x.Keyword))));
                     return;
@@ -682,10 +732,12 @@ namespace Pronunciation.Parser
                         continue;
                 }
 
-                if (!string.Equals(RemoveSpecialSymbols(alternativeSpelling.Keyword),
-                    RemoveSpecialSymbols(item.ItemKeyword), StringComparison.OrdinalIgnoreCase))
+                if (keywordsFilter != null)
                 {
-                    if (keywordsFilter != null)
+                    if (!string.Equals(
+                        RemoveSpecialSymbols(alternativeSpelling.Keyword),
+                        RemoveSpecialSymbols(item.ItemKeyword),
+                        StringComparison.OrdinalIgnoreCase))
                     {
                         if (!keywordsFilter.Contains(alternativeSpelling.Keyword))
                             continue;

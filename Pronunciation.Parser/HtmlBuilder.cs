@@ -47,7 +47,6 @@ namespace Pronunciation.Parser
 
         private readonly WordUsageBuilder _usageBuilder;
         private readonly Dictionary<int, int> _ranks;
-        private readonly IFileLoader _fileLoader;
         private readonly LDOCEHtmlBuilder _ldoce;
         private readonly MWHtmlBuilder _mw;
         private readonly DatabaseUploader _dbUploader;
@@ -81,18 +80,17 @@ namespace Pronunciation.Parser
             get { return _generationMode == GenerationMode.IPhone; }
         }
 
-        public HtmlBuilder(GenerationMode generationMode, DatabaseUploader dbUploader, IFileLoader fileLoader, 
+        public HtmlBuilder(GenerationMode generationMode, DatabaseUploader dbUploader, AudioButtonHtmlBuilder buttonBuilder,
             LDOCEHtmlBuilder ldoce, MWHtmlBuilder mw, WordUsageBuilder usageBuilder, string logFile)
         {
             _generationMode = generationMode;
             _logFile = logFile;
-            _fileLoader = fileLoader;
             _ldoce = ldoce;
             _mw = mw;
             _dbUploader = dbUploader;
             _usageBuilder = usageBuilder;
+            _buttonBuilder = buttonBuilder;
 
-            _buttonBuilder = new AudioButtonHtmlBuilder(generationMode, fileLoader);
             _ranks = PrepareRanks(_usageBuilder.GetRanks());
             _replaceMap = new XmlReplaceMap();
             _nameBuilder = new FileNameBuilder();
@@ -292,14 +290,12 @@ namespace Pronunciation.Parser
             _dbUploader.Open();
             try
             {
+                var sounds = new List<SoundInfo>();
                 foreach (var group in groups.Values.OrderBy(x => x.Name, StringComparer.Ordinal))
                 {
                     var letter = group.Name.Substring(0, 1);
                     if (currentLetter != letter)
                     {
-                        _fileLoader.FlushCache();
-                        _fileLoader.LoadCache(letter);
-
                         if (letterWords > 0)
                         {
                             Console.WriteLine(" ({0}) words.", letterWords);
@@ -314,6 +310,11 @@ namespace Pronunciation.Parser
                         var pageBuilder = new StringBuilder();
                         WordDescription description = GenerateHtml(word, pageBuilder, soundStats);
                         description.DictionaryId = word.DictionaryId;
+                        if (description.Sounds != null)
+                        {
+                            sounds.AddRange(description.Sounds);
+                        }
+
                         if (!isFakeMode)
                         {
                             _dbUploader.StoreWord(description, pageBuilder.ToString());
@@ -330,10 +331,17 @@ namespace Pronunciation.Parser
                 Console.WriteLine(" ({0}) words.", letterWords);
                 Console.WriteLine("Total: {0} words", wordsCount);
 
-                if (!isFakeMode && deleteExtraWords)
+                if (!isFakeMode)
                 {
-                    int deleteCount = _dbUploader.DeleteExtraWords();
-                    Console.WriteLine("Deleted '{0}' extra words", deleteCount);
+                    Console.WriteLine("Processing sounds...");
+                    int soundsCount = _dbUploader.StoreSounds(sounds);
+                    Console.WriteLine("Totally processed {0} sounds.", soundsCount);
+
+                    if (deleteExtraWords)
+                    {
+                        int deleteCount = _dbUploader.DeleteExtraWords();
+                        Console.WriteLine("Deleted '{0}' extra words", deleteCount);
+                    }
                 }
 
                 _dbUploader.FinishUpload();
@@ -346,9 +354,6 @@ namespace Pronunciation.Parser
             {
                 _dbUploader.Dispose();
             }
-
-            _fileLoader.FlushCache();
-            _fileLoader.ClearCache();
         }
 
         private void GenerateInFileSystem(List<DicWord> words, string rootFolder, StringBuilder soundStats, int maxWords, bool isFakeMode)
@@ -381,9 +386,6 @@ namespace Pronunciation.Parser
                         Directory.CreateDirectory(outputFolder);
                     }
 
-                    _fileLoader.FlushCache();
-                    _fileLoader.LoadCache(subFolder);
-
                     if (letterGroups > 0)
                     {
                         letterStats.AppendFormat(", groups: {0}\r\n", letterGroups);
@@ -415,9 +417,9 @@ namespace Pronunciation.Parser
 
                 if (!isFakeMode)
                 {
-                    File.WriteAllText(Path.Combine(outputFolder, string.Format("{0}.html", group.Name)),
-                        string.Format(template, title, pageBuilder),
-                        Encoding.UTF8);
+                    //File.WriteAllText(Path.Combine(outputFolder, string.Format("{0}.html", group.Name)),
+                    //    string.Format(template, title, pageBuilder),
+                    //    Encoding.UTF8);
                 }
 
                 letterGroups++;
@@ -425,9 +427,6 @@ namespace Pronunciation.Parser
                 if (maxWords > 0 && wordsCount >= maxWords)
                     break;
             }
-
-            _fileLoader.FlushCache();
-            _fileLoader.ClearCache();
 
             letterStats.AppendFormat(", groups: {0}\r\n", letterGroups);
             Console.WriteLine(" ({0}) groups.", letterGroups);

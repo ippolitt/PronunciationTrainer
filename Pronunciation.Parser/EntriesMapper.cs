@@ -185,29 +185,20 @@ namespace Pronunciation.Parser
 
             foreach (var sourceForm in source.WordForms)
             {
-                var matchingForm = target.WordForms.FirstOrDefault(x => x.Note == sourceForm.Note
-                    && x.Title.IsEqual(sourceForm.Title) && x.Transcription == sourceForm.Transcription);
+                var matchingForm = target.WordForms.FirstOrDefault(x => x.Transcription == sourceForm.Transcription
+                    && CollectionsEqual(x.SoundFiles, sourceForm.SoundFiles));
                 if (matchingForm != null)
                 {
-                    matchingForm.SoundFiles = MergeSoundFiles(matchingForm.SoundFiles, sourceForm.SoundFiles); 
+                    matchingForm.Title = MergeDisplayNames(matchingForm.Title, sourceForm.Title);
                 }
                 else
                 {
-                    matchingForm = target.WordForms.FirstOrDefault(x => x.Transcription == sourceForm.Transcription
-                        && CollectionsEqual(x.SoundFiles, sourceForm.SoundFiles));
-                    if (matchingForm != null)
-                    {
-                        matchingForm.Title = MergeDisplayNames(matchingForm.Title, sourceForm.Title);
-                    }
-                    else
-                    {
-                        target.WordForms.Add(sourceForm);
-                    }
+                    target.WordForms.Add(sourceForm);
                 }
             }
         }
 
-        private void MergeEntryItems(IExtraEntry target, IExtraEntry source, string keyword, string title, 
+        private void MergeEntryItems(IExtraEntry target, IExtraEntry source, string keyword, string context, 
             Action<IExtraEntryItem> actionAdd, Func<IExtraEntryItem, IEnumerable<IExtraEntryItem>, IExtraEntryItem> match)
         {
             if (source.Items == null)
@@ -224,7 +215,7 @@ namespace Pronunciation.Parser
                 if (targetItem != null)
                 {
                     _stats.AppendFormat("Merged {4} item '{0} {1}' with item '{2} {3}'.\r\n",
-                        sourceItem.Title, sourceItem.Number, targetItem.Title, targetItem.Number, title);
+                        sourceItem.Title, sourceItem.Number, targetItem.Title, targetItem.Number, context);
 
                     targetItem.PartsOfSpeech = MergePartsOfSpeech(targetItem.PartsOfSpeech, sourceItem.PartsOfSpeech);
                     targetItem.Title = MergeDisplayNames(targetItem.Title, sourceItem.Title);
@@ -232,7 +223,7 @@ namespace Pronunciation.Parser
                 else
                 {
                     _stats.AppendFormat("Merged {3} item '{0} {1}' with entry '{2}'.\r\n",
-                        sourceItem.Title, sourceItem.Number, keyword, title);
+                        sourceItem.Title, sourceItem.Number, keyword, context);
 
                     actionAdd(sourceItem);
                     resetNumbers = true;

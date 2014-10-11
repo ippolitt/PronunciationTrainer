@@ -20,5 +20,14 @@ namespace Pronunciation.Parser
         {
             return string.Format("{0}|{1}", Offset, Length);
         }
+
+        public static DataIndex Parse(string indexKey)
+        {
+            string[] index = indexKey.Split('|');
+            if (index.Length != 2)
+                throw new ArgumentException("Invalid format of data index!");
+
+            return new DataIndex { Offset = long.Parse(index[0]), Length = long.Parse(index[1]) };
+        }
     }
 }

@@ -5,11 +5,8 @@ using System.Text;
 
 namespace Pronunciation.Parser
 {
-    interface IFileLoader
+    interface IFileLoader : IDisposable
     {
-        bool FlushCache();
-        bool LoadCache(string cacheKey);
-        void ClearCache();
         string GetBase64Content(string fileKey);
         byte[] GetRawData(string fileKey);
     }

@@ -9,11 +9,13 @@ namespace Pronunciation.Parser
     {
         public string SoundKey { get; private set; }
         public bool IsUKSound { get; private set; }
+        public int? DictionaryId { get; private set; }
 
         public SoundInfo(string soundKey, bool isUKSound)
         {
             SoundKey = soundKey;
             IsUKSound = isUKSound;
+            DictionaryId = SoundManager.GetDictionaryId(soundKey);
         }
     }
 }

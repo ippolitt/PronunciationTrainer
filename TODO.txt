@@ -3,9 +3,9 @@
 --
 - How to mark favorite recordings if word has several meanings (I, II etc.)?
 - Add ability to add notes for a word (or my prefered pronunciation. Remember, that there could be different pronunciations for a word)
+- Add auto list: words with favorite sounds
 - Add auto list: word with several recordings. Mark such words in the list somehow
 - Somehow remember the last word I learned in the dictionary
-- Add a "Favorite audio" button to audio panel (what about words with multiple pronunciations?)
 - Ranks: map "etc" and "ie" from Ranks to dictionary entries. Find other entries that might have been missed. Generated more accurate list of missing ranks.
 - LPD: add ability to specify which transcription does the sound actually relates to
 - Add records count and current number to the suggestions list
@@ -21,20 +21,24 @@
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
 Dictionary:
 	- Import
+		- LPD: note that multy-entries ("process") are separated in the dictionary. I might also do it for DB mode (ranks? matching with other dictionaries?)
 		- Don't delete a word if there's custom information there (custom notes etc.)
 		- MW: group by transcription only and join sounds
-		- MW: "an" is joined incorrectly
-		- LDOCE: group by transcription only and join sounds. Get transcription from previous item if missing. 
-			- Display audio only if it differs from LPD (or do not display at all?). This will also reduce size on iPhone
-			- Check "eye" or "Express, the"
+			- Cain, little (less)
+		- MW: "an" is joined incorrectly, "duplicate"
+		- LDOCE: Display audio only if it differs from LPD (or do not display at all?). This will also reduce size on iPhone
+			- ? Don't import LDOCE sounds if it's a fragment (but some words have better transcription than LPD ("process"))
 		- LDOCE: entries like "-meter": maybe show two keywords and allow to see two articles?
-		- LPD: Fix "candidate", "Halley" errors: AmE pronunciation is not separated
-		- LPD: "detail", "direct"- preference poll attached to word form (same in the original entry)
+		- LDOCE: "second-hand" - how to know which variant to use?
+		- LPD: 
+			Fix "candidate", "Halley" errors: AmE pronunciation is not separated
+			"detail", "direct"- preference poll attached to word form (same in the original entry)
+			"wound" - past participle of
 		- Resolve references in LPD ("am" -> see "I'm", except ... -> ... (ref) ), also (go -> "See gonna") and MW
 		- Get word forms from LPD and - in case if it exists as a separate entry in other dictionaries - generate a hypelink to the base form
 		- MW: generate hyperlink for [ref] in transcription and other places (both in file system and database)
 		- MW: extract some word forms as a dedicated word (e.g. forms of "to be")?
-		- MW: add a ref to parent entry for variants (word forms? extra items?) because thranscription is often incomplete.
+		- MW: add a ref to parent entry for variants and dervied words (see "deterrent") because thranscription is often incomplete.
 		- Add more information to LDOCE and MW articles (e.g. "movie")
 		- Get rid of <strong> in LPD.xml - convert to hyperlink
 	- Change color of dictionary name
