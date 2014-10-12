@@ -15,6 +15,7 @@ namespace Pronunciation.Trainer.StyleSelectors
     {
         private readonly static Style _serviceItemStyle;
         private readonly static Style _extraItemStyle;
+        private readonly static Style _multiPronItemStyle;
 
         static SuggestionsListItemStyleSelector()
         {
@@ -25,6 +26,9 @@ namespace Pronunciation.Trainer.StyleSelectors
 
             _extraItemStyle = new Style(typeof(ListBoxItem));
             _extraItemStyle.Setters.Add(new Setter(ListBoxItem.ForegroundProperty, Brushes.DarkSlateGray));
+
+            _multiPronItemStyle = new Style(typeof(ListBoxItem));
+            _multiPronItemStyle.Setters.Add(new Setter(ListBoxItem.FontWeightProperty, FontWeights.Bold));
         }
 
         public override Style SelectStyle(object item, DependencyObject container)
@@ -39,6 +43,10 @@ namespace Pronunciation.Trainer.StyleSelectors
                 if (IsExtraItem((IndexEntry)item, container))
                 {
                     st = _extraItemStyle;
+                }
+                else if (((IndexEntry)item).HasMultiplePronunciations == true)
+                {
+                    st = _multiPronItemStyle;
                 }
             }
 

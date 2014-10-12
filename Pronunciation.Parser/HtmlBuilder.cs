@@ -599,6 +599,11 @@ namespace Pronunciation.Parser
             StringBuilder soundStats, out WordAudio wordAudio)
         {
             wordAudio = null;
+            if (entries.Count > 1)
+            {
+                wordDescription.HasMultiplePronunciations = true;
+            }
+
             var bld = new StringBuilder();
             bool isWordAudioSet = false;
             int ordinal = 0;

@@ -104,6 +104,7 @@
           <Property Name="DictionaryId" Type="int" />
           <Property Name="IsCollocation" Type="bit" />
           <Property Name="FavoriteSoundKey" Type="nvarchar" MaxLength="100" />
+          <Property Name="HasMultiplePronunciations" Type="bit" />
         </EntityType>
         <EntityType Name="Exercise">
           <Key>
@@ -551,6 +552,7 @@
           <Property Type="Boolean" Name="IsCollocation" />
           <NavigationProperty Name="DictionaryCategories" Relationship="PronunciationModel.DictionaryCategoryWord" FromRole="DictionaryWord" ToRole="DictionaryCategory" />
           <Property Type="String" Name="FavoriteSoundKey" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Type="Boolean" Name="HasMultiplePronunciations" />
         </EntityType>
         <Association Name="DictionaryCategoryWord">
           <End Type="PronunciationModel.DictionaryCategory" Role="DictionaryCategory" Multiplicity="*" />
@@ -671,6 +673,7 @@
           <EntitySetMapping Name="DictionaryWords">
             <EntityTypeMapping TypeName="PronunciationModel.DictionaryWord">
               <MappingFragment StoreEntitySet="DictionaryWord">
+                <ScalarProperty Name="HasMultiplePronunciations" ColumnName="HasMultiplePronunciations" />
                 <ScalarProperty Name="FavoriteSoundKey" ColumnName="FavoriteSoundKey" />
                 <ScalarProperty Name="IsCollocation" ColumnName="IsCollocation" />
                 <ScalarProperty Name="DictionaryId" ColumnName="DictionaryId" />

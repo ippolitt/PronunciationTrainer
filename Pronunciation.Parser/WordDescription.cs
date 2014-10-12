@@ -14,5 +14,6 @@ namespace Pronunciation.Parser
         public List<SoundInfo> Sounds = new List<SoundInfo>();
         public int? DictionaryId;
         public bool IsCollocation;
+        public bool HasMultiplePronunciations;
     }
 }

@@ -105,13 +105,16 @@
         </DockPanel>
         <StatusBar DockPanel.Dock="Bottom" Height="20" 
                    Background="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}, Path=Background}">
+            <StatusBarItem Padding="0" VerticalContentAlignment="Bottom" HorizontalContentAlignment="Center" Width="150">
+                <TextBlock Name="lblSuggestionStats" Text="" />
+            </StatusBarItem>
             <StatusBarItem Padding="0" VerticalContentAlignment="Bottom">
-                <TextBlock Name="lblSessionStats" Text="" />
+                <TextBlock Name="lblSessionStats" Text="" Margin="5,0,0,0" />
             </StatusBarItem>
         </StatusBar>
         <controls:SuggestionsList x:Name="lstSuggestions" DockPanel.Dock="Left" Width="150" Margin="0,5,0,0" TabIndex="40"
             ItemContainerStyleSelector="{StaticResource suggestionsItemStyleSelector}" MouseLeftButtonUp="lstSuggestions_MouseLeftButtonUp" PreviewKeyDown="lstSuggestions_PreviewKeyDown"
-            SelectionChanged="lstSuggestions_SelectionChanged" />
+            SelectionChanged="lstSuggestions_SelectionChanged" ItemsSourceChanged="lstSuggestions_ItemsSourceChanged" />
         <TabControl Name="tabsHistory" DockPanel.Dock="Right" Width="170" Margin="10,5,0,0" TabStripPlacement="Top" Focusable="False">
             <controls:TabItemExt Header="Recent words" x:Name="tabRecent" IsTabStop="False">
                 <controls:ListBoxExt x:Name="lstRecentWords" TabIndex="50" BorderThickness="0" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown" />

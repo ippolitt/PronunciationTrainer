@@ -10,7 +10,7 @@ namespace Pronunciation.Trainer.Dictionary
     public class IndexEntryImitation : IndexEntry, ISuggestionItemInfo
     {
         public IndexEntryImitation(string entryText)
-            : base(entryText, null, null, 1)
+            : base(entryText, null, null, null, 1)
         {
         }
 

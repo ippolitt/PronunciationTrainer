@@ -105,6 +105,7 @@ namespace Pronunciation.Parser
             wordRecord["SoundKeyUS"] = word.SoundKeyUS;
             wordRecord["DictionaryId"] = word.DictionaryId;
             wordRecord["IsCollocation"] = word.IsCollocation ? true : (bool?)null;
+            wordRecord["HasMultiplePronunciations"] = word.HasMultiplePronunciations ? true : (bool?)null;
 
             // Word usage statistics
             wordRecord["UsageRank"] = null;

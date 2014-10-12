@@ -9,7 +9,11 @@ namespace Pronunciation.Trainer.Controls
 {
     public class SuggestionsList : ListBoxExt
     {
+        public event EventHandler ItemsSourceChanged;
+
         private HashSet<object> _secondaryItemsLookup;
+
+        public bool HasMoreItems { get; private set; }
 
         public bool CanSelectPrevious
         {
@@ -94,11 +98,17 @@ namespace Pronunciation.Trainer.Controls
 
         public void AttachItemsSource<T>(IEnumerable<T> items)
         {
-            AttachItemsSource<T>(items, null);
+            AttachItemsSource<T>(items, null, false);
         }
 
-        public void AttachItemsSource<T>(IEnumerable<T> mainItems, IEnumerable<T> secondaryItems)
+        public void AttachItemsSource<T>(IEnumerable<T> items, bool hasMoreItems)
         {
+            AttachItemsSource<T>(items, null, hasMoreItems);
+        }
+
+        public void AttachItemsSource<T>(IEnumerable<T> mainItems, IEnumerable<T> secondaryItems, bool hasMoreItems)
+        {
+            HasMoreItems = hasMoreItems;
             if (secondaryItems == null)
             {
                 this.ItemsSource = mainItems;
@@ -114,6 +124,11 @@ namespace Pronunciation.Trainer.Controls
                     _secondaryItemsLookup.Add(secondaryItem);
                 }
                 this.ItemsSource = items;
+            }
+
+            if (ItemsSourceChanged != null)
+            {
+                ItemsSourceChanged(this, null);
             }
         }
 

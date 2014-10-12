@@ -65,7 +65,7 @@ namespace Pronunciation.Core.Providers.Dictionary
 
                 // Load words
                 cmd.CommandText =
-@"SELECT WordId, Keyword, UsageRank, DictionaryId  
+@"SELECT WordId, Keyword, UsageRank, DictionaryId, HasMultiplePronunciations  
 FROM DictionaryWord";
                 using (SqlCeDataReader reader = cmd.ExecuteReader())
                 {
@@ -75,6 +75,7 @@ FROM DictionaryWord";
                             reader["Keyword"] as string,
                             reader["UsageRank"] as int?,
                             reader["DictionaryId"] as int?,
+                            reader["HasMultiplePronunciations"] as bool?,
                             (int)reader["WordId"]));
                     }
                 }
@@ -209,8 +210,8 @@ WHERE WordId = @wordId";
             var bld = new StringBuilder();
             foreach (var entry in index)
             {
-                bld.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}", 
-                    entry.DisplayName, entry.UsageRank, entry.WordId, entry.DictionaryId));
+                bld.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}",
+                    entry.DisplayName, entry.UsageRank, entry.WordId, entry.DictionaryId, entry.HasMultiplePronunciations));
             }
 
             File.WriteAllText(_indexFilePath, bld.ToString(), Encoding.UTF8);
@@ -225,7 +226,7 @@ WHERE WordId = @wordId";
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 4)
+                    if (data.Length != 5)
                         throw new InvalidOperationException("Index file is broken!");
 
                     int? dictionaryId = string.IsNullOrEmpty(data[3]) ? (int?)null : int.Parse(data[3]);
@@ -235,6 +236,7 @@ WHERE WordId = @wordId";
                     words.Add(new IndexEntry(data[0], 
                         string.IsNullOrEmpty(data[1]) ? (int?)null : int.Parse(data[1]),
                         dictionaryId, 
+                        string.IsNullOrEmpty(data[4]) ? (bool?)null : bool.Parse(data[4]),
                         int.Parse(data[2])));
                 }
             }

@@ -530,27 +530,33 @@ namespace Pronunciation.Trainer
                     List<IndexEntry> filterEntries = _searchIndex.FindEntriesByText(searchText, false, -1);
 
                     // Search items in the main index
+                    bool hasMoreItems = false;
                     if (filterEntries == null || filterEntries.Count < VisibleNumberOfSuggestions)
                     {
-                        extraEntries = _mainIndex.FindEntriesByText(searchText, false, MaxNumberOfSuggestions);
+                        // Subtract 1 for "Out of the filter" item
+                        int maxNumberOfExtraItems = MaxNumberOfSuggestions - filterEntries.Count - 1;
+                        extraEntries = _mainIndex.FindEntriesByText(searchText, false, maxNumberOfExtraItems);
                         if (extraEntries != null)
                         {
+                            bool addEllipsis = (extraEntries.Count == maxNumberOfExtraItems);
                             if (filterEntries != null && filterEntries.Count > 0)
                             {
                                 extraEntries = extraEntries.Where(x => !filterEntries.Contains(x)).ToList();
                             }
+
                             if (extraEntries.Count > 0)
                             {
-                                if (extraEntries.Count == MaxNumberOfSuggestions)
+                                if (addEllipsis)
                                 {
                                     extraEntries.Add(new IndexEntryImitation("..."));
+                                    hasMoreItems = true;
                                 }
                                 extraEntries.Insert(0, new IndexEntryImitation("*** Out of the filter ***"));
                             }
                         }
                     }
 
-                    lstSuggestions.AttachItemsSource(filterEntries, extraEntries);
+                    lstSuggestions.AttachItemsSource(filterEntries, extraEntries, hasMoreItems);
                 }
             }
             else
@@ -561,13 +567,15 @@ namespace Pronunciation.Trainer
                 }
                 else
                 {
+                    bool hasMoreItems = false;
                     List<IndexEntry> filterEntries = _searchIndex.FindEntriesByText(searchText, false, MaxNumberOfSuggestions);
                     if (filterEntries != null && filterEntries.Count == MaxNumberOfSuggestions)
                     {
                         filterEntries.Add(new IndexEntryImitation("..."));
+                        hasMoreItems = true;
                     }
 
-                    lstSuggestions.AttachItemsSource(filterEntries);
+                    lstSuggestions.AttachItemsSource(filterEntries, hasMoreItems);
                 }
             }
 
@@ -673,6 +681,35 @@ namespace Pronunciation.Trainer
         {
             _commandPrevious.UpdateState(lstSuggestions.CanSelectPrevious);
             _commandNext.UpdateState(lstSuggestions.CanSelectNext);
+
+            RefreshSuggestionStats();
+        }
+
+        private void lstSuggestions_ItemsSourceChanged(object sender, EventArgs e)
+        {
+            RefreshSuggestionStats();
+        }
+
+        private void RefreshSuggestionStats()
+        {
+            int count = lstSuggestions.Items.Count;
+            if (lstSuggestions.HasMoreItems)
+            {
+                count--;
+            }
+
+            if (count == 0 || (count == 1 && (lstSuggestions.Items[0] is IndexEntryImitation)))
+            {
+                lblSuggestionStats.Text = null;
+            }
+            else if (lstSuggestions.SelectedIndex < 0)
+            {
+                lblSuggestionStats.Text = string.Format("0 of {0}", count);
+            }
+            else
+            {
+                lblSuggestionStats.Text = string.Format("{0} of {1}", lstSuggestions.SelectedIndex + 1, count);
+            }
         }
 
         private void lstRecentWords_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
