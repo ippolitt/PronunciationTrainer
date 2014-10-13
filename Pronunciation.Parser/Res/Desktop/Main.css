@@ -11,8 +11,7 @@ iframe
 .word
 {
     border: 1px solid;
-    padding: 10px 10px 0px;
-    margin-bottom: 20px;
+    padding: 10px 10px 10px 10px;
     font-size: 1.5em;
 }
 .word_name, .word_link
@@ -59,22 +58,24 @@ iframe
 .entry
 {
     padding-left: 1em;
-    padding-bottom: 0.5em;
 }
 .entry .entry_number
 {
+    margin-left: -1em;
     font-style: italic;
-    margin-left: -0.5em;
-    margin-right: 1em;
+    font-size: 1.2em;
+}
+.entry_text
+{
+    padding-top: 10px;
+}
+.entry_text strong
+{
     font-size: 1.2em;
 }
 .entry_name
 {
     font-weight: bold;
-    font-size: 1.2em;
-}
-.entry_text strong
-{
     font-size: 1.2em;
 }
 .speech_part, .entry_note, .form_note
@@ -85,7 +86,8 @@ iframe
 
 .forms, .collocations, .notes
 {
-    margin-top: 1em;
+    margin-top: 10px;
+    margin-bottom: 5px;
     padding: 5px;
     border: 1px solid;
 }
@@ -118,10 +120,12 @@ iframe
 .audio_button
 {
     font-weight: bold;
-    margin-left: 1em;
+    margin-left: 0.2em;
+    margin-right: 0.5em;
     padding-left: 1em;
     padding-right: 1em;
     font-size: 0.7em;
+    vertical-align: text-top;
     border-radius: 10px;
 }
 .word_audio .audio_button, .entry_audio .audio_button
@@ -177,14 +181,13 @@ iframe
     margin-right: 5px;
 }
 
-.ldoce_page, .mw_page
+.ldoce_fragment
 {
-    margin-bottom: 10px;
+    margin-top: 1.5em;
 }
-.ldoce_fragment, .mw_fragment
+.mw_fragment
 {
     margin-top: 1em;
-    margin-bottom: 10px;
 }
 .ldoce_fragment .dic_header:before
 {

@@ -112,8 +112,7 @@ namespace Pronunciation.Core.Providers.Dictionary
                         new DictionaryWordInfo(
                             data[1], 
                             data[3], 
-                            data[4],
-                            null)));
+                            data[4])));
                 }
             }
 
@@ -128,6 +127,11 @@ namespace Pronunciation.Core.Providers.Dictionary
         public void UpdateFavoriteSound(int wordId, string favoriteSoundKey)
         {
             // do nothing
+        }
+
+        public List<int> GetWordsWithNotes()
+        {
+            return null;
         }
 
         private Uri PreparePageUrl(string pageKey)

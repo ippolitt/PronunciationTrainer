@@ -51,8 +51,8 @@ namespace Pronunciation.Parser
 ",
                 isFragment ? "ldoce_fragment" : "ldoce_page");
 
-            bool isMainAudioSet = false;
             bool addNumber = entry.Items.Count > 1;
+            bool extractAudio = _generationMode == HtmlBuilder.GenerationMode.IPhone;
             foreach (var item in entry.Items)
             {
                 bld.Append(
@@ -80,25 +80,13 @@ namespace Pronunciation.Parser
 @" <span class=""entry_note"">{0}</span>", item.Notes);
                 }
 
-                if (!string.IsNullOrEmpty(item.TranscriptionUK))
-                {
-                    bld.AppendFormat(
-@" <span class=""pron"">{0}</span>", PrepareTranscriptionHtml(item.TranscriptionUK));
-                }
-
-                if (!string.IsNullOrEmpty(item.TranscriptionUS))
-                {
-                    bld.AppendFormat(
-@" <span class=""pron_us"">{0}</span>", PrepareTranscriptionHtml(item.TranscriptionUS));
-                }
-
                 bool hasUKAudio = !string.IsNullOrEmpty(item.SoundFileUK);
                 bool hasUSAudio = !string.IsNullOrEmpty(item.SoundFileUS);
                 string soundKeyUK = GetAudioKey(item.SoundFileUK);
                 string soundKeyUS = GetAudioKey(item.SoundFileUS);
 
                 string htmlEntryNumber = addNumber ? item.Number.ToString() : null;
-                if (entry.Items.Count == 1 && !isFragment)
+                if (extractAudio && !isFragment && entry.Items.Count == 1)
                 {
                     // If there's only one item then put audio buttons on the word level, not on the item level
                     wordAudio = new HtmlBuilder.WordAudio();
@@ -129,21 +117,35 @@ namespace Pronunciation.Parser
 
                 if (wordDescription != null)
                 {
-                    if (!isFragment && !isMainAudioSet && (hasUKAudio || hasUSAudio))
-                    {
-                        wordDescription.SoundKeyUK = soundKeyUK;
-                        wordDescription.SoundKeyUS = soundKeyUS;
-                        isMainAudioSet = true;
-                    }
-
                     if (hasUKAudio)
                     {
+                        if (string.IsNullOrEmpty(wordDescription.SoundKeyUK))
+                        {
+                            wordDescription.SoundKeyUK = soundKeyUK;
+                        }
                         wordDescription.Sounds.Add(new SoundInfo(soundKeyUK, true));
                     }
+
                     if (hasUSAudio)
                     {
+                        if (string.IsNullOrEmpty(wordDescription.SoundKeyUS))
+                        {
+                            wordDescription.SoundKeyUS = soundKeyUS;
+                        }
                         wordDescription.Sounds.Add(new SoundInfo(soundKeyUS, false));
                     }
+                }
+
+                if (!string.IsNullOrEmpty(item.TranscriptionUK))
+                {
+                    bld.AppendFormat(
+@" <span class=""pron"">{0}</span>", PrepareTranscriptionHtml(item.TranscriptionUK));
+                }
+
+                if (!string.IsNullOrEmpty(item.TranscriptionUS))
+                {
+                    bld.AppendFormat(
+@" <span class=""pron_us"">{0}</span>", PrepareTranscriptionHtml(item.TranscriptionUS));
                 }
 
                 bld.Append(

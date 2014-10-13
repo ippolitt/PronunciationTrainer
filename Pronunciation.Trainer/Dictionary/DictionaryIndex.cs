@@ -45,6 +45,14 @@ namespace Pronunciation.Trainer.Dictionary
             return _entries.FirstOrDefault(x => x.DisplayName == wordName);
         }
 
+        public IndexEntry GetWordById(int wordId)
+        {
+            if (!_isInitialized)
+                return null;
+
+            return _entries.Single(x => x.WordId == wordId);
+        }
+
         public IndexEntry GetEntryByPosition(int entryPosition)
         {
             if (!_isInitialized || entryPosition < 0)

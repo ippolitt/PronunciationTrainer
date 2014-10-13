@@ -53,6 +53,7 @@ namespace Pronunciation.Parser
                 isFragment ? "mw_fragment" : "mw_page");
 
             bool addNumber = entry.Items.Count > 1;
+            bool extractAudio = _generationMode == HtmlBuilder.GenerationMode.IPhone;
             foreach (var item in entry.Items)
             {
                 bld.Append(
@@ -76,19 +77,13 @@ namespace Pronunciation.Parser
                     }
                 }
 
-                if (!string.IsNullOrEmpty(item.Transcription))
-                {
-                    bld.AppendFormat(
-@" <span class=""pron"">{0}</span>", PrepareTranscriptionHtml(item.Transcription));
-                }
-
                 if (item.SoundFiles != null && item.SoundFiles.Length > 0)
                 {
                     var sounds = new List<SoundInfo>();
                     string entryNumber = addNumber ? item.Number.ToString() : null;
 
                     // If there's only one item with one audio then put audio button on the word level, not on the item level
-                    if (!isFragment && entry.Items.Count == 1 && item.SoundFiles.Length == 1)
+                    if (extractAudio && !isFragment && entry.Items.Count == 1 && item.SoundFiles.Length == 1)
                     {
                         wordAudio = PrepareWordAudio(item.SoundFiles[0], sounds, entry.Keyword, entryNumber);
                     }
@@ -99,12 +94,18 @@ namespace Pronunciation.Parser
 
                     if (wordDescription != null && sounds.Count > 0)
                     {
-                        wordDescription.Sounds.AddRange(sounds);
-                        if (!isFragment && string.IsNullOrEmpty(wordDescription.SoundKeyUS))
+                        if (string.IsNullOrEmpty(wordDescription.SoundKeyUS))
                         {
                             wordDescription.SoundKeyUS = sounds[0].SoundKey;
                         }
+                        wordDescription.Sounds.AddRange(sounds);
                     }
+                }
+
+                if (!string.IsNullOrEmpty(item.Transcription))
+                {
+                    bld.AppendFormat(
+@" <span class=""pron"">{0}</span>", PrepareTranscriptionHtml(item.Transcription));
                 }
 
                 bld.Append(
@@ -150,12 +151,6 @@ namespace Pronunciation.Parser
 @" <span class=""form_note"">{0}</span>", form.Note);
             }
 
-            if (!string.IsNullOrEmpty(form.Transcription))
-            {
-                bld.AppendFormat(
-@" <span class=""pron"">{0}</span>", PrepareTranscriptionHtml(form.Transcription));
-            }
-
             if (form.SoundFiles != null && form.SoundFiles.Length > 0)
             {
                 var sounds = new List<SoundInfo>();
@@ -164,6 +159,12 @@ namespace Pronunciation.Parser
                 {
                     wordDescription.Sounds.AddRange(sounds);
                 }
+            }
+
+            if (!string.IsNullOrEmpty(form.Transcription))
+            {
+                bld.AppendFormat(
+@" <span class=""pron"">{0}</span>", PrepareTranscriptionHtml(form.Transcription));
             }
 
             return bld.ToString();

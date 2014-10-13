@@ -30,11 +30,6 @@ namespace Pronunciation.Parser
         {
             public string SoundTextUK;
             public string SoundTextUS;
-
-            public bool IsEmpty
-            {
-                get { return string.IsNullOrEmpty(SoundTextUK) && string.IsNullOrEmpty(SoundTextUS); }
-            }
         }
 
         public class ParseResult
@@ -528,8 +523,11 @@ namespace Pronunciation.Parser
                     PrepareLanguageVariant(word.Language.Value));
             }
 
-            if (wordAudio != null && !wordAudio.IsEmpty)
+            if (wordAudio != null)
             {
+                if (_generationMode != GenerationMode.IPhone)
+                    throw new ArgumentException();
+
                 pageBuilder.AppendFormat(
 @"      <div class=""word_audio"">
             {0}
@@ -603,61 +601,62 @@ namespace Pronunciation.Parser
             {
                 wordDescription.HasMultiplePronunciations = true;
             }
+            bool extractSounds = _generationMode == GenerationMode.IPhone;
+            bool joinNumberWithEntry = _generationMode != GenerationMode.IPhone;
 
-            var bld = new StringBuilder();
-            bool isWordAudioSet = false;
             int ordinal = 0;
+            var bld = new StringBuilder();
             foreach (var entry in entries)
             {
                 ordinal++;
 
                 // Parse main data
                 var entrySoundCollector = new SoundCollector();
-                ParseResult entryResult = ParseItemXml(entry.RawMainData, true, null, entrySoundCollector);
+                ParseResult entryResult = ParseItemXml(entry.RawMainData, extractSounds, null, entrySoundCollector);
                 wordDescription.Sounds.AddRange(entrySoundCollector.Sounds);
 
-                // If word entry has exactly two sounds (UK & US) then these sounds are considered as entry audio 
-                if (entrySoundCollector.HasUKSound && entrySoundCollector.HasUSSound
-                    && entrySoundCollector.Sounds.Count == 2)
+                // If word entry has exactly two sounds (UK & US) then extraction is acceptable
+                // otherwise rebuild output html without extracting the audio
+                if (extractSounds && (!entrySoundCollector.HasUKSound || !entrySoundCollector.HasUSSound 
+                    || entrySoundCollector.Sounds.Count != 2))
                 {
-                    // Consider audio of the first entry as the word audio
-                    if (!isWordAudioSet)
-                    {
-                        wordDescription.SoundKeyUK = entrySoundCollector.MainSoundUK;
-                        wordDescription.SoundKeyUS = entrySoundCollector.MainSoundUS;
-                        isWordAudioSet = true;
-                    }
+                    entryResult = ParseItemXml(entry.RawMainData, false, null, null);
+                }
+
+                // Assing first sounds as the word sounds
+                if (string.IsNullOrEmpty(wordDescription.SoundKeyUK))
+                {
+                    wordDescription.SoundKeyUK = entrySoundCollector.MainSoundUK;
+                }
+                if (string.IsNullOrEmpty(wordDescription.SoundKeyUS))
+                {
+                    wordDescription.SoundKeyUS = entrySoundCollector.MainSoundUS;
+                }
+
+                string warningText = null;
+                if (!entrySoundCollector.HasUKSound && !entrySoundCollector.HasUSSound)
+                {
+                    warningText = "misses both UK & US pronunciations";
+                }
+                else if (!entrySoundCollector.HasUKSound)
+                {
+                    warningText = "misses a UK pronunciation";
+                }
+                else if (!entrySoundCollector.HasUSSound)
+                {
+                    warningText = "misses a US pronunciation";
                 }
                 else
                 {
-                    // Otherwise we rebuild output html without extracting the audio
-                    entryResult = ParseItemXml(entry.RawMainData, false, null, null);
+                    if (entrySoundCollector.Sounds.Count > 2)
+                    {
+                        warningText = "has more than two pronunciations";
+                    }
+                }
 
-                    string warningText = null;
-                    if (!entrySoundCollector.HasUKSound && !entrySoundCollector.HasUSSound)
-                    {
-                        warningText = "misses both UK & US pronunciations";
-                    }
-                    else if (!entrySoundCollector.HasUKSound)
-                    {
-                        warningText = "misses a UK pronunciation";
-                    }
-                    else if (!entrySoundCollector.HasUSSound)
-                    {
-                        warningText = "misses a US pronunciation";
-                    }
-                    else
-                    {
-                        if (entrySoundCollector.Sounds.Count > 2)
-                        {
-                            warningText = "has more than two pronunciations";
-                        }
-                    }
-
-                    if (!string.IsNullOrEmpty(warningText))
-                    {
-                        soundStats.AppendFormat("Word entry [{0}] {1} {2}\r\n", keyword, entry.EntryNumber, warningText);
-                    }
+                if (!string.IsNullOrEmpty(warningText))
+                {
+                    soundStats.AppendFormat("Word entry [{0}] {1} {2}\r\n", keyword, entry.EntryNumber, warningText);
                 }
 
                 _buttonBuilder.InjectSoundText(entryResult, keyword, entry.EntryNumber, entrySoundCollector.Sounds);
@@ -667,39 +666,62 @@ namespace Pronunciation.Parser
     <div class=""entry"">
 ");
 
-                if (string.IsNullOrEmpty(entry.EntryNumber))
+                if (joinNumberWithEntry)
                 {
-                    // Add sounds directly to the word name if entry number is missing
-                    if (ordinal == 1)
+                    bld.Append(
+@"          <div class=""entry_text"">");
+
+                    if (entries.Count > 1)
                     {
-                        wordAudio = new WordAudio { SoundTextUK = entryResult.SoundTextUK, SoundTextUS = entryResult.SoundTextUS };
+                        bld.AppendFormat(
+@"<span class=""entry_number"">{0}. </span>",
+                                ordinal);
                     }
-                    else
-                        throw new ArgumentException();
+
+                    bld.AppendFormat(
+@"{0}</div>
+",
+                            entryResult.HtmlData);
                 }
                 else
                 {
-                    bld.AppendFormat(
+                    if (string.IsNullOrEmpty(entry.EntryNumber))
+                    {
+                        if (entries.Count != 1)
+                            throw new ArgumentException();
+                    }
+                    else
+                    {
+                        bld.AppendFormat(
 @"          <span class=""entry_number"">{0}</span>
 ",
-                        entry.EntryNumber);
+                            entry.EntryNumber);
+                    }
 
                     if (!string.IsNullOrEmpty(entryResult.SoundTextUK) || !string.IsNullOrEmpty(entryResult.SoundTextUS))
                     {
-                        bld.AppendFormat(
+                        if (entries.Count == 1)
+                        {
+                            // Add sounds directly to the word name if this is a single entry
+                            wordAudio = new WordAudio { SoundTextUK = entryResult.SoundTextUK, SoundTextUS = entryResult.SoundTextUS };
+                        }
+                        else
+                        {
+                            bld.AppendFormat(
 @"          <span class=""entry_audio"">
                 {0}
                 {1}
             </span>
 ",
-                            entryResult.SoundTextUK, entryResult.SoundTextUS);
+                                entryResult.SoundTextUK, entryResult.SoundTextUS);
+                        }
                     }
-                }
 
-                bld.AppendFormat(
+                    bld.AppendFormat(
 @"          <div class=""entry_text"">{0}</div>
 ",
-                        entryResult.HtmlData);
+                            entryResult.HtmlData);
+                }
 
                 // Parse word forms and collocations
                 if (entry.AllItems != null && entry.AllItems.Count > 0)

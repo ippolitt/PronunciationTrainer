@@ -77,31 +77,48 @@
                     Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                     ToolTip="Find current word in the list [{0}]">
                     <Image Source="Resources/SynchronizeList.png" Style="{StaticResource ToolbarImage}" />
-                </Button>                
-                <!--<controls:OnOffButton Height="23" Width="23" x:Name="btnFavorites" Focusable="False" 
+                </Button>
+                <controls:OnOffButton Height="23" Width="23" x:Name="btnEditNotes" Focusable="False" 
                     Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                    StateOnTooltip="Remove the word from favorites [{0}]" StateOffTooltip="Add the word to favorites [{0}]">
+                    StateOnTooltip="Edit word notes" StateOffTooltip="Add word notes">
                     <Image>
                         <Image.Style>
                             <Style TargetType="Image" BasedOn="{StaticResource ToolbarImage}">
-                                <Setter Property="Source" Value="Resources/Favorites.png" />
-                                <Setter Property="Opacity" Value="0.5" />
+                                <Setter Property="Source" Value="Resources/AddWordNotes.png" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ElementName=btnFavorites, Path=IsOn}" Value="True">
-                                        <Setter Property="Opacity" Value="1" />
+                                    <DataTrigger Binding="{Binding ElementName=btnEditNotes, Path=IsOn}" Value="True">
+                                        <Setter Property="Source" Value="Resources/EditWordNotes.png" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Image.Style>
                     </Image>
-                </controls:OnOffButton>-->
+                </controls:OnOffButton>
                 <Button Height="23" Width="23" Name="btnEditCategories" Focusable="False" Click="btnEditCategories_Click" 
                     Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                     ToolTip="Edit list of categories">
-                    <Image Source="Resources/EditCategories.png" Style="{StaticResource ToolbarImage}" />
+                    <Image Source="Resources/EditCategories.png" Style="{StaticResource ToolbarImage}" />                  
                 </Button>
             </StackPanel>
-            <controls:ComboBoxExt Height="23" Margin="0,0,0,0" TabIndex="30" x:Name="cboCategories" DisableAltGestures="True" SelectionChanged="cboCategories_SelectionChanged" KeyDown="cboCategories_KeyDown" />            
+            <controls:ComboBoxExt Height="23" Margin="0,0,0,0" TabIndex="30" x:Name="cboCategories" DisableAltGestures="True" 
+                SelectionChanged="cboCategories_SelectionChanged" KeyDown="cboCategories_KeyDown">
+                <ComboBox.ItemContainerStyle>
+                    <Style TargetType="{x:Type ComboBoxItem}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsSeparator}" Value="True">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                                            <Separator HorizontalAlignment="Stretch" IsEnabled="False"/>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ComboBox.ItemContainerStyle>
+
+            </controls:ComboBoxExt>
         </DockPanel>
         <StatusBar DockPanel.Dock="Bottom" Height="20" 
                    Background="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}, Path=Background}">

@@ -33,6 +33,11 @@ namespace Pronunciation.Trainer
             get { return new KeyGesture(Key.Q, ModifierKeys.Alt, "Alt+Q"); }
         }
 
+        public static KeyGesture EditNotes
+        {
+            get { return new KeyGesture(Key.N, ModifierKeys.Alt, "Alt+N"); }
+        }
+
         public static KeyGesture Favorites
         {
             get { return new KeyGesture(Key.F, ModifierKeys.Alt, "Alt+F"); }

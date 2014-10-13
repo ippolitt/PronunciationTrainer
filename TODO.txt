@@ -1,9 +1,7 @@
 ﻿Top:
 - Try installing video card, then try giving more memory to video adapter
 --
-- Add ability to add notes for a word (or my prefered pronunciation. Remember, that there could be different pronunciations for a word)
 - LPD: add ability to specify which transcription does the sound actually relates to
-- Add auto list: word with several recordings.
 - Add auto list: words with favorite sounds
 - Somehow remember the last word I learned in the dictionary
 - Ranks: map "etc" and "ie" from Ranks to dictionary entries. Find other entries that might have been missed. Generated more accurate list of missing ranks.
@@ -19,6 +17,7 @@
 Dictionary:
 	- Import
 		- iPhone: import only those LDOCE sounds that differ from LPD sounds on the page (should we import BrE?)
+		- iPhone: ensure my formatting changes didn't affect iPhone (not extracting sounds etc.)
 		- LPD: note that multy-entries ("process") are separated in the dictionary. I might also do it for DB mode (ranks? matching with other dictionaries?)
 		- Don't delete a word if there's custom information there (custom notes etc.)
 		- MW: group by transcription only and join sounds
@@ -33,6 +32,7 @@ Dictionary:
 			Fix "candidate", "Halley" errors: AmE pronunciation is not separated
 			"detail", "direct"- preference poll attached to word form (same in the original entry)
 			"wound" - past participle of
+			"Agar, Adler" - split in two lines
 		- Resolve references in LPD ("am" -> see "I'm", except ... -> ... (ref) ), also (go -> "See gonna") and MW
 		- Get word forms from LPD and - in case if it exists as a separate entry in other dictionaries - generate a hypelink to the base form
 		- MW: generate hyperlink for [ref] in transcription and other places (both in file system and database)
@@ -75,14 +75,17 @@ HTML to WPF migration:
 	- Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
 	- Think of another DB engine (SQLLite?). Test it with big databases and storing image/binary/ntext data.  
 - New functionality:
+	- Add "Phrase bank" functionality:
+		- - Import phrases from LDOCE (match sounds and text).
+	- Split .dat files into UK and US files to reduce download size
+	- On first start ask which variant is preferred UK, US, both. Don't display UK/US buttons if another variant is selected.
+	- Add a setting whether to display LDOCE and MW info (including words). Don't display MW words if user has chosen UK on first start. 
 	- Add ability to pause the recording
 	- Find some good dictionary with Russian translations
 	- Add at least main russian meaning to the LPD (from popup dictionary?)
 	- Import spelling-to-sound from LPD
-	- During import add a flag "several pronunciations/meanings". Then use this flag for autolist "several pronunciations"
 	- Add ability to search by wildcards (e.g. select a certain problematic syllable - lrt - and practice many words with it)
 	- Add ability to expand list when I click on "..." (e.g. I want to through all items)
-	- Add bility to exclude "collocations" from search (useful when moving down the list of words)
 	- Add a setting "Decrease recorded audio volume"
 	- Long records: improve usability (back/forward a few seconds, repeat a region etc.)
 	- Compare different reference pronunciation or different recorded ones
@@ -140,6 +143,8 @@ Waveforms:
 	- Add word name to the last played audio
 	- Play sound along with moving a slider on waveform
 	- Add ability to show real amplitude of the sounds (don't stretch them) to compare loudness 
+Tests:
+	- Test when there are no custom categories
 Deployment:
 	- Add logic to check if it's an updated version and call some migration logic (MUST be done before deployment!)
 	- Think how a new changes to the database will be deployed (consider that all audio/html index will be broken)

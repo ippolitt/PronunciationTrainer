@@ -10,6 +10,7 @@ namespace Pronunciation.Core.Providers.Dictionary
     {
         List<IndexEntry> GetWordsIndex(int[] dictionaryIds);
         DictionaryWordInfo GetWordInfo(int wordId);
+        List<int> GetWordsWithNotes();
         void UpdateFavoriteSound(int wordId, string favoriteSoundKey);
         ArticlePage PrepareArticlePage(IndexEntry index);
         PageInfo PrepareGenericPage(Uri pageUrl);

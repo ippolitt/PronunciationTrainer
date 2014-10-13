@@ -34,6 +34,7 @@ using System.Media;
 using System.Threading.Tasks;
 using Pronunciation.Core.Utility;
 using Pronunciation.Core.Providers.Categories;
+using Pronunciation.Core.Database;
 
 namespace Pronunciation.Trainer
 {
@@ -80,6 +81,7 @@ namespace Pronunciation.Trainer
         private DictionaryIndex _searchIndex;
         private DictionaryInitializer _dictionaryLoader;
         private CategoryManager _categoryManager;
+        private AutoListsManager _autoListsManager;
         private WordCategoryStateTracker _categoryTracker;
         private SessionStatisticsCollector _statsCollector;
         private readonly IgnoreEventsRegion _ignoreEvents = new IgnoreEventsRegion();
@@ -92,6 +94,7 @@ namespace Pronunciation.Trainer
         private ExecuteActionCommand _commandPrevious;
         private ExecuteActionCommand _commandNext;
         private ExecuteActionCommand _commandSyncPage;
+        private ExecuteActionCommand _commandEditNotes;
 
         private const int MaxNumberOfSuggestions = 100;
         private const int VisibleNumberOfSuggestions = 30;
@@ -117,6 +120,7 @@ namespace Pronunciation.Trainer
                 AppSettings.Instance.Folders.Database, AppSettings.Instance.Connections.Trainer);
             IndexEntry.ActiveProvider = _dictionaryProvider;
             _dictionaryLoader = new DictionaryInitializer(_mainIndex, _dictionaryProvider);
+            _autoListsManager = new AutoListsManager(_dictionaryProvider);
 
             _audioContext = new DictionaryAudioContext(_dictionaryProvider, AppSettings.Instance.Recorders.Dictionary, 
                 new AppSettingsBasedRecordingPolicy());
@@ -135,8 +139,8 @@ namespace Pronunciation.Trainer
             _commandClearText = new ExecuteActionCommand(ClearText, true);
             _commandPrevious = new ExecuteActionCommand(GoPreviousItem, false);
             _commandNext = new ExecuteActionCommand(GoNextItem, false);
-            
             _commandSyncPage = new ExecuteActionCommand(SynchronizeSuggestions, false);
+            _commandEditNotes = new ExecuteActionCommand(EditNotes, false);
 
             this.InputBindings.Add(new KeyBinding(_commandBack, KeyGestures.NavigateBack));
             this.InputBindings.Add(new KeyBinding(_commandForward, KeyGestures.NavigateForward));
@@ -144,6 +148,7 @@ namespace Pronunciation.Trainer
             this.InputBindings.Add(new KeyBinding(_commandPrevious, KeyGestures.PreviousWord));
             this.InputBindings.Add(new KeyBinding(_commandNext, KeyGestures.NextWord));
             this.InputBindings.Add(new KeyBinding(_commandSyncPage, KeyGestures.SyncWord));
+            this.InputBindings.Add(new KeyBinding(_commandEditNotes, KeyGestures.EditNotes));
 
             btnBack.Command = _commandBack;
             btnForward.Command = _commandForward;
@@ -151,6 +156,7 @@ namespace Pronunciation.Trainer
             btnPrevious.Command = _commandPrevious;
             btnNext.Command = _commandNext;
             btnSyncPage.Command = _commandSyncPage;
+            btnEditNotes.Command = _commandEditNotes;
 
             lblSessionStats.Text = string.Format(StatisticsTemplate, 0, 0);
 
@@ -273,7 +279,13 @@ namespace Pronunciation.Trainer
 
                 if (_isFirstPageLoad)
                 {
-                    Logger.Info("Audio context refreshed. Refreshing categories state...");
+                    Logger.Info("Audio context refreshed. Refreshing notes state...");
+                }
+                RefreshNotesState(_currentPage.WordIndex);
+
+                if (_isFirstPageLoad)
+                {
+                    Logger.Info("Notes state refreshed. Refreshing categories state...");
                 }
                 RefreshCategoriesState(_currentPage.WordId);
 
@@ -347,6 +359,63 @@ namespace Pronunciation.Trainer
             {
                 _categoryTracker.RegisterWord(wordId.Value);
                 categoriesDataGrid.IsEnabled = true;
+            }
+        }
+
+        private void RefreshNotesState(IndexEntry index)
+        {
+            if (index == null)
+            {
+                _commandEditNotes.UpdateState(false);
+                btnEditNotes.IsStateOn = false;
+            }
+            else
+            {
+                _commandEditNotes.UpdateState(true);
+                var info = index.Word;
+                btnEditNotes.IsStateOn = !string.IsNullOrEmpty(info.Notes) || !string.IsNullOrEmpty(info.FavoriteTranscription);
+            }
+        }
+
+        private void EditNotes()
+        {
+            if (_currentPage == null || _currentPage.WordId == null)
+                throw new ArgumentNullException();
+
+            var dialog = new EditWordNotes();
+            dialog.WordId = _currentPage.WordId.Value;
+            dialog.WordInfoUpdated += WordInfoUpdated;
+            dialog.Owner = ControlsHelper.GetWindow(this);
+            dialog.Show();
+        }
+
+        private void WordInfoUpdated(DictionaryWord wordDetails)
+        {
+            bool refreshNotesState = false;
+            IndexEntry wordIndex;
+            if (_currentPage != null && _currentPage.WordId == wordDetails.WordId)
+            {
+                wordIndex = _currentPage.WordIndex;
+                refreshNotesState = true;
+            }
+            else
+            {
+                wordIndex = _mainIndex.GetWordById(wordDetails.WordId);
+            }
+
+            DictionaryWordInfo wordInfo = wordIndex.Word;
+            bool hadNotes = wordInfo.HasCustomNotes;
+            wordInfo.FavoriteTranscription = wordDetails.FavoriteTranscription;
+            wordInfo.Notes = wordDetails.Notes;
+
+            if (refreshNotesState)
+            {
+                RefreshNotesState(wordIndex);
+            }
+
+            if (hadNotes != wordInfo.HasCustomNotes)
+            {
+                ProcessWordCategoryChanged(wordDetails.WordId, AutoListsManager.WordsWithNotes, hadNotes);
             }
         }
 
@@ -485,15 +554,22 @@ namespace Pronunciation.Trainer
                 var query = isRank ? _mainIndex.Entries.Where(x => x.UsageRank == rank.Rank) : _mainIndex.Entries;
                 if (isCategory)
                 {
-                    var categoryWords = new HashSet<int>(_categoryManager.GetCategoryWordIds(category.CategoryId));
-                    if (categoryWords != null && categoryWords.Count > 0)
+                    if (_autoListsManager.IsAutoList(category.CategoryId))
                     {
-                        query = query.Where(x => x.WordId != null && categoryWords.Contains(x.WordId.Value));
+                        query = _autoListsManager.ApplyAutoList(category.CategoryId, query);
                     }
                     else
                     {
-                        // It means there are no words in the category
-                        query = new IndexEntry[0];
+                        var categoryWords = new HashSet<int>(_categoryManager.GetCategoryWordIds(category.CategoryId));
+                        if (categoryWords != null && categoryWords.Count > 0)
+                        {
+                            query = query.Where(x => x.WordId != null && categoryWords.Contains(x.WordId.Value));
+                        }
+                        else
+                        {
+                            // It means there are no words in the category
+                            query = new IndexEntry[0];
+                        }
                     }
                 }
 
@@ -907,13 +983,23 @@ namespace Pronunciation.Trainer
 
         private void PopulateCategories()
         {
-            var categories = _categoryManager.GetAllCategories().OrderBy(x => x).ToList();
+            var allCategories = new List<DictionaryCategoryListItem>
+            {
+                new DictionaryCategoryListItem { DisplayName = "none", IsServiceItem = true },
+                new DictionaryCategoryListItem { DisplayName = "Words with notes", IsSystemCategory = true, 
+                    CategoryId = AutoListsManager.WordsWithNotes },
+                new DictionaryCategoryListItem { DisplayName = "Top multi-pronunciation words", IsSystemCategory = true,
+                    CategoryId = AutoListsManager.WordsWithMultiplePronunciations },
+                new DictionaryCategoryListItem { DisplayName = "", IsServiceItem = true, IsSeparator = true }
+            };
+
+            var dbCategories = _categoryManager.GetAllCategories().OrderBy(x => x).ToList();
             
-            _categoryTracker.SynchronizeCategories(categories);
+            _categoryTracker.SynchronizeCategories(dbCategories);
             categoriesDataGrid.ItemsSource = _categoryTracker.GetCategories();
 
-            categories.Insert(0, new DictionaryCategoryListItem { DisplayName = "none", IsServiceItem = true });
-            cboCategories.ItemsSource = categories;
+            allCategories.AddRange(dbCategories);
+            cboCategories.ItemsSource = allCategories;
         }
     }
 }

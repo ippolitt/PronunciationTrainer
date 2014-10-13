@@ -12,6 +12,7 @@ namespace Pronunciation.Core.Providers.Categories
         public string DisplayName { get; set; }
         public bool? IsSystemCategory { get; set; }
         public bool IsServiceItem { get; set; }
+        public bool IsSeparator { get; set; }
 
         public DictionaryCategoryListItem()
         {

@@ -26,6 +26,8 @@ namespace Pronunciation.Core.Database
         public string HtmlIndex { get; set; }
         public Nullable<bool> IsCollocation { get; set; }
         public Nullable<bool> HasMultiplePronunciations { get; set; }
+        public string FavoriteTranscription { get; set; }
+        public string Notes { get; set; }
 
         public virtual ICollection<DictionaryCategory> DictionaryCategories { get; set; }
     }

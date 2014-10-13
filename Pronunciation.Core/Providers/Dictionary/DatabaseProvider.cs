@@ -146,7 +146,7 @@ WHERE SoundKey = @soundKey", conn);
                 SqlCeCommand cmd = new SqlCeCommand();
                 cmd.Connection = conn;
                 cmd.CommandText =
-@"SELECT HtmlIndex, SoundKeyUK, SoundKeyUS, FavoriteSoundKey
+@"SELECT HtmlIndex, SoundKeyUK, SoundKeyUS, FavoriteSoundKey, FavoriteTranscription, Notes
 FROM DictionaryWord
 WHERE WordId = @wordId";
                 cmd.Parameters.AddWithValue("@wordId", wordId);
@@ -158,8 +158,11 @@ WHERE WordId = @wordId";
                         word = new DictionaryWordInfo(
                             reader["HtmlIndex"] as string,
                             reader["SoundKeyUK"] as string,
-                            reader["SoundKeyUS"] as string,
-                            reader["FavoriteSoundKey"] as string);
+                            reader["SoundKeyUS"] as string);
+                        word.FavoriteSoundKey = reader["FavoriteSoundKey"] as string;
+                        word.FavoriteTranscription = reader["FavoriteTranscription"] as string;
+                        word.Notes = reader["Notes"] as string;
+
                         break;
                     }
                 }
@@ -187,6 +190,32 @@ WHERE WordId = @wordId";
                 if (cmd.ExecuteNonQuery() <= 0)
                     throw new ArgumentException("Favorite sound for the word hasn't been updated!");
             }
+        }
+
+        public List<int> GetWordsWithNotes()
+        {
+            List<int> wordIds = new List<int>();
+            using (SqlCeConnection conn = new SqlCeConnection(_connectionString))
+            {
+                conn.Open();
+
+                SqlCeCommand cmd = new SqlCeCommand();
+                cmd.Connection = conn;
+                cmd.CommandText =
+@"SELECT WordId
+FROM DictionaryWord
+WHERE (FavoriteTranscription IS NOT NULL AND FavoriteTranscription <> '') OR (Notes IS NOT NULL AND Notes <> '')";
+
+                using (SqlCeDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        wordIds.Add((int)reader["WordId"]);
+                    }
+                }
+            }
+
+            return wordIds;
         }
 
         public DictionarySoundInfo GetAudioFromScriptData(string soundKey, string scriptData)

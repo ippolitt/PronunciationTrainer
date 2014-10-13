@@ -11,7 +11,7 @@ namespace Pronunciation.Trainer.Dictionary
 {
     public class CategoryManager
     {
-        public delegate void WordCategoryChangedDelegate(int wordId, Guid categoryId, bool isRemoved); 
+        public delegate void WordCategoryChangedDelegate(int wordId, Guid categoryId, bool isRemoved);
 
         private readonly WordCategoryChangedDelegate _changeHandler;
         private readonly CategoryProvider _provider;

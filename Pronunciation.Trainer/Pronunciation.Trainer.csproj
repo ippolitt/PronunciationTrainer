@@ -80,6 +80,7 @@
     <Compile Include="Controls\ComboBoxExt.cs" />
     <Compile Include="Controls\ISuggestionItemInfo.cs" />
     <Compile Include="Controls\OnOffButton.cs" />
+    <Compile Include="Dictionary\AutoListsManager.cs" />
     <Compile Include="Dictionary\DictionaryIndex.cs" />
     <Compile Include="Dictionary\DictionaryInitializer.cs" />
     <Compile Include="Dictionary\IndexEntryImitation.cs" />
@@ -90,6 +91,9 @@
     <Compile Include="Dictionary\WordCategoryStateTracker.cs" />
     <Compile Include="EditCategories.xaml.cs">
       <DependentUpon>EditCategories.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="EditWordNotes.xaml.cs">
+      <DependentUpon>EditWordNotes.xaml</DependentUpon>
     </Compile>
     <Compile Include="Export\AudioExporter.cs" />
     <Compile Include="FileOverrideDialog.xaml.cs">
@@ -172,6 +176,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="EditCategories.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="EditWordNotes.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -292,6 +300,8 @@
       <Link>lame.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Resource Include="Resources\AddWordNotes.png" />
+    <Resource Include="Resources\EditWordNotes.png" />
     <Resource Include="Resources\Favorites.png" />
     <Resource Include="Resources\EditCategories.png" />
     <Resource Include="Resources\SynchronizeList.png" />
