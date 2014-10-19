@@ -8,33 +8,102 @@ namespace Pronunciation.Trainer.Dictionary
 {
     public class DictionaryIndex
     {
-        private IndexEntry[] _entries;
+        private IndexEntry[] _mainEntries;
+        private IndexEntry[] _alternativeEntries;
         private TokenizedIndexEntry[] _tokens;
         private bool _isInitialized;
 
-        public void Build(IEnumerable<IndexEntry> entries)
+        private readonly static Dictionary<char, string> ReplacementMap;
+
+        static DictionaryIndex()
+        {
+            ReplacementMap = InitReplacementMap();
+        }
+
+        public void Build(IEnumerable<IndexEntry> indexEntries, bool isMainIndex)
         {
             _isInitialized = false;
-            if (entries == null)
+
+            _mainEntries = null;
+            _alternativeEntries = null;
+            _tokens = null;
+            if (indexEntries == null)
                 return;
+            
+            // Avoid using temporary list if possible (because its size is pretty big)
+            List<IndexEntry> mainList = null;
+            IndexEntry[] mainArray = null;
+            if (indexEntries is ICollection<IndexEntry>)
+            {
+                mainArray = new IndexEntry[((ICollection<IndexEntry>)indexEntries).Count];
+            }
+            else
+            {
+                mainList = new List<IndexEntry>();
+            }
 
-            // Build index for StartsWith match
-            _entries = entries.OrderBy(x => x.DisplayName).ToArray();
+            var alternativeEntries = new List<IndexEntry>();
+            var tokens = new List<TokenizedIndexEntry>();
+            int i = 0;
+            foreach (var entry in indexEntries.OrderBy(x => x.DisplayName))
+            {
+                // Index for StartsWith match
+                if (mainList == null)
+                {
+                    mainArray[i] = entry;
+                }
+                else
+                {
+                    mainList.Add(entry);
+                }
 
-            // Build index for token-based match (split a phrase into words, each word can be searched using StartsWith)
-            _tokens = BuildTokensIndex(_entries);
+                // Index for token-based match (split a phrase into words, each word can be searched using StartsWith)
+                AddTokens(entry.DisplayName, entry, tokens);
+
+                // Generate alternative name (without accented characters etc.) if required
+                if (isMainIndex)
+                {
+                    entry.AlternativeName = PrepareAlternativeName(entry.DisplayName);
+                }
+
+                if (!string.IsNullOrEmpty(entry.AlternativeName))
+                {
+                    alternativeEntries.Add(entry);
+                    AddTokens(entry.AlternativeName, entry, tokens);
+                }
+
+                i++;
+            }
+
+            if (mainList == null)
+            {
+                _mainEntries = mainArray;
+            }
+            else
+            {
+                _mainEntries = mainList.ToArray();
+            }
+            _alternativeEntries = alternativeEntries.OrderBy(x => x.DisplayName).ToArray();
+            _tokens = tokens.OrderBy(x => x.Rank).ThenBy(x => x.Entry.DisplayName).ToArray();
+
+            var bld = new StringBuilder();
+            foreach (var entry in _alternativeEntries)
+            {
+                bld.AppendFormat("{0}\t{1}\r\n", entry.DisplayName, entry.AlternativeName);
+            }
+            System.IO.File.WriteAllText(@"D:\test.txt", bld.ToString());
 
             _isInitialized = true;
         }
 
         public int EntriesCount
         {
-            get { return _entries.Length; }
+            get { return _mainEntries.Length; }
         }
 
         public IEnumerable<IndexEntry> Entries
         {
-            get { return _entries; }
+            get { return _mainEntries; }
         }
 
         public IndexEntry GetWordByName(string wordName)
@@ -42,7 +111,7 @@ namespace Pronunciation.Trainer.Dictionary
             if (!_isInitialized)
                 return null;
 
-            return _entries.FirstOrDefault(x => x.DisplayName == wordName);
+            return _mainEntries.FirstOrDefault(x => x.DisplayName == wordName);
         }
 
         public IndexEntry GetWordById(int wordId)
@@ -50,7 +119,7 @@ namespace Pronunciation.Trainer.Dictionary
             if (!_isInitialized)
                 return null;
 
-            return _entries.Single(x => x.WordId == wordId);
+            return _mainEntries.Single(x => x.WordId == wordId);
         }
 
         public IndexEntry GetEntryByPosition(int entryPosition)
@@ -58,7 +127,7 @@ namespace Pronunciation.Trainer.Dictionary
             if (!_isInitialized || entryPosition < 0)
                 return null;
 
-            return entryPosition < _entries.Length ? _entries[entryPosition] : null;
+            return entryPosition < _mainEntries.Length ? _mainEntries[entryPosition] : null;
         }
 
         public int GetEntryPosition(IndexEntry entry)
@@ -66,9 +135,9 @@ namespace Pronunciation.Trainer.Dictionary
             if (!_isInitialized)
                 return -1;
 
-            for (int i = 0; i < _entries.Length; i++)
+            for (int i = 0; i < _mainEntries.Length; i++)
             {
-                if (ReferenceEquals(_entries[i], entry))
+                if (ReferenceEquals(_mainEntries[i], entry))
                     return i;
             }
 
@@ -81,90 +150,288 @@ namespace Pronunciation.Trainer.Dictionary
                 return null;
 
             // Add main matches
+            bool limitMaxItems = maxItems >= 0;
             searchText = searchText.Trim();
             IEnumerable<IndexEntry> mainQuery;
             if (isExactMatch)
             {
-                mainQuery = _entries.Where(x => string.Equals(x.DisplayName, searchText, StringComparison.OrdinalIgnoreCase));
+                mainQuery = _mainEntries.Where(x => string.Equals(x.DisplayName, searchText, StringComparison.OrdinalIgnoreCase));
             }
             else
             {
-                mainQuery = _entries.Where(x => x.DisplayName.StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
+                mainQuery = _mainEntries.Where(x => x.DisplayName.StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
             }
-            if (maxItems >= 0)
+            if (limitMaxItems)
             {
                 mainQuery = mainQuery.Take(maxItems);
             }
             var comparer = new IndexEntryComparer(searchText);
             var entries = mainQuery.OrderBy(x => x, comparer).ToList();
 
-            // Add token based matches
-            if (!isExactMatch && (entries.Count < maxItems || maxItems < 0))
+            if (!isExactMatch)
             {
-                var tokensQuery = _tokens.Where(x => x.Token.StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
-                if (maxItems >= 0)
+                HashSet<IndexEntry> entriesHash = null;
+
+                // Add alternative text matches
+                int itemsLeft = maxItems - entries.Count;
+                if (itemsLeft > 0 || !limitMaxItems)
                 {
-                    tokensQuery = tokensQuery.Take(maxItems - entries.Count);
+                    var alternativeQuery = _alternativeEntries
+                        .Where(x => x.AlternativeName.StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
+                    if (limitMaxItems)
+                    {
+                        alternativeQuery = alternativeQuery.Take(itemsLeft);
+                    }
+
+                    var alternativeEntries = alternativeQuery.OrderBy(x => x.DisplayName).ToList();
+                    if (alternativeEntries.Count > 0)
+                    {
+                        // Add only those entries that don't already present in the list
+                        if (entriesHash == null)
+                        {
+                            entriesHash = new HashSet<IndexEntry>(entries);
+                        }
+                        entries.AddRange(alternativeEntries.Where(x => entriesHash.Add(x)));
+                    }
                 }
 
-                var tokenEntries = tokensQuery.OrderBy(x => x.Rank).ThenBy(x => x.Entry.DisplayName).Select(x => x.Entry).ToList();
-                if (tokenEntries.Count > 0)
+                // Add token based matches
+                itemsLeft = maxItems - entries.Count;
+                if (itemsLeft > 0 || !limitMaxItems)
                 {
-                    // Add only those entries that don't already present in the list
-                    var hashSet = new HashSet<IndexEntry>(entries);
-                    entries.AddRange(tokenEntries.Where(x => hashSet.Add(x)));
+                    var tokensQuery = _tokens.Where(x => x.Token.StartsWith(searchText, StringComparison.OrdinalIgnoreCase));
+                    if (limitMaxItems)
+                    {
+                        tokensQuery = tokensQuery.Take(itemsLeft);
+                    }
+
+                    var tokenEntries = tokensQuery.OrderBy(x => x.Rank).ThenBy(x => x.Entry.DisplayName).Select(x => x.Entry).ToList();
+                    if (tokenEntries.Count > 0)
+                    {
+                        // Add only those entries that don't already present in the list
+                        if (entriesHash == null)
+                        {
+                            entriesHash = new HashSet<IndexEntry>(entries);
+                        }
+                        entries.AddRange(tokenEntries.Where(x => entriesHash.Add(x)));
+                    }
                 }
             }
 
             return entries;
         }
 
-        private static TokenizedIndexEntry[] BuildTokensIndex(IndexEntry[] entries)
+        private static void AddTokens(string text, IndexEntry entry, List<TokenizedIndexEntry> tokens)
         {
-            var tokens = new List<TokenizedIndexEntry>();
-            foreach (var entry in entries)
+            int rank = 0;
+            int position = 0;
+            int tokenStartPosition = 0;
+            bool isTokenStart = false;
+            foreach (char ch in text)
             {
-                int rank = 0;
-                int position = 0;
-                bool isTokenStart = false;
-                foreach (char ch in entry.DisplayName)
+                if (ch == ' ' || ch == '-' || ch == ',' || ch == '/' || ch == '(' || ch == '&')
                 {
-                    if (ch == ' ' || ch == '-' || ch == ',' || ch == '/' || ch == '(' || ch == ')')
+                    // As soon as we hit a separator the next character might be the beginning of a token
+                    // It means that we'll skip first words (because this case is covered by the _wordsIndex array)
+                    isTokenStart = true;
+                    if (ch != ' ' && position > 0 && tokenStartPosition == 0)
                     {
-                        // As soon as we hit a separator the next character might be the beginning of a token
-                        // It means that we'll skip first words (because this case is covered by the _wordsIndex array)
-                        isTokenStart = true;
+                        tokenStartPosition = position;
                     }
-                    else
+                }
+                else
+                {
+                    if (isTokenStart)
                     {
-                        if (isTokenStart)
+                        isTokenStart = false;
+
+                        // Add the whole remaining string as a token to enable multi-words match: 
+                        // e.g. match "lot car" in "parking lot car"
+                        string token = text.Substring(position);
+
+                        // Don't add 1-symbol tokens
+                        if (token.Length > 1)
                         {
-                            isTokenStart = false;
-
-                            // Add the whole remaining string as a token to enable multi-words match: 
-                            // e.g. match "lot car" in "parking lot car"
-                            string token = entry.DisplayName.Substring(position);
-
-                            // Don't add 1-symbol tokens
-                            if (token.Length > 1)
+                            tokens.Add(new TokenizedIndexEntry
                             {
-                                tokens.Add(new TokenizedIndexEntry
-                                {
-                                    Rank = rank,
-                                    Token = token,
-                                    Entry = entry
-                                });
-                            }
-
-                            rank++;
+                                Rank = rank,
+                                Token = token,
+                                Entry = entry
+                            });
                         }
+
+                        // Add also string including a separator in case a user will search like "-hand" or "/DC"
+                        if (tokenStartPosition > 0)
+                        {
+                            token = text.Substring(tokenStartPosition);
+                            tokens.Add(new TokenizedIndexEntry
+                            {
+                                Rank = rank,
+                                Token = token,
+                                Entry = entry
+                            });
+                        }
+                        tokenStartPosition = 0;
+
+                        rank++;
+                    }
+                }
+
+                position++;
+            }
+        }
+
+        private static string PrepareAlternativeName(string displayName)
+        {
+            StringBuilder bld = null;
+            int wordEndReplacements = 0;
+            int totalReplacements = 0;
+            for (int i = 0; i < displayName.Length; i++)
+            {
+                char ch = displayName[i];
+
+                // If word differs only by first hyphen we don't create an alternative entry (this case will be covered by tokens).
+                if (ch == '-' && i == 0)
+                    continue;
+
+                string replacement;
+                if (ReplacementMap.TryGetValue(ch, out replacement))
+                {
+                    if (bld == null)
+                    {
+                        // Initialize string builder with the preceding part of the string
+                        bld = new StringBuilder(displayName.Substring(0, i));
                     }
 
-                    position++;
+                    // Don't add consecutive whitespaces
+                    if (!(replacement == " " && bld.Length > 0 && bld[bld.Length - 1] == ' '))
+                    {
+                        bld.Append(replacement);
+                    }
+
+                    totalReplacements++;
+                    wordEndReplacements++;
+                }
+                else
+                {
+                    if (bld != null)
+                    {
+                        // Don't add consecutive whitespaces
+                        if (!(ch == ' ' && bld.Length > 0 && bld[bld.Length - 1] == ' '))
+                        {
+                            bld.Append(ch);
+                        }
+                        wordEndReplacements = 0;
+                    }
                 }
             }
 
-            return tokens.OrderBy(x => x.Rank).ThenBy(x => x.Entry.DisplayName).ToArray();
+            // If all replacements took place at the end of the string then don't generate alternative text
+            if (totalReplacements > 0 && totalReplacements == wordEndReplacements)
+                return null;
+
+            return bld == null ? null : bld.ToString().Trim();
+        }
+
+        private static Dictionary<char, string> InitReplacementMap()
+        {
+            return new Dictionary<char, string>
+            {
+                // Remove
+                {'"', ""},
+                {',', ""},
+                {'(', ""},
+                {')', ""},
+                {'!', ""},
+                {'?', ""},
+                {'¿', ""},
+                {'$', ""},
+
+                // Symbols
+                {'-', " "},
+                {'.', " "},
+                {'\'', " "},
+                {'′', " "},
+                {'&', " "},
+                {'*', " "},
+                {'+', " "},
+                {'/', " "},
+                {':', " "},
+                
+                // Accented characters
+                {'Á', "A"},
+                {'Å', "A"},
+                {'Æ', "Ae"},
+                {'Ç', "C"},
+                {'É', "E"},
+                {'Í', "I"},
+                {'Î', "I"},
+                {'Ó', "O"},
+                {'Õ', "O"},
+                {'Ö', "O"},
+                {'Ø', "O"},
+                {'Ü', "U"},
+                {'à', "a"},
+                {'á', "a"},
+                {'â', "a"},
+                {'ã', "a"},
+                {'ä', "a"},
+                {'å', "a"},
+                {'æ', "ae"},
+                {'ç', "c"},
+                {'è', "e"},
+                {'é', "e"},
+                {'ê', "e"},
+                {'ë', "e"},
+                {'ì', "i"},
+                {'í', "i"},
+                {'î', "i"},
+                {'ï', "i"},
+                {'ñ', "n"},
+                {'ò', "o"},
+                {'ó', "o"},
+                {'ô', "o"},
+                {'õ', "o"},
+                {'ö', "o"},
+                {'ø', "o"},
+                {'ù', "u"},
+                {'ú', "u"},
+                {'û', "u"},
+                {'ü', "u"},
+                {'ý', "y"},
+                {'ÿ', "y"},
+                {'Ā', "A"},
+                {'ā', "a"},
+                {'ă', "a"},
+                {'ą', "a"},
+                {'ć', "c"},
+                {'Č', "C"},
+                {'č', "c"},
+                {'ę', "e"},
+                {'ě', "e"},
+                {'ī', "i"},
+                {'İ', "I"},
+                {'ı', "i"},
+                {'ł', "l"},
+                {'ń', "n"},
+                {'ň', "n"},
+                {'ō', "o"},
+                {'ő', "o"},
+                {'œ', "oe"},
+                {'ř', "r"},
+                {'Ś', "S"},
+                {'ś', "s"},
+                {'ş', "s"},
+                {'Š', "S"},
+                {'š', "s"},
+                {'ţ', "t"},
+                {'ũ', "u"},
+                {'ū', "u"},
+                {'ŭ', "u"},
+                {'ů', "u"},
+                {'Ž', "Z"},
+                {'ž', "z"}
+            };
         }
 
         private class TokenizedIndexEntry

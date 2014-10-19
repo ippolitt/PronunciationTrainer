@@ -17,7 +17,7 @@ namespace Pronunciation.Core.Database
         public Nullable<int> UsageRank { get; set; }
         public string RankLongmanS { get; set; }
         public string RankLongmanW { get; set; }
-        public Nullable<int> RankMacmillan { get; set; }
+        public Nullable<int> RankLongman { get; set; }
         public Nullable<int> RankCOCA { get; set; }
         public Nullable<int> DictionaryId { get; set; }
         public string SoundKeyUK { get; set; }
@@ -28,6 +28,8 @@ namespace Pronunciation.Core.Database
         public Nullable<bool> HasMultiplePronunciations { get; set; }
         public string FavoriteTranscription { get; set; }
         public string Notes { get; set; }
+        public Nullable<bool> HasNotes { get; set; }
+        public Nullable<bool> IsAcademicWord { get; set; }
 
         public virtual ICollection<DictionaryCategory> DictionaryCategories { get; set; }
     }

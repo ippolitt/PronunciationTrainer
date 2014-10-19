@@ -39,17 +39,21 @@ namespace Pronunciation.Parser
             if (ldoce == null)
                 return;
 
+            var entries = ldoce.GetEntries();
+            var spellings = PrepareAlternativeSpellings(entries);
+            
             _stats.AppendLine("\r\nMatching LDOCE entries...");
-            AddEntries(ldoce.GetEntries(),
+            AddEntries(entries,
                 MergeLDOCEEntry,
                 (entry) => new DicWord 
                     { 
-                        Keyword = entry.Keyword, 
+                        Title = entry.Keyword,
                         Language = ((LDOCEHtmlEntry)entry).Language,
                         LDOCEEntry = (LDOCEHtmlEntry)entry, 
                         IsLDOCEEntry = true
                     },
-                allowNew); 
+                allowNew, 
+                spellings); 
         }
 
         public void AddEntries(MWHtmlBuilder mw, bool allowNew)
@@ -62,28 +66,74 @@ namespace Pronunciation.Parser
                 MergeMWEntry,
                 (entry) => new DicWord
                 {
-                    Keyword = entry.Keyword,
+                    Title = entry.Keyword,
                     MWEntry = (MWHtmlEntry)entry,
                     IsMWEntry = true
                 },
-                allowNew); 
+                allowNew, 
+                null); 
+        }
+
+        private Dictionary<string, HashSet<string>> PrepareAlternativeSpellings(IEnumerable<LDOCEHtmlEntry> entries)
+        {
+            var sourceArticles = new Dictionary<string, HashSet<string>>();
+            foreach (var entry in entries.Where(x =>
+                !string.IsNullOrEmpty(x.SourceArticleKeyword) && x.Keyword != x.SourceArticleKeyword))
+            {
+                HashSet<string> altKeywords;
+                string sourceKeyword = DicWord.PrepareKeyword(entry.SourceArticleKeyword);
+                string altKeyword = DicWord.PrepareKeyword(entry.Keyword);
+
+                if (!sourceArticles.TryGetValue(sourceKeyword, out altKeywords))
+                {
+                    altKeywords = new HashSet<string>();
+                    sourceArticles.Add(sourceKeyword, altKeywords);
+                }
+                altKeywords.Add(altKeyword);
+            }
+
+            var spellings = new Dictionary<string, HashSet<string>>();
+            foreach (var pair in sourceArticles)
+            {
+                spellings.Add(pair.Key, pair.Value);
+
+                foreach (var altKeyword in pair.Value)
+                {
+                    HashSet<string> altKeywords;
+                    if (!spellings.TryGetValue(altKeyword, out altKeywords))
+                    {
+                        altKeywords = new HashSet<string>();
+                        spellings.Add(altKeyword, altKeywords);
+                    }
+
+                    altKeywords.Add(pair.Key);
+                    foreach (var otherKeyword in pair.Value.Where(x => x != altKeyword))
+                    {
+                        altKeywords.Add(otherKeyword);
+                    }
+                }
+            }
+
+            return spellings;
         }
 
         private void AddEntries(IEnumerable<IExtraEntry> entries, Action<DicWord, IExtraEntry> matchAction,
-            Func<IExtraEntry, DicWord> newWordBuilder, bool allowNew)
+            Func<IExtraEntry, DicWord> newWordBuilder, bool allowNew, Dictionary<string, HashSet<string>> altSpellings)
         {
             int addedEntriesCount = 0;
             foreach(var entry in entries)
             {
+                string keyword = DicWord.PrepareKeyword(entry.Keyword);
+
                 // First, trying to find case sensitive match
                 DicWord word;
-                if (_caseSensitiveMap.TryGetValue(entry.Keyword, out word))
+                if (_caseSensitiveMap.TryGetValue(keyword, out word))
                 {
                     matchAction(word, entry);
                 }
                 else
                 {
-                    if (_caseInsensitiveMap.TryGetValue(entry.Keyword, out word))
+                    if (_caseInsensitiveMap.TryGetValue(keyword, out word))
                     {
                         matchAction(word, entry);
                     }
@@ -93,10 +143,27 @@ namespace Pronunciation.Parser
                         {
                             word = newWordBuilder(entry);
                             _words.Add(word);
-                            _caseSensitiveMap.Add(entry.Keyword, word);
-                            _caseInsensitiveMap.Add(entry.Keyword, word);
+                            _caseSensitiveMap.Add(keyword, word);
+                            _caseInsensitiveMap.Add(keyword, word);
 
                             addedEntriesCount++;
+                        }
+                    }
+                }
+
+                if (altSpellings != null && altSpellings.Count > 0)
+                {
+                    HashSet<string> altKeywords;
+                    if (altSpellings.TryGetValue(word.Keyword, out altKeywords))
+                    {
+                        if (word.AlternativeSpellings == null)
+                        {
+                            word.AlternativeSpellings = new HashSet<string>();
+                        }
+
+                        foreach (var altKeyword in altKeywords)
+                        {
+                            word.AlternativeSpellings.Add(altKeyword);
                         }
                     }
                 }
@@ -134,9 +201,18 @@ namespace Pronunciation.Parser
                 {
                     var item = (LDOCEHtmlEntryItem)sourceItem;
                     var items = (IEnumerable<LDOCEHtmlEntryItem>)targetItems;
-                    return items.FirstOrDefault(x => x.SoundFileUK == item.SoundFileUK && x.SoundFileUS == item.SoundFileUS
+                    var matchedItem = items.FirstOrDefault(x => x.SoundFileUK == item.SoundFileUK && x.SoundFileUS == item.SoundFileUS
                         && (x.TranscriptionUK == item.TranscriptionUK || string.IsNullOrEmpty(item.TranscriptionUK)) 
                         && (x.TranscriptionUS == item.TranscriptionUS || string.IsNullOrEmpty(item.TranscriptionUS)));
+                    if (matchedItem != null && !matchedItem.Title.IsEqual(item.Title, true))
+                    {
+                        if (!matchedItem.Title.IncludesTitle(item.Title) && !item.Title.IncludesTitle(matchedItem.Title))
+                        {
+                            matchedItem = null;
+                        }
+                    }
+
+                    return matchedItem;
                 });
         }
 
@@ -264,9 +340,6 @@ namespace Pronunciation.Parser
             var result = new List<string>(target);
             result.AddRange(source.Where(x => !result.Contains(x)));
 
-            if (result.Count != target.Length)
-            {
-            }
             return result.ToArray();
         }
 

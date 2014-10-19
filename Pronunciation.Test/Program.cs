@@ -33,8 +33,9 @@ namespace Pronunciation.Test
                 //string str = "sec".Substring(1, 0);
                 //TestBigFile();
                 //TestLoadingData();
-
+                
                 string s = @"alˌ52";
+                var blde = new StringBuilder(s.Substring(0, 0));
                 bool bo = s.StartsWith("al", StringComparison.Ordinal);
 
                 if (args != null && args.Length == 1)

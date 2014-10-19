@@ -10,6 +10,8 @@ namespace Pronunciation.Trainer.Dictionary
     {
         public readonly static Guid WordsWithNotes = new Guid("b3caba42-b4b0-4d58-a820-f976d2f8dc28");
         public readonly static Guid WordsWithMultiplePronunciations = new Guid("7b0311a1-e695-433a-b43a-e9fbe492f615");
+        //public readonly static Guid RecentRecordings = new Guid("428484d2-fd90-4d4a-ab51-d121ec5e8c76");
+
         private readonly static Guid[] AutoListIds;
 
         private readonly IDictionaryProvider _provider;
@@ -49,6 +51,10 @@ namespace Pronunciation.Trainer.Dictionary
             {
                 query = query.Where(x => x.UsageRank != null && x.HasMultiplePronunciations == true);
             }
+            //else if (listId == RecentRecordings)
+            //{
+
+            //}
             else
                 throw new NotSupportedException();
 

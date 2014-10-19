@@ -118,7 +118,7 @@
     </Compile>
     <Compile Include="Providers\Dictionary\ArticlePage.cs" />
     <Compile Include="Providers\Categories\CategoryProvider.cs" />
-    <Compile Include="Providers\Categories\DictionaryCategoryListItem.cs" />
+    <Compile Include="Providers\Categories\DictionaryCategoryItem.cs" />
     <Compile Include="Providers\Dictionary\DictionaryDATReader.cs" />
     <Compile Include="Providers\Dictionary\DictionarySoundInfo.cs" />
     <Compile Include="Providers\Dictionary\DictionaryTargetKey.cs" />

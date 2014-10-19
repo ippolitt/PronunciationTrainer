@@ -53,6 +53,8 @@
     <Compile Include="StringHelper.cs" />
     <Compile Include="TraceHelper.cs" />
     <Compile Include="UppercaseFirstComparer.cs" />
+    <Compile Include="WordRanks.cs" />
+    <Compile Include="WordUsageInfo.cs" />
     <Compile Include="XmlContentCollector.cs" />
     <Compile Include="HtmlHelper.cs" />
     <Compile Include="MWEntry.cs" />

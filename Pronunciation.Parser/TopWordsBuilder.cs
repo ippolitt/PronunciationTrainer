@@ -10,25 +10,42 @@ namespace Pronunciation.Parser
     {
         private class TopWordInfo
         {
-            public string Word;
+            public string Keyword;
             public List<TopWordForm> Forms;
         }
 
         private class TopWordForm
         {
+            public string FormName;
             public SourceType Creator;
             public List<string> SpeechParts = new List<string>();
             public string LongmanRankS;
             public string LongmanRankW;
-            public string MacmillanRank;
-            public string CocaRank;
+            public int? LongmanRank;
+            public int? MacmillanRank;
+            public int? CocaRank;
+            public bool? IsAcademic;
+        }
+
+        private class MergedTopWordInfo
+        {
+            public string Keyword;
+            public TopWordForm Form;
         }
 
         private enum SourceType
         {
+            Undefined,
             Longman,
             Macmillan,
             COCA
+        }
+
+        public StringBuilder Log { get; private set; }
+
+        public TopWordsBuilder()
+        {
+            Log = new StringBuilder();
         }
 
         public void GroupWords()
@@ -60,36 +77,411 @@ namespace Pronunciation.Parser
             Console.WriteLine("{0}: total - {1}, unique - {2}.", sourceType, total, dic.Count);
         }
 
-        public void MergeTopWords()
+        public void GenerateTopWordsWithPartsOfSpeech()
         {
-            var dic = new Dictionary<string, TopWordInfo>();
+            Dictionary<string, TopWordInfo> words = GroupWordsWithPartsOfSpeech();
 
-            MatchFile(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopLongman.txt", dic, SourceType.Longman);
-            MatchFile(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopMacmillan.txt", dic, SourceType.Macmillan);
-            MatchFile(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopCOCA.txt", dic, SourceType.COCA);
-
-            using (var dest = new StreamWriter(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopWords.txt"))
+            using (var dest = new StreamWriter(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopWordsWithPartsOfSpeech.txt"))
             {
-                foreach (var word in dic.Values.OrderBy(x => x.Word))
+                foreach (var word in words.Values.OrderBy(x => x.Keyword))
                 {
                     foreach (var form in word.Forms.OrderBy(x =>
                         x.SpeechParts == null ? null : string.Join(", ", x.SpeechParts)))
                     {
-                        dest.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}\t{5}", 
-                            word.Word,
-                            form.SpeechParts == null ? null : string.Join(", ", form.SpeechParts),
+                        dest.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}",
+                            word.Keyword,
+                            form.SpeechParts == null || form.SpeechParts.Count == 0 ? null : string.Join(", ", form.SpeechParts),
+                            form.LongmanRank,
                             form.LongmanRankS,
                             form.LongmanRankW,
-                            form.MacmillanRank,
-                            form.CocaRank);
+                            form.CocaRank,
+                            form.IsAcademic);
                     }
+                }
+            }
+        }
+
+        public void GenerateTopWords()
+        {
+            Dictionary<string, TopWordInfo> words = GroupWordsWithPartsOfSpeech();
+
+            // Merge word forms
+            var mergedWords = new Dictionary<string, MergedTopWordInfo>();
+            foreach (var word in words.Values.OrderBy(x => x.Keyword))
+            {
+                TopWordForm mergedForm = new TopWordForm();
+                foreach (var form in word.Forms)
+                {
+                    MergeWordForms(mergedForm, form);
+                }
+
+                mergedWords.Add(word.Keyword, new MergedTopWordInfo { Keyword = word.Keyword, Form = mergedForm });
+            }
+
+            // Merge information from similar words
+            foreach (var word in mergedWords.Values.OrderBy(x => x.Keyword))
+            {
+                string groupingKey = PrepareGroupingKey(word.Keyword);
+
+                MergedTopWordInfo matchingWord;
+                if (mergedWords.TryGetValue(groupingKey, out matchingWord))
+                {
+                    if (ReferenceEquals(matchingWord, word))
+                    {
+                        matchingWord = null;
+                    }
+                }
+
+                if (matchingWord == null && word.Keyword.Contains("-"))
+                {
+                    groupingKey = word.Keyword.Replace("-", string.Empty);
+                    if (mergedWords.TryGetValue(groupingKey, out matchingWord))
+                    {
+                        if (ReferenceEquals(matchingWord, word))
+                        {
+                            matchingWord = null;
+                        }
+                    }
+
+                    if (matchingWord == null)
+                    {
+                        groupingKey = word.Keyword.Replace("-", " ");
+                        mergedWords.TryGetValue(groupingKey, out matchingWord);
+                    }
+                }
+
+                if (matchingWord != null && !ReferenceEquals(matchingWord, word) && matchingWord.Form.Creator != word.Form.Creator)
+                {
+                    MergeWordForms(matchingWord.Form, word.Form);
+                    MergeWordForms(word.Form, matchingWord.Form);
+                    Log.AppendFormat("Merged word '{0}' {1} with '{2}' {3}\r\n",
+                        matchingWord.Keyword, matchingWord.Form.Creator, word.Keyword, word.Form.Creator);
+                }
+            }
+
+            // Persist
+            using (var dest = new StreamWriter(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopWords.txt"))
+            {
+                foreach (var word in mergedWords.Values.OrderBy(x => x.Keyword))
+                {
+                    dest.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}\t{5}",
+                        word.Keyword,
+                        word.Form.LongmanRank,
+                        word.Form.LongmanRankS,
+                        word.Form.LongmanRankW,
+                        word.Form.CocaRank,
+                        word.Form.IsAcademic);
+                }
+            }
+        }
+
+        private string PrepareGroupingKey(string keyword)
+        {
+            if (keyword == "AM" || keyword == "A.M.")
+            {
+                keyword = "a.m.";
+            }
+            else if (keyword == "PM" || keyword == "P.M.")
+            {
+                keyword = "p.m.";
+            }
+            else if (keyword == "ok")
+            {
+                keyword = "OK";
+            }
+            else
+            {
+                keyword = keyword.Replace(".", "");
+            }
+
+            return keyword;
+        }
+
+        private void MergeWordForms(TopWordForm target, TopWordForm source)
+        {
+            if (target.Creator == SourceType.Undefined)
+            {
+                target.Creator = source.Creator;
+            }
+            target.LongmanRank = MergeNumberRank(target.LongmanRank, source.LongmanRank);
+            target.LongmanRankS = MergeLongmanRank(target.LongmanRankS , source.LongmanRankS);
+            target.LongmanRankW = MergeLongmanRank(target.LongmanRankW, source.LongmanRankW);
+            target.MacmillanRank = MergeNumberRank(target.MacmillanRank, source.MacmillanRank);
+            target.CocaRank = MergeNumberRank(target.CocaRank, source.CocaRank);
+            if (source.IsAcademic == true)
+            {
+                target.IsAcademic = true;
+            }
+        }
+
+        private string MergeLongmanRank(string targetRank, string sourceRank)
+        {
+            if (string.IsNullOrEmpty(sourceRank))
+                return targetRank;
+
+            if (string.IsNullOrEmpty(targetRank))
+                return sourceRank;
+
+            // Get second symbol which is a digit (S1, W2 etc.)
+            return int.Parse(sourceRank.Substring(1)) < int.Parse(targetRank.Substring(1)) ? sourceRank : targetRank;
+        }
+
+        private int? MergeNumberRank(int? targetRank, int? sourceRank)
+        {
+            if (sourceRank == null)
+                return targetRank;
+
+            if (targetRank == null)
+                return sourceRank;
+
+            return sourceRank.Value < targetRank.Value ? sourceRank : targetRank;
+        }
+
+        private Dictionary<string, TopWordInfo> GroupWordsWithPartsOfSpeech()
+        {
+            var dic = new Dictionary<string, TopWordInfo>();
+
+            MatchFile(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopLongman.txt", dic, SourceType.Longman);
+            //MatchFile(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopMacmillan.txt", dic, SourceType.Macmillan);
+            MatchFile(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopCOCA.txt", dic, SourceType.COCA);
+
+            return dic;
+        }
+
+        public void GroupLongmanOriginal()
+        {
+            var dic = new Dictionary<string, TopWordForm>();
+            PrepareLongmanFile("LongmanS1", (x) => x.LongmanRankS = "S1", dic);
+            PrepareLongmanFile("LongmanS2", (x) => x.LongmanRankS = "S2", dic);
+            PrepareLongmanFile("LongmanS3", (x) => x.LongmanRankS = "S3", dic);
+            PrepareLongmanFile("LongmanW1", (x) => x.LongmanRankW = "W1", dic);
+            PrepareLongmanFile("LongmanW2", (x) => x.LongmanRankW = "W2", dic);
+            PrepareLongmanFile("LongmanW3", (x) => x.LongmanRankW = "W3", dic);
+            PrepareLongmanFile("Longman3000", (x) => x.LongmanRank = 3000, dic);
+            PrepareLongmanFile("Longman6000", (x) => x.LongmanRank = 6000, dic);
+            PrepareLongmanFile("Longman9000", (x) => x.LongmanRank = 9000, dic);
+            PrepareLongmanFile("LongmanAcademic", (x) => x.IsAcademic = true, dic);
+
+            using (var dest = new StreamWriter(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopLongmanOriginal.txt"))
+            {
+                foreach (var form in dic.Values.OrderBy(x => x.FormName))
+                {
+                    dest.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}",
+                        form.FormName,
+                        form.LongmanRank,
+                        form.LongmanRankS,
+                        form.LongmanRankW,
+                        form.IsAcademic);
+                }
+            }
+        }
+
+        public void ParseLongmanOriginal()
+        {
+            var partsOfSpeech = new string[] 
+            { 
+                "adjective",
+                "adverb",
+                "auxiliary verb",
+                "conjunction",
+                "definite article",
+                "determiner",
+                "indefinite article",
+                "interjection",
+                "modal verb",
+                "noun",
+                "number",
+                "predeterminer",
+                "preposition",
+                "pronoun",
+                "verb"
+            };
+
+            var replacements = new Dictionary<string, string>
+            { 
+                {"auxiliary verb", "verb"},
+                {"definite article", "article"},
+                {"indefinite article", "article"},
+                {"modal verb", "verb"},
+                {"predeterminer", "determiner"}
+            };
+            
+            var forms = new Dictionary<string, TopWordForm>();
+            using (var source = new StreamReader(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopLongmanOriginal.txt"))
+            {
+                while (!source.EndOfStream)
+                {
+                    var text = source.ReadLine();
+                    if (string.IsNullOrEmpty(text))
+                        throw new ArgumentException();
+
+                    var parts = text.Split('\t');
+                    if (parts.Length != 5)
+                        throw new ArgumentException();
+
+                    string combinedName = parts[0].Trim();
+                    if (string.IsNullOrWhiteSpace(combinedName))
+                        throw new ArgumentException();
+
+                    TopWordForm form = ParseCombinedLongmanName(combinedName, partsOfSpeech);
+                    form.LongmanRank = string.IsNullOrEmpty(parts[1]) ? (int?)null : int.Parse(parts[1]);
+                    form.LongmanRankS = string.IsNullOrEmpty(parts[2]) ? null : parts[2];
+                    form.LongmanRankW = string.IsNullOrEmpty(parts[3]) ? null : parts[3];
+                    form.IsAcademic = string.IsNullOrEmpty(parts[4]) ? (bool?)null : bool.Parse(parts[4]);
+
+                    form.SpeechParts = GroupLongmanSpeechParts(form.SpeechParts, replacements);
+                    string groupingKey = form.SpeechParts == null || form.SpeechParts.Count == 0 
+                        ? form.FormName
+                        : string.Format("{0}|{1}", form.FormName, string.Join(",", form.SpeechParts));
+
+                    TopWordForm finalForm;
+                    if (forms.TryGetValue(groupingKey, out finalForm))
+                    {
+                        MergeWordForms(finalForm, form);
+                        Log.AppendFormat("Merged '{0}'\r\n", groupingKey);
+                    }
+                    else
+                    {
+                        forms.Add(groupingKey, form);
+                    }
+                }
+            }
+
+            using (var dest = new StreamWriter(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\TopLongman.txt"))
+            {
+                foreach (var form in forms.Values.OrderBy(x => x.FormName))
+                {
+                    dest.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}\t{5}",
+                        form.FormName,
+                        form.SpeechParts == null || form.SpeechParts.Count == 0 ? null : string.Join(", ", form.SpeechParts),
+                        form.LongmanRank,
+                        form.LongmanRankS,
+                        form.LongmanRankW,
+                        form.IsAcademic);
+                }
+            }
+        }
+
+        private List<string> GroupLongmanSpeechParts(List<string> speechParts, Dictionary<string, string> replacements)
+        {
+            if (speechParts == null || speechParts.Count == 0)
+                return speechParts;
+
+            var results = new List<string>();
+            foreach(var speechPart in speechParts)
+            {
+                string replacement;
+                if (replacements.TryGetValue(speechPart, out replacement))
+                {
+                    if (!results.Contains(replacement))
+                    {
+                        results.Add(replacement);
+                    }
+                }
+                else
+                {
+                    if (!results.Contains(speechPart))
+                    {
+                        results.Add(speechPart);
+                    }
+                }
+            }
+
+            return results;
+        }
+
+        private TopWordForm ParseCombinedLongmanName(string combinedName, string[] speechParts)
+        {
+            var partsOfSpeech = new List<string>();
+            string formName = null;
+            int i = 0;
+            foreach (var part in combinedName.Split(new string[] {", "}, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Trim()).Where(x => !string.IsNullOrEmpty(x)))
+            {
+                if (i == 0)
+                {
+                    if (part.Contains(" "))
+                    {
+                        int splitIndex = -1;
+                        for(int j = 0; j < part.Length; j++)
+                        {
+                            if (part[j] == ' ')
+                            {
+                                string speechPart = part.Substring(j + 1);
+                                if (speechParts.Contains(speechPart))
+                                {
+                                    splitIndex = j;
+                                    partsOfSpeech.Add(speechPart);
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (splitIndex < 0)
+                        {
+                            formName = part;
+                        }
+                        else
+                        {
+                            formName = part.Substring(0, splitIndex);
+                        }
+                    }
+                    else
+                    {
+                        formName = part;
+                    }
+                }
+                else
+                {
+                    if (!speechParts.Contains(part))
+                        throw new ArgumentException();
+
+                    partsOfSpeech.Add(part);
+                }
+
+                i++;
+            }
+
+            if (string.IsNullOrWhiteSpace(formName) || formName.Contains(","))
+                throw new ArgumentException();
+
+            formName = formName.Trim();
+            int number;
+            if (int.TryParse(formName.Last().ToString(), out number))
+            {
+                formName = formName.Remove(formName.Length - 1);
+            }
+
+            return new TopWordForm { FormName = formName, SpeechParts = partsOfSpeech };
+        }
+
+        private void PrepareLongmanFile(string sourceFileName, Action<TopWordForm> action, 
+            Dictionary<string, TopWordForm> dic)
+        {
+            string sourceFile = string.Format(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\{0}.txt", sourceFileName);
+            using (var source = new StreamReader(sourceFile))
+            {
+                while (!source.EndOfStream)
+                {
+                    var text = source.ReadLine().Trim();
+                    if (string.IsNullOrEmpty(text))
+                        continue;
+
+                    TopWordForm form;
+                    if (!dic.TryGetValue(text, out form))
+                    {
+                        form = new TopWordForm { FormName = text };
+                        dic.Add(text, form);
+                    }
+
+                    action(form);
                 }
             }
         }
 
         private void MatchFile(string sourceFile, Dictionary<string, TopWordInfo> dic, SourceType sourceType)
         {
-            int columnsCount = (sourceType == SourceType.Longman ? 4 : 3);
+            int columnsCount = (sourceType == SourceType.Longman ? 6 : 3);
             using (var source = new StreamReader(sourceFile))
             {
                 while (!source.EndOfStream)
@@ -107,7 +499,7 @@ namespace Pronunciation.Parser
                     {
                         info = new TopWordInfo
                         {
-                            Word = key,
+                            Keyword = key,
                             Forms = new List<TopWordForm> 
                             { 
                                 new TopWordForm { Creator = sourceType, SpeechParts = speechParts }
@@ -160,55 +552,61 @@ namespace Pronunciation.Parser
                         switch (sourceType)
                         {
                             case SourceType.Longman:
+                                if (form.LongmanRank != null)
+                                    throw new ArgumentException();
+                                form.LongmanRank = string.IsNullOrEmpty(parts[2]) ? (int?)null : int.Parse(parts[2]);
+
                                 if (form.LongmanRankS != null)
                                     throw new ArgumentException();
-                                form.LongmanRankS = parts[2];
+                                form.LongmanRankS = parts[3];
 
                                 if (form.LongmanRankW != null)
                                     throw new ArgumentException();
-                                form.LongmanRankW = parts[3];
+                                form.LongmanRankW = parts[4];
+
+                                if (form.IsAcademic != null)
+                                    throw new ArgumentException();
+                                form.IsAcademic = string.IsNullOrEmpty(parts[5]) ? (bool?)null : bool.Parse(parts[5]);
                                 break;
 
                             case SourceType.Macmillan:
                                 if (form.MacmillanRank != null)
                                 {
-                                    int oldRank = int.Parse(form.MacmillanRank);
                                     int newRank = int.Parse(parts[2]);
-                                    if (oldRank <= newRank)
+                                    if (form.MacmillanRank.Value <= newRank)
                                     {
-                                        Console.WriteLine("Skipped MC: {0} - {1}", info.Word,
+                                        Console.WriteLine("Skipped MC: {0} - {1}", info.Keyword,
                                              string.Join(", ", speechParts));
                                         continue;
                                     }
                                     else
                                     {
-                                        Console.WriteLine("Overriden MC: {0} - {1} with {2}", info.Word,
+                                        Console.WriteLine("Overriden MC: {0} - {1} with {2}", info.Keyword,
                                             string.Join(", ", form.SpeechParts), string.Join(", ", speechParts));
                                     }
                                 }
 
-                                form.MacmillanRank = parts[2];
+                                form.MacmillanRank = int.Parse(parts[2]);
                                 break;
 
                             case SourceType.COCA:
                                 if (form.CocaRank != null)
                                 {
-                                    int oldRank = int.Parse(form.CocaRank);
                                     int newRank = int.Parse(parts[2]);
-                                    if (oldRank <= newRank)
+                                    if (form.CocaRank.Value <= newRank)
                                     {
-                                        Console.WriteLine("Skipped COCA: {0} - {1}", info.Word,
+                                        Console.WriteLine("Skipped COCA: {0} - {1}", info.Keyword,
                                              string.Join(", ", speechParts));
                                         continue;
                                     }
                                     else
                                     {
-                                        Console.WriteLine("Overriden COCA: {0} - {1} with {2}", info.Word,
+                                        Console.WriteLine("Overriden COCA: {0} - {1} with {2}", info.Keyword,
                                             string.Join(", ", form.SpeechParts), string.Join(", ", speechParts));
                                     }
                                 }
 
-                                form.CocaRank = parts[2];
+                                form.CocaRank = int.Parse(parts[2]);
                                 break;
                         }
                     }

@@ -10,6 +10,7 @@ namespace Pronunciation.Parser
     {
         public string Keyword { get; set; }
         public EnglishVariant? Language { get; set; }
+        public string SourceArticleKeyword { get; set; }
         public List<LDOCEHtmlEntryItem> Items { get; set; }
 
         IEnumerable<IExtraEntryItem> IExtraEntry.Items

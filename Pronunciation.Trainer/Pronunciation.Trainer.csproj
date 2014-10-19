@@ -89,11 +89,12 @@
     <Compile Include="Dictionary\SessionStatisticsCollector.cs" />
     <Compile Include="Dictionary\CategoryManager.cs" />
     <Compile Include="Dictionary\WordCategoryStateTracker.cs" />
-    <Compile Include="EditCategories.xaml.cs">
-      <DependentUpon>EditCategories.xaml</DependentUpon>
+    <Compile Include="CategoriesList.xaml.cs">
+      <DependentUpon>CategoriesList.xaml</DependentUpon>
     </Compile>
-    <Compile Include="EditWordNotes.xaml.cs">
-      <DependentUpon>EditWordNotes.xaml</DependentUpon>
+    <Compile Include="Views\DictionaryCategoryListItem.cs" />
+    <Compile Include="WordNotes.xaml.cs">
+      <DependentUpon>WordNotes.xaml</DependentUpon>
     </Compile>
     <Compile Include="Export\AudioExporter.cs" />
     <Compile Include="FileOverrideDialog.xaml.cs">
@@ -175,11 +176,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="EditCategories.xaml">
+    <Page Include="CategoriesList.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="EditWordNotes.xaml">
+    <Page Include="WordNotes.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

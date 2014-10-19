@@ -49,7 +49,7 @@ namespace Pronunciation.Trainer.Dictionary
             return _provider.GetWordCategoryIds(wordId);
         }
 
-        public DictionaryCategoryListItem[] GetAllCategories()
+        public DictionaryCategoryItem[] GetAllCategories()
         {
             return _provider.GetCategories();
         }

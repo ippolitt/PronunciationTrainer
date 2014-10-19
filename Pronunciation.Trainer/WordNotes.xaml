@@ -1,4 +1,4 @@
-﻿<Window x:Class="Pronunciation.Trainer.EditWordNotes"
+﻿<Window x:Class="Pronunciation.Trainer.WordNotes"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Edit word notes" WindowStartupLocation="CenterOwner" Height="248" Width="480"

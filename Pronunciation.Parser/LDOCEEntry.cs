@@ -10,6 +10,7 @@ namespace Pronunciation.Parser
         public string Keyword;
         public EnglishVariant? Language;
         public bool IsDuplicate;
+        public string DuplicateSourceKeyword;
         public List<LDOCEEntryItem> Items;
     }
 

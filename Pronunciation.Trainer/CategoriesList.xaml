@@ -1,4 +1,4 @@
-﻿<Window x:Class="Pronunciation.Trainer.EditCategories"
+﻿<Window x:Class="Pronunciation.Trainer.CategoriesList"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:data="clr-namespace:Pronunciation.Trainer.Database"
@@ -24,8 +24,9 @@
                   CanUserReorderColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeRows="False" 
                   IsReadOnly="False" SelectionMode="Extended" SelectionUnit="CellOrRowHeader" >
             <DataGrid.Columns>
-                <DataGridTextColumn x:Name="nameColumn" Binding="{Binding Path=DisplayName, Mode=TwoWay}" Header="Category" Width="200" />
-                <DataGridTextColumn x:Name="descriptionColumn" Binding="{Binding Path=Description, Mode=TwoWay}" Header="Description" Width="*"
+                <DataGridTextColumn x:Name="nameColumn" Binding="{Binding Path=DisplayName, Mode=TwoWay, NotifyOnValidationError=true}" Header="Category" Width="200" />
+                <DataGridCheckBoxColumn x:Name="isTopColumn" Binding="{Binding Path=IsTopCategory, TargetNullValue=False, Mode=TwoWay, NotifyOnValidationError=true}" Header="Top" Width="30" />
+                <DataGridTextColumn x:Name="descriptionColumn" Binding="{Binding Path=Description, Mode=TwoWay, NotifyOnValidationError=true}" Header="Description" Width="*"
                                     CellStyle="{StaticResource DescriptionCell}"/>
             </DataGrid.Columns>
             <DataGrid.RowHeaderStyle>

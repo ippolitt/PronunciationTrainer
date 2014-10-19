@@ -373,7 +373,7 @@ namespace Pronunciation.Trainer
             {
                 _commandEditNotes.UpdateState(true);
                 var info = index.Word;
-                btnEditNotes.IsStateOn = !string.IsNullOrEmpty(info.Notes) || !string.IsNullOrEmpty(info.FavoriteTranscription);
+                btnEditNotes.IsStateOn = info.HasNotes;
             }
         }
 
@@ -382,7 +382,7 @@ namespace Pronunciation.Trainer
             if (_currentPage == null || _currentPage.WordId == null)
                 throw new ArgumentNullException();
 
-            var dialog = new EditWordNotes();
+            var dialog = new WordNotes();
             dialog.WordId = _currentPage.WordId.Value;
             dialog.WordInfoUpdated += WordInfoUpdated;
             dialog.Owner = ControlsHelper.GetWindow(this);
@@ -404,16 +404,17 @@ namespace Pronunciation.Trainer
             }
 
             DictionaryWordInfo wordInfo = wordIndex.Word;
-            bool hadNotes = wordInfo.HasCustomNotes;
+            bool hadNotes = wordInfo.HasNotes;
             wordInfo.FavoriteTranscription = wordDetails.FavoriteTranscription;
             wordInfo.Notes = wordDetails.Notes;
+            wordInfo.HasNotes = wordDetails.HasNotes == true;
 
             if (refreshNotesState)
             {
                 RefreshNotesState(wordIndex);
             }
 
-            if (hadNotes != wordInfo.HasCustomNotes)
+            if (hadNotes != wordInfo.HasNotes)
             {
                 ProcessWordCategoryChanged(wordDetails.WordId, AutoListsManager.WordsWithNotes, hadNotes);
             }
@@ -574,7 +575,7 @@ namespace Pronunciation.Trainer
                 }
 
                 _searchIndex = new DictionaryIndex();
-                _searchIndex.Build(query);
+                _searchIndex.Build(query, false);
             }
         }
 
@@ -820,7 +821,7 @@ namespace Pronunciation.Trainer
 
         private void btnEditCategories_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new EditCategories();
+            var dialog = new CategoriesList();
             dialog.Owner = ControlsHelper.GetWindow(this);
             dialog.ShowDialog();
             if (dialog.DialogResult == true)
@@ -976,29 +977,47 @@ namespace Pronunciation.Trainer
                 new UsageRankListItem(1000, "Top 1000"),
                 new UsageRankListItem(2000, "Top 1000-2000"),
                 new UsageRankListItem(3000, "Top 2000-3000"),
-                new UsageRankListItem(5000, "Top 3000-5000"),
-                new UsageRankListItem(7500, "Top 5000-7500")
+                new UsageRankListItem(6000, "Top 3000-6000"),
+                new UsageRankListItem(9000, "Top 6000-9000")
             };
         }
 
         private void PopulateCategories()
         {
-            var allCategories = new List<DictionaryCategoryListItem>
-            {
-                new DictionaryCategoryListItem { DisplayName = "none", IsServiceItem = true },
-                new DictionaryCategoryListItem { DisplayName = "Words with notes", IsSystemCategory = true, 
-                    CategoryId = AutoListsManager.WordsWithNotes },
-                new DictionaryCategoryListItem { DisplayName = "Top multi-pronunciation words", IsSystemCategory = true,
-                    CategoryId = AutoListsManager.WordsWithMultiplePronunciations },
-                new DictionaryCategoryListItem { DisplayName = "", IsServiceItem = true, IsSeparator = true }
-            };
-
-            var dbCategories = _categoryManager.GetAllCategories().OrderBy(x => x).ToList();
-            
+            var dbCategories = _categoryManager.GetAllCategories();
             _categoryTracker.SynchronizeCategories(dbCategories);
             categoriesDataGrid.ItemsSource = _categoryTracker.GetCategories();
 
-            allCategories.AddRange(dbCategories);
+            var allCategories = new List<DictionaryCategoryListItem>();
+            allCategories.Add(new DictionaryCategoryListItem("none"));
+            allCategories.Add(new DictionaryCategoryListItem());
+            if (dbCategories.Count(x => x.IsTopCategory) > 0)
+            {
+                allCategories.AddRange(dbCategories.Where(x => x.IsTopCategory)
+                    .OrderBy(x => x).Select(x => new DictionaryCategoryListItem(x)));
+                allCategories.Add(new DictionaryCategoryListItem());
+            }
+
+            var systemCategories = new List<DictionaryCategoryItem>
+            {
+                new DictionaryCategoryItem { DisplayName = "Words with notes", IsSystemCategory = true, 
+                    CategoryId = AutoListsManager.WordsWithNotes },
+                new DictionaryCategoryItem { DisplayName = "Top multi-pronunciation words", IsSystemCategory = true,
+                    CategoryId = AutoListsManager.WordsWithMultiplePronunciations }     
+                //new DictionaryCategoryItem { DisplayName = "Recent recordings", IsSystemCategory = true,
+                //    CategoryId = AutoListsManager.RecentRecordings },           
+            };
+            systemCategories.AddRange(dbCategories.Where(x => x.IsSystemCategory && !x.IsTopCategory));
+            systemCategories.Sort();
+            allCategories.AddRange(systemCategories.Select(x => new DictionaryCategoryListItem(x)));
+
+            if (dbCategories.Count(x => !x.IsSystemCategory && !x.IsTopCategory) > 0)
+            {
+                allCategories.Add(new DictionaryCategoryListItem());
+                allCategories.AddRange(dbCategories.Where(x => !x.IsSystemCategory && !x.IsTopCategory)
+                    .OrderBy(x => x).Select(x => new DictionaryCategoryListItem(x)));
+            }
+
             cboCategories.ItemsSource = allCategories;
         }
     }

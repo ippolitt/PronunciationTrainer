@@ -124,7 +124,7 @@ namespace Pronunciation.Parser
                 File.AppendAllText(_logFile, "\r\nExtra entries matching stats:\r\n" + mapper.Stats.ToString());
             }
 
-            _usageBuilder.Initialize(words.Select(x => x.Keyword));
+            _usageBuilder.Initialize(words);
 
             var soundStats = new StringBuilder();
             if (IsDatabaseMode)
@@ -200,7 +200,7 @@ namespace Pronunciation.Parser
                 {
                     words.Add(new DicWord
                     {
-                        Keyword = names[i],
+                        Title = names[i],
                         LPDEntries = new List<DicEntry> 
                         { 
                             new DicEntry { RawMainData = entry.RawMainData, AllItems = entry.AllItems } 
@@ -260,7 +260,7 @@ namespace Pronunciation.Parser
                     {
                         words.Add(new DicWord
                         {
-                            Keyword = name,
+                            Title = name,
                             IsLPDCollocation = true,
                             LPDEntries = new List<DicEntry> 
                             { 
@@ -510,7 +510,7 @@ namespace Pronunciation.Parser
 ",
                 word.Title);
 
-            if (wordDescription.UsageInfo != null)
+            if (wordDescription.UsageInfo != null && wordDescription.UsageInfo.CombinedRank > 0)
             {
                 pageBuilder.Append(GenerateUsageInfoHtml(wordDescription.UsageInfo));
             }
@@ -563,7 +563,7 @@ namespace Pronunciation.Parser
             }
             else
             {
-                int previousRank = _ranks[rank.CombinedRank];
+                int previousRank =  _ranks[rank.CombinedRank];
                 return string.Format(
 @"      <span class=""word_usage"">Usage rank: top {0}{1}</span>
 ",
@@ -1056,7 +1056,7 @@ namespace Pronunciation.Parser
             var word = new DicWord();
 
             reader.ScrollToStartTag(XmlBuilder.ElementKeywordName);
-            word.Keyword = reader.ReadInnerXml();
+            word.Title = reader.ReadInnerXml();
 
             bool isFirstEntry = true;
             while (true)

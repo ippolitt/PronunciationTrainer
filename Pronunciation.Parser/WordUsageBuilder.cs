@@ -6,60 +6,13 @@ using System.IO;
 
 namespace Pronunciation.Parser
 {
-    class WordUsageInfo
-    {
-        public string Keyword;
-        public int CombinedRank;
-        public WordRanks Ranks;
-        public WordUsageInfo PreviousWord;
-        public WordUsageInfo NextWord;
-        public bool IsMapped;
-    }
-
-    public class WordRanks
-    {
-        public string LongmanSpoken;
-        public string LongmanWritten;
-        public int Macmillan;
-        public int COCA;
-
-        public int CalculateRank()
-        {
-            int rank;
-            if (LongmanSpoken == "S1" || LongmanWritten == "W1" || (COCA > 0 && COCA <= 1000))
-            {
-                rank = 1000;
-            }
-            else if (LongmanSpoken == "S2" || LongmanWritten == "W2" || (COCA > 1000 && COCA <= 2000))
-            {
-                rank = 2000;
-            }
-            else if (LongmanSpoken == "S3" || LongmanWritten == "W3" || (COCA > 2000 && COCA <= 3000) || Macmillan == 2500)
-            {
-                rank = 3000;
-            }
-            else if ((COCA > 3000 && COCA <= 5000) || Macmillan == 5000)
-            {
-                rank = 5000;
-            }
-            else if ((COCA > 5000 && COCA <= 7500) || Macmillan == 7500)
-            {
-                rank = 7500;
-            }
-            else
-            {
-                throw new ArgumentException();
-            }
-
-            return rank;
-        }
-    }
-
     class WordUsageBuilder
     {
         private Dictionary<string, WordUsageInfo> _words;
         private string _usageFile;
         private StringBuilder _stats;
+
+        private static string[] CanRemoveDots = new string[] { "etc.", "O.K.", "vs.", "i.e.", "Mr.", "Ms.", "Mrs.", "Dr.", "A.D.", "A.M.", "P.M." };
 
         public WordUsageBuilder(string usageFile)
         {
@@ -74,56 +27,116 @@ namespace Pronunciation.Parser
             get { return _stats; }
         }
 
-        public void Initialize(IEnumerable<string> keywords)
+        public void Initialize(IEnumerable<DicWord> allWords)
         {
             _stats = new StringBuilder();
-            Dictionary<string, WordUsageInfo> caseSensitiveRanks = GroupWords(_usageFile);
+            Dictionary<string, WordUsageInfo> topWords = LoadWords(_usageFile);
+
+            var secondMatchWords = new Dictionary<string, List<WordUsageInfo>>();
+            foreach (var topWord in topWords.Values)
+            {
+                string matchingKeyword = PrepareMatchingKeyword(topWord.Keyword, false);
+
+                List<WordUsageInfo> items;
+                if (!secondMatchWords.TryGetValue(matchingKeyword, out items))
+                {
+                    items = new List<WordUsageInfo>();
+                    secondMatchWords.Add(matchingKeyword, items);
+                }
+                items.Add(topWord);
+            }
 
             _words = new Dictionary<string, WordUsageInfo>();
-            var unmappedKeywords = new List<string>();
-            foreach (var keyword in keywords)
+            foreach (var word in allWords)
             {
-                WordUsageInfo info;
-                if (caseSensitiveRanks.TryGetValue(keyword, out info))
+                WordUsageInfo info = null;
+                if (topWords.TryGetValue(word.Keyword, out info))
                 {
-                    info.CombinedRank = info.Ranks.CalculateRank();
                     info.IsMapped = true;
-                    _words.Add(keyword, info);
-                }
-                else
-                {
-                    unmappedKeywords.Add(keyword);
+                    _words.Add(word.Keyword, info);
                 }
             }
 
-            // Perform case insensitive match
-            var caseInsensitiveRanks = new Dictionary<string, WordUsageInfo>(StringComparer.OrdinalIgnoreCase);
-            foreach (var group in caseSensitiveRanks.Values.Where(x => !x.IsMapped).GroupBy(x => x.Keyword.ToLower()))
+            // Second attempt
+            foreach (var word in allWords)
             {
-                var groupItems = group.OrderBy(x => x.Ranks.CalculateRank()).ToArray();
-                caseInsensitiveRanks.Add(group.Key, groupItems[0]);
-            }
-            foreach (var keyword in unmappedKeywords)
-            {
-                WordUsageInfo info;
-                if (caseInsensitiveRanks.TryGetValue(keyword, out info))
+                string matchingKeyword = PrepareMatchingKeyword(word.Keyword, false);
+                List<WordUsageInfo> items;
+                if (secondMatchWords.TryGetValue(matchingKeyword, out items))
                 {
-                    info.CombinedRank = info.Ranks.CalculateRank();
-                    info.IsMapped = true;
-                    _words.Add(keyword, info);
+                    WordUsageInfo usageInfo = items.OrderBy(x => x.CombinedRank).FirstOrDefault(x => !x.IsMapped);
+                    if (usageInfo == null)
+                    {
+                        string caseMatchingKeyword = PrepareMatchingKeyword(word.Keyword, true);
+                        usageInfo = items.OrderBy(x => x.CombinedRank)
+                            .FirstOrDefault(x => PrepareMatchingKeyword(x.Keyword, true) == caseMatchingKeyword);
+                    }
+
+                    if (usageInfo == null)
+                        continue;
+
+                    WordUsageInfo previousMatch;
+                    if (_words.TryGetValue(word.Keyword, out previousMatch))
+                    {
+                        if (usageInfo.CombinedRank < previousMatch.CombinedRank)
+                        {
+                            if (usageInfo.IsMapped)
+                            {
+                                _stats.AppendFormat("Ranks: reusing mapped rank '{0}'.\r\n", usageInfo.Keyword);
+                            }
+
+                            usageInfo.IsMapped = true;
+                            previousMatch.IsMapped = false;
+                            _words[word.Keyword] = usageInfo;
+
+                            _stats.AppendFormat("Ranks: remapped keyword '{0}' to lower rank '{1}'.\r\n",
+                                word.Keyword, usageInfo.Keyword);
+                        }
+                    }
+                    else
+                    {
+                        if (usageInfo.IsMapped)
+                        {
+                            _stats.AppendFormat("Ranks: reusing mapped rank '{0}'.\r\n", usageInfo.Keyword);
+                        }
+
+                        usageInfo.IsMapped = true;
+                        _words.Add(word.Keyword, usageInfo);
+
+                        _stats.AppendFormat("Ranks: mapped keyword '{0}' to rank for '{1}' on second attempt.\r\n",
+                            word.Keyword, usageInfo.Keyword);
+                    }
+                }
+            }
+
+            // Third attempt - consider that alternative spellings have the same rank (if they are not mapped yet)
+            foreach (var word in allWords.Where(x => x.AlternativeSpellings != null && x.AlternativeSpellings.Count > 0))
+            {
+                WordUsageInfo usageInfo;
+                if (!_words.TryGetValue(word.Keyword, out usageInfo))
+                    continue;
+
+                foreach (var altKeyword in word.AlternativeSpellings)
+                {
+                    if (!_words.ContainsKey(altKeyword))
+                    {
+                        _words.Add(altKeyword, usageInfo);
+                        _stats.AppendFormat("Ranks: assinged alternative spelling keyword '{0}' the same rank as the original one '{1}'.\r\n",
+                            altKeyword, word.Keyword);
+                    }
                 }
             }
 
             int count = 0;
-            foreach (var keyword in caseSensitiveRanks.Values.Where(x => !x.IsMapped).Select(x => x.Keyword).OrderBy(x => x))
+            foreach (var keyword in topWords.Values.Where(x => !x.IsMapped).Select(x => x.Keyword).OrderBy(x => x))
             {
                 count++;
-                _stats.AppendFormat("Keyword '{0}' is not mapped.\r\n", keyword);
+                _stats.AppendFormat("Ranks: keyword '{0}' is not mapped.\r\n", keyword);
             }
-            _stats.AppendFormat("Totally '{0}' keywords haven't been mapped.\r\n", count);
+            _stats.AppendFormat("Ranks: totally '{0}' keywords haven't been mapped.\r\n", count);
 
             // Build previous and next words within each rank
-            foreach (var group in _words.Values.GroupBy(x => x.CombinedRank))
+            foreach (var group in _words.Values.Where(x => x.CombinedRank > 0).GroupBy(x => x.CombinedRank))
             {
                 WordUsageInfo previous = null;
                 foreach (var word in group.OrderBy(x => x.Keyword))
@@ -139,7 +152,25 @@ namespace Pronunciation.Parser
             }
         }
 
-        private Dictionary<string, WordUsageInfo> GroupWords(string usageFile)
+        private string PrepareMatchingKeyword(string keyword, bool preserveCase)
+        {
+            if (CanRemoveDots.Contains(keyword))
+            {
+                keyword = keyword.Replace(".", "");
+            }
+
+            if (!preserveCase && keyword.Length > 1)
+            {
+                if (char.IsUpper(keyword[0]) && !char.IsUpper(keyword[1]))
+                {
+                    keyword = keyword.ToLower();
+                }
+            }
+
+            return keyword;
+        }
+
+        private Dictionary<string, WordUsageInfo> LoadWords(string usageFile)
         {
             var words = new Dictionary<string, WordUsageInfo>();
             using (var source = new StreamReader(usageFile))
@@ -153,61 +184,20 @@ namespace Pronunciation.Parser
                     var keyword = parts[0];
                     var ranks = new WordRanks 
                     {
-                        LongmanSpoken = parts[2],
-                        LongmanWritten = parts[3],
-                        Macmillan = string.IsNullOrEmpty(parts[4]) ? 0 : int.Parse(parts[4]),
-                        COCA = string.IsNullOrEmpty(parts[5]) ? 0 : int.Parse(parts[5])
+                        Longman = string.IsNullOrEmpty(parts[1]) ? 0 : int.Parse(parts[1]),
+                        LongmanSpoken = string.IsNullOrEmpty(parts[2]) ? null : parts[2],
+                        LongmanWritten = string.IsNullOrEmpty(parts[3]) ? null : parts[3],
+                        COCA = string.IsNullOrEmpty(parts[4]) ? 0 : int.Parse(parts[4]),
+                        IsAcademicWord = string.IsNullOrEmpty(parts[5]) ? false : bool.Parse(parts[5]),
                     };
 
-                    WordUsageInfo info;
-                    if (!words.TryGetValue(keyword, out info))
-                    {
-                        info = new WordUsageInfo { Keyword = keyword, Ranks = ranks };
-                        words.Add(keyword, info);
-                    }
-                    else
-                    {
-                        MergeRanks(info.Ranks, ranks);
-                    }
+                    WordUsageInfo info = new WordUsageInfo { Keyword = keyword, Ranks = ranks };
+                    info.CombinedRank = info.Ranks.CalculateRank();
+                    words.Add(keyword, info);
                 }
             }
 
             return words;
-        }
-
-        private void MergeRanks(WordRanks target, WordRanks source)
-        {
-            if (LongmanRankIsHigher(source.LongmanSpoken, target.LongmanSpoken))
-            {
-                target.LongmanSpoken = source.LongmanSpoken;
-            }
-
-            if (LongmanRankIsHigher(source.LongmanWritten, target.LongmanWritten))
-            {
-                target.LongmanWritten = source.LongmanWritten;
-            }
-
-            if (source.Macmillan > 0 && (target.Macmillan <= 0 || source.Macmillan < target.Macmillan))
-            {
-                target.Macmillan = source.Macmillan;
-            }
-
-            if (source.COCA > 0 && (target.COCA <= 0 || source.COCA < target.COCA))
-            {
-                target.COCA = source.COCA;
-            }
-        }
-
-        // S1, W2 etc
-        private bool LongmanRankIsHigher(string sourceRank, string targetRank)
-        {
-            if (string.IsNullOrEmpty(sourceRank))
-                return false;
-
-            if (string.IsNullOrEmpty(targetRank))
-                return true;
-
-            return (int.Parse(sourceRank.Substring(1)) < int.Parse(targetRank.Substring(1)));
         }
 
         public WordUsageInfo GetUsage(string keyword)
@@ -221,7 +211,7 @@ namespace Pronunciation.Parser
 
         public int[] GetRanks()
         {
-            return new[] { 1000, 2000, 3000, 5000, 7500 };
+            return new[] { 1000, 2000, 3000, 6000, 9000 };
         }
 
         public IEnumerable<WordUsageInfo> GetWords(int rank)

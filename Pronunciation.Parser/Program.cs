@@ -66,17 +66,16 @@ namespace Pronunciation.Parser
                // FindUnmatchedRanks(rootFolder);
 
                 //var topBuilder = new TopWordsBuilder();
-                //topBuilder.MergeTopWords();
-                //topBuilder.FixMacmillan();
+                ////topBuilder.GenerateTopWordsWithPartsOfSpeech();
+                //topBuilder.GenerateTopWords();
+                ////topBuilder.ParseLongmanOriginal();
+                //File.WriteAllText(@"D:\WORK\NET\PronunciationTrainer\Data\TopWords\Builder.log", topBuilder.Log.ToString());
 
                 //return;
 
                 //var data = File.ReadAllBytes(Path.Combine(HtmlFolderPath, @"Recordings\j\jump.mp3"));
                 //var str = Convert.ToBase64String(data);
                 //File.WriteAllText(Path.Combine(RootFolderPath, "mp3.txt"), str);
-
-                //var b = new TopWordsBuilder();
-                //b.GroupWords();
 
                 //CheckFiles();
 
@@ -104,6 +103,7 @@ namespace Pronunciation.Parser
                 //    Path.Combine(rootFolder, DataFolderLDOCE, SourceFileNameLDOCE),
                 //    Path.Combine(rootFolder, AnalysisFolderLDOCE, ResultsFileNameLDOCE),
                 //    Path.Combine(rootFolder, AnalysisFolderLDOCE, ConvertLogFileName));
+                //return;
 
                 //var items1 = LDOCEProcessor.LoadParsedData(@"D:\WORK\NET\PronunciationTrainer\Analysis\LDOCE\Results.txt");
                 //var items2 = LDOCEProcessor.LoadParsedData(@"D:\WORK\NET\PronunciationTrainer\Data\ResultsLDOCE.txt");

@@ -62,8 +62,8 @@ namespace Pronunciation.Trainer.Dictionary
         {
             Logger.Info("Build index started...");
 
-            List<IndexEntry> data = _provider.GetWordsIndex(AppSettings.Instance.ActiveDictionaryIds);
-            _index.Build(data);
+            List<IndexEntry> entries = _provider.GetWordsIndex(AppSettings.Instance.ActiveDictionaryIds);
+            _index.Build(entries, true);
 
             Logger.Info("Build index completed.");
         }

@@ -23,6 +23,7 @@ namespace Pronunciation.Core.Database
         public string DisplayName { get; set; }
         public string Description { get; set; }
         public Nullable<bool> IsSystemCategory { get; set; }
+        public Nullable<bool> IsTopCategory { get; set; }
 
         public virtual ICollection<DictionaryWord> DictionaryWords { get; set; }
     }

@@ -146,7 +146,7 @@ WHERE SoundKey = @soundKey", conn);
                 SqlCeCommand cmd = new SqlCeCommand();
                 cmd.Connection = conn;
                 cmd.CommandText =
-@"SELECT HtmlIndex, SoundKeyUK, SoundKeyUS, FavoriteSoundKey, FavoriteTranscription, Notes
+@"SELECT HtmlIndex, SoundKeyUK, SoundKeyUS, FavoriteSoundKey, FavoriteTranscription, Notes, HasNotes
 FROM DictionaryWord
 WHERE WordId = @wordId";
                 cmd.Parameters.AddWithValue("@wordId", wordId);
@@ -162,6 +162,7 @@ WHERE WordId = @wordId";
                         word.FavoriteSoundKey = reader["FavoriteSoundKey"] as string;
                         word.FavoriteTranscription = reader["FavoriteTranscription"] as string;
                         word.Notes = reader["Notes"] as string;
+                        word.HasNotes = (reader["HasNotes"] as bool?) == true;
 
                         break;
                     }
@@ -204,7 +205,7 @@ WHERE WordId = @wordId";
                 cmd.CommandText =
 @"SELECT WordId
 FROM DictionaryWord
-WHERE (FavoriteTranscription IS NOT NULL AND FavoriteTranscription <> '') OR (Notes IS NOT NULL AND Notes <> '')";
+WHERE HasNotes = 'True'";
 
                 using (SqlCeDataReader reader = cmd.ExecuteReader())
                 {
@@ -250,6 +251,7 @@ WHERE (FavoriteTranscription IS NOT NULL AND FavoriteTranscription <> '') OR (No
         {
             var words = new List<IndexEntry>();
             bool checkDictionaryId = dictionaryIds != null && dictionaryIds.Length > 0;
+
             using (var reader = new StreamReader(_indexFilePath, Encoding.UTF8))
             {
                 while (!reader.EndOfStream)

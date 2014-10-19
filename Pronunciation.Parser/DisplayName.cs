@@ -132,10 +132,23 @@ namespace Pronunciation.Parser
 
         public bool IsEqual(DisplayName title)
         {
+            return IsEqual(title, false);
+        }
+
+        public bool IsEqual(DisplayName title, bool ignoreCase)
+        {
             if (title == null)
                 return false;
 
-            return GetStringWithoutStress() == title.GetStringWithoutStress();
+            return string.Compare(GetStringWithoutStress(), title.GetStringWithoutStress(), ignoreCase) == 0;
+        }
+
+        public bool IncludesTitle(DisplayName title)
+        {
+            if (title == null)
+                return false;
+
+            return GetStringWithoutStress().Contains(title.GetStringWithoutStress());
         }
 
         public bool ContainsStress

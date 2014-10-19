@@ -109,10 +109,11 @@ namespace Pronunciation.Parser
 
             // Word usage statistics
             wordRecord["UsageRank"] = null;
+            wordRecord["RankLongman"] = null;
             wordRecord["RankLongmanS"] = null;
             wordRecord["RankLongmanW"] = null;
-            wordRecord["RankMacmillan"] = null;
             wordRecord["RankCOCA"] = null;
+            wordRecord["IsAcademicWord"] = null;
             if (word.UsageInfo != null)
             {
                 if (word.UsageInfo.CombinedRank > 0)
@@ -122,6 +123,10 @@ namespace Pronunciation.Parser
                 if (word.UsageInfo.Ranks != null)
                 {
                     var ranks = word.UsageInfo.Ranks;
+                    if (ranks.Longman > 0)
+                    {
+                        wordRecord["RankLongman"] = ranks.Longman;
+                    }
                     if (!string.IsNullOrEmpty(ranks.LongmanSpoken))
                     {
                         wordRecord["RankLongmanS"] = ranks.LongmanSpoken;
@@ -130,13 +135,13 @@ namespace Pronunciation.Parser
                     {
                         wordRecord["RankLongmanW"] = ranks.LongmanWritten;
                     }
-                    if (ranks.Macmillan > 0)
-                    {
-                        wordRecord["RankMacmillan"] = ranks.Macmillan;
-                    }
                     if (ranks.COCA > 0)
                     {
                         wordRecord["RankCOCA"] = ranks.COCA;
+                    }
+                    if (ranks.IsAcademicWord)
+                    {
+                        wordRecord["IsAcademicWord"] = true;
                     }
                 }
             }

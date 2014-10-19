@@ -28,12 +28,12 @@ namespace Pronunciation.Trainer.Dictionary
             get { return _currentWordId; }
         }
 
-        public void SynchronizeCategories(IEnumerable<DictionaryCategoryListItem> categories)
+        public void SynchronizeCategories(IEnumerable<DictionaryCategoryItem> categories)
         {
             using (var region = _ignoreEvents.Start())
             {
                 var categoryIds = new HashSet<Guid>();
-                foreach(var category in categories.Where(x => !(x.IsSystemCategory == true || x.IsServiceItem)))
+                foreach(var category in categories.Where(x => !x.IsSystemCategory))
                 {
                     var item = _categories.SingleOrDefault(x => x.CategoryId == category.CategoryId);
                     if (item == null)

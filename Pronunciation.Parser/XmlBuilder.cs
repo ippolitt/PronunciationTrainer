@@ -72,7 +72,7 @@ namespace Pronunciation.Parser
 
                             if (replaceAllTags)
                             {
-                                keyword = tags.ConvertText(EntryType.Keyword, keyword, keyword);
+                                keyword = FixKeyword(tags.ConvertText(EntryType.Keyword, keyword, keyword));
                             }
                             tracker.RegisterKeyword(keyword);
                             keywordsCount++;
@@ -125,7 +125,7 @@ namespace Pronunciation.Parser
                                     {
                                         AddNode(dest, ElementEntryNumber, tracker.EntryNumber);
                                     }
-                                    AddNode(dest, ElementEntryData, convertedText);
+                                    AddNode(dest, ElementEntryData, FixMainEntry(convertedText));
                                     break;
 
                                 case EntryType.Comment:
@@ -150,7 +150,7 @@ namespace Pronunciation.Parser
 
                                 case EntryType.Collocation:
                                     tracker.RegisterEntryCollocation();
-                                    AddNode(dest, ElementCollocation, convertedText);
+                                    AddNode(dest, ElementCollocation, FixCollocation(convertedText));
                                     break;
 
                                 default:
@@ -186,6 +186,34 @@ namespace Pronunciation.Parser
                     }
                 }
             }
+        }
+
+        private static string FixKeyword(string keyword)
+        {
+            if (keyword == "Scotty. s~")
+            {
+                keyword = "Scotty";
+            }
+
+            return keyword;
+        }
+
+        private static string FixMainEntry(string entryText)
+        {
+            if (string.IsNullOrEmpty(entryText))
+                return entryText;
+
+            return entryText.Replace("×", "x"); // fix for "4x4" from "four by four" article
+        }
+
+        private static string FixCollocation(string collocationText)
+        {
+            if (string.IsNullOrEmpty(collocationText))
+                return collocationText;
+
+            return collocationText
+                .Replace("enemy;", "enemy") // Fix for "public enemy;" from "public" article
+                .Replace("\"Swamp", "Swamp"); // fix for [Okavango "Swamp]
         }
 
         private void WriteStats(TagAnalyzer tags)

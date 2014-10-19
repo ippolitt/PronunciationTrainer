@@ -13,9 +13,11 @@ namespace Pronunciation.Core.Providers.Dictionary
         public int? WordId { get; private set; }
         public bool? HasMultiplePronunciations { get; private set; }
 
+        public string AlternativeName { get; set; }
+
         // Use static property to avoid storing reference in each instance of index entry
         public static IDictionaryProvider ActiveProvider { get; set; }
-
+        
         private DictionaryWordInfo _word;
 
         public override string ToString()
@@ -23,23 +25,26 @@ namespace Pronunciation.Core.Providers.Dictionary
             return DisplayName;
         }
 
-        public IndexEntry(string displayName, int? usageRank, int? dictionaryId,  bool? hasMultiplePronunciations, int wordId)
+        private IndexEntry(string displayName, int? usageRank, int? dictionaryId)
         {
             DisplayName = displayName;
             UsageRank = usageRank;
             DictionaryId = dictionaryId;
+        }
+
+        public IndexEntry(string displayName, int? usageRank, int? dictionaryId,  bool? hasMultiplePronunciations, int wordId)
+            : this (displayName, usageRank, dictionaryId)
+        {
             HasMultiplePronunciations = hasMultiplePronunciations;
             WordId = wordId;
         }
 
         public IndexEntry(string displayName, int? usageRank, int? dictionaryId, DictionaryWordInfo word)
+            : this(displayName, usageRank, dictionaryId)
         {
             if (word == null)
                 throw new ArgumentNullException();
 
-            DisplayName = displayName;
-            UsageRank = usageRank;
-            DictionaryId = dictionaryId;
             _word = word;
         }
 

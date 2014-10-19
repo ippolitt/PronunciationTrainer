@@ -17,26 +17,27 @@ namespace Pronunciation.Core.Providers.Categories
             _connectionString = connectionString;
         }
 
-        public DictionaryCategoryListItem[] GetCategories()
+        public DictionaryCategoryItem[] GetCategories()
         {
-            var categories = new List<DictionaryCategoryListItem>();
+            var categories = new List<DictionaryCategoryItem>();
             using (SqlCeConnection conn = new SqlCeConnection(_connectionString))
             {
                 conn.Open();
 
                 SqlCeCommand cmd = new SqlCeCommand(
-@"SELECT CategoryId, DisplayName, IsSystemCategory
+@"SELECT CategoryId, DisplayName, IsSystemCategory, IsTopCategory
 FROM DictionaryCategory", conn);
 
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        categories.Add(new DictionaryCategoryListItem 
+                        categories.Add(new DictionaryCategoryItem 
                         {
                             CategoryId = (Guid)reader["CategoryId"],
                             DisplayName = (string)reader["DisplayName"],
-                            IsSystemCategory = reader["IsSystemCategory"] as bool?
+                            IsSystemCategory = (reader["IsSystemCategory"] as bool?) == true,
+                            IsTopCategory = (reader["IsTopCategory"] as bool?) == true
                         });
                     }
                 }

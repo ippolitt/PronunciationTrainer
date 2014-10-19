@@ -19,7 +19,7 @@ namespace Pronunciation.Trainer
     /// <summary>
     /// Interaction logic for EditWordNotes.xaml
     /// </summary>
-    public partial class EditWordNotes : Window
+    public partial class WordNotes : Window
     {
         public delegate void WordInfoUpdatedDelegate(DictionaryWord wordDetails);
 
@@ -29,7 +29,7 @@ namespace Pronunciation.Trainer
         public int WordId { get; set; }
         public event WordInfoUpdatedDelegate WordInfoUpdated;
 
-        public EditWordNotes()
+        public WordNotes()
         {
             InitializeComponent();
         }
@@ -75,6 +75,10 @@ namespace Pronunciation.Trainer
 
             if (_dbContext.HasChanges())
             {
+                var word = WordDetails;
+                word.HasNotes = !string.IsNullOrWhiteSpace(word.FavoriteTranscription)
+                    || !string.IsNullOrWhiteSpace(word.Notes);
+
                 _dbContext.SaveChanges();
                 if (WordInfoUpdated != null)
                 {

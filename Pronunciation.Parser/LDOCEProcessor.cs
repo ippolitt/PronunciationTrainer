@@ -23,6 +23,7 @@ namespace Pronunciation.Parser
                     bld.Append(string.Join("\t",
                         entry.Keyword, 
                         entry.Language,
+                        entry.IsDuplicate ? entry.DuplicateSourceKeyword : null,
                         number,
                         PreparePartsOfSpeech(item.PartsOfSpeech),
                         item.ItemTitle.Serialize(),
@@ -46,7 +47,7 @@ namespace Pronunciation.Parser
                 while (!reader.EndOfStream)
                 {
                     string[] data = reader.ReadLine().Split('\t');
-                    if (data.Length != 10)
+                    if (data.Length != 11)
                         throw new InvalidOperationException("Source LDOCE file is broken!");
 
                     string keyword = data[0];
@@ -58,19 +59,23 @@ namespace Pronunciation.Parser
                         {
                             entry.Language = (EnglishVariant)Enum.Parse(typeof(EnglishVariant), data[1]);
                         }
+                        if (!string.IsNullOrEmpty(data[2]))
+                        {
+                            entry.SourceArticleKeyword = data[2];
+                        }
                         entries.Add(keyword, entry);
                     }
 
                     entry.Items.Add(new LDOCEHtmlEntryItem 
                     { 
-                        Number = int.Parse(data[2]),
-                        PartsOfSpeech = data[3],
-                        Title = DisplayName.Deserialize(data[4]),
-                        TranscriptionUK = data[5],
-                        TranscriptionUS = data[6],
-                        SoundFileUK = data[7],
-                        SoundFileUS = data[8],
-                        Notes = data[9]
+                        Number = int.Parse(data[3]),
+                        PartsOfSpeech = data[4],
+                        Title = DisplayName.Deserialize(data[5]),
+                        TranscriptionUK = data[6],
+                        TranscriptionUS = data[7],
+                        SoundFileUK = data[8],
+                        SoundFileUS = data[9],
+                        Notes = data[10]
                     });
                 }
             }

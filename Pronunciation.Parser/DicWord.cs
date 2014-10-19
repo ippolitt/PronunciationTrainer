@@ -16,6 +16,7 @@ namespace Pronunciation.Parser
         public List<DicEntry> LPDEntries;
         public LDOCEHtmlEntry LDOCEEntry;
         public MWHtmlEntry MWEntry;
+        public HashSet<string> AlternativeSpellings;
 
         public const int DictionaryIdLDOCE = 1;
         public const int DictionaryIdMW = 2;
@@ -23,24 +24,16 @@ namespace Pronunciation.Parser
         public string Keyword
         {
             get { return _keyword; }
-            set 
-            {
-                _title = value;
-                if (string.IsNullOrEmpty(_title))
-                {
-                    _keyword = _title;
-                }
-                else
-                {
-                    // Some keywords contain HTML tags in them (e.g. H20)
-                    _keyword = _title.Replace("<sub>", "").Replace("</sub>", "");                    
-                }
-            }
         }
 
         public string Title
         {
             get { return _title; }
+            set 
+            { 
+                _title = value;
+                _keyword = PrepareKeyword(value);
+            }
         }
 
         public int? DictionaryId
@@ -58,6 +51,13 @@ namespace Pronunciation.Parser
         {
             get { return _dictionaryId == DictionaryIdMW; }
             set { _dictionaryId = DictionaryIdMW; }
+        }
+
+        public static string PrepareKeyword(string keyword)
+        {
+            return keyword.Replace("<sub>", "").Replace("</sub>", "").Replace("&amp;", "&")
+                .Replace('–', '-').Replace('‘', '\'').Replace('ʻ', '\'').Replace('“', '"').Replace('”', '"')
+                .Replace("\u0327", "").Replace("\u0306", "").Replace("\u0323", "");
         }
     }
 

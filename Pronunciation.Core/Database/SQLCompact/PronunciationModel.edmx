@@ -78,6 +78,7 @@
           <Property Name="DisplayName" Type="nvarchar" Nullable="false" MaxLength="100" />
           <Property Name="Description" Type="nvarchar" MaxLength="500" />
           <Property Name="IsSystemCategory" Type="bit" />
+          <Property Name="IsTopCategory" Type="bit" />
         </EntityType>
         <EntityType Name="DictionaryCategoryWord">
           <Key>
@@ -96,7 +97,6 @@
           <Property Name="UsageRank" Type="int" />
           <Property Name="RankLongmanS" Type="nvarchar" MaxLength="10" />
           <Property Name="RankLongmanW" Type="nvarchar" MaxLength="10" />
-          <Property Name="RankMacmillan" Type="int" />
           <Property Name="RankCOCA" Type="int" />
           <Property Name="SoundKeyUK" Type="nvarchar" MaxLength="100" />
           <Property Name="SoundKeyUS" Type="nvarchar" MaxLength="100" />
@@ -107,6 +107,9 @@
           <Property Name="HasMultiplePronunciations" Type="bit" />
           <Property Name="FavoriteTranscription" Type="nvarchar" MaxLength="100" />
           <Property Name="Notes" Type="nvarchar" MaxLength="500" />
+          <Property Name="HasNotes" Type="bit" />
+          <Property Name="RankLongman" Type="int" />
+          <Property Name="IsAcademicWord" Type="bit" />
         </EntityType>
         <EntityType Name="Exercise">
           <Key>
@@ -535,6 +538,7 @@
           <Property Type="String" Name="Description" MaxLength="500" FixedLength="false" Unicode="true" />
           <Property Type="Boolean" Name="IsSystemCategory" />
           <NavigationProperty Name="DictionaryWords" Relationship="PronunciationModel.DictionaryCategoryWord" FromRole="DictionaryCategory" ToRole="DictionaryWord" />
+          <Property Type="Boolean" Name="IsTopCategory" />
         </EntityType>
         <EntityType Name="DictionaryWord">
           <Key>
@@ -545,18 +549,20 @@
           <Property Type="Int32" Name="UsageRank" />
           <Property Type="String" Name="RankLongmanS" MaxLength="10" FixedLength="false" Unicode="true" />
           <Property Type="String" Name="RankLongmanW" MaxLength="10" FixedLength="false" Unicode="true" />
-          <Property Type="Int32" Name="RankMacmillan" />
           <Property Type="Int32" Name="RankCOCA" />
           <Property Type="String" Name="SoundKeyUK" MaxLength="100" FixedLength="false" Unicode="true" />
           <Property Type="String" Name="SoundKeyUS" MaxLength="100" FixedLength="false" Unicode="true" />
           <Property Type="String" Name="HtmlIndex" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Type="Int32" Name="DictionaryId" />
           <Property Type="Boolean" Name="IsCollocation" />
-          <NavigationProperty Name="DictionaryCategories" Relationship="PronunciationModel.DictionaryCategoryWord" FromRole="DictionaryWord" ToRole="DictionaryCategory" />
           <Property Type="String" Name="FavoriteSoundKey" MaxLength="100" FixedLength="false" Unicode="true" />
           <Property Type="Boolean" Name="HasMultiplePronunciations" />
           <Property Type="String" Name="FavoriteTranscription" MaxLength="100" FixedLength="false" Unicode="true" />
           <Property Type="String" Name="Notes" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Type="Boolean" Name="HasNotes" />
+          <Property Type="Int32" Name="RankLongman" />
+          <Property Type="Boolean" Name="IsAcademicWord" />
+          <NavigationProperty Name="DictionaryCategories" Relationship="PronunciationModel.DictionaryCategoryWord" FromRole="DictionaryWord" ToRole="DictionaryCategory" />
         </EntityType>
         <Association Name="DictionaryCategoryWord">
           <End Type="PronunciationModel.DictionaryCategory" Role="DictionaryCategory" Multiplicity="*" />
@@ -667,6 +673,7 @@
           <EntitySetMapping Name="DictionaryCategories">
             <EntityTypeMapping TypeName="PronunciationModel.DictionaryCategory">
               <MappingFragment StoreEntitySet="DictionaryCategory">
+                <ScalarProperty Name="IsTopCategory" ColumnName="IsTopCategory" />
                 <ScalarProperty Name="IsSystemCategory" ColumnName="IsSystemCategory" />
                 <ScalarProperty Name="Description" ColumnName="Description" />
                 <ScalarProperty Name="DisplayName" ColumnName="DisplayName" />
@@ -677,6 +684,9 @@
           <EntitySetMapping Name="DictionaryWords">
             <EntityTypeMapping TypeName="PronunciationModel.DictionaryWord">
               <MappingFragment StoreEntitySet="DictionaryWord">
+                <ScalarProperty Name="IsAcademicWord" ColumnName="IsAcademicWord" />
+                <ScalarProperty Name="RankLongman" ColumnName="RankLongman" />
+                <ScalarProperty Name="HasNotes" ColumnName="HasNotes" />
                 <ScalarProperty Name="Notes" ColumnName="Notes" />
                 <ScalarProperty Name="FavoriteTranscription" ColumnName="FavoriteTranscription" />
                 <ScalarProperty Name="HasMultiplePronunciations" ColumnName="HasMultiplePronunciations" />
@@ -687,7 +697,6 @@
                 <ScalarProperty Name="SoundKeyUS" ColumnName="SoundKeyUS" />
                 <ScalarProperty Name="SoundKeyUK" ColumnName="SoundKeyUK" />
                 <ScalarProperty Name="RankCOCA" ColumnName="RankCOCA" />
-                <ScalarProperty Name="RankMacmillan" ColumnName="RankMacmillan" />
                 <ScalarProperty Name="RankLongmanW" ColumnName="RankLongmanW" />
                 <ScalarProperty Name="RankLongmanS" ColumnName="RankLongmanS" />
                 <ScalarProperty Name="UsageRank" ColumnName="UsageRank" />
@@ -767,10 +776,10 @@
         </AssociationConnector>
         <EntityTypeShape EntityType="PronunciationModel.Training" Width="1.5" PointX="7.375" PointY="9.75" Height="3.1340950520833335" />
         <EntityTypeShape EntityType="PronunciationModel.DictionaryCategory" Width="1.5" PointX="9.375" PointY="10.75" Height="1.9802864583333353" />
-        <EntityTypeShape EntityType="PronunciationModel.DictionaryWord" Width="1.5" PointX="11.625" PointY="10" Height="3.5186979166666745" />
+        <EntityTypeShape EntityType="PronunciationModel.DictionaryWord" Width="1.5" PointX="11.625" PointY="9.25" Height="4.6725065104166656" />
         <AssociationConnector Association="PronunciationModel.DictionaryCategoryWord" >
-          <ConnectorPoint PointX="10.875" PointY="11.740143229166668" />
-          <ConnectorPoint PointX="11.625" PointY="11.740143229166668" />
+          <ConnectorPoint PointX="10.875" PointY="11.8362939453125" />
+          <ConnectorPoint PointX="11.625" PointY="11.8362939453125" />
         </AssociationConnector>
         </Diagram>
     </Diagrams>

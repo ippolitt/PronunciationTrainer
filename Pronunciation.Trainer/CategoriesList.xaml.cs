@@ -21,14 +21,14 @@ namespace Pronunciation.Trainer
     /// <summary>
     /// Interaction logic for EditCategories.xaml
     /// </summary>
-    public partial class EditCategories : Window
+    public partial class CategoriesList : Window
     {
         private Entities _dbContext;
         private Lazy<ObservableCollection<DictionaryCategory>> _categories;
 
         private const string DefaultDisplayName = "New category";
 
-        public EditCategories()
+        public CategoriesList()
         {
             InitializeComponent();
         }
