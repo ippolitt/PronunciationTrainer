@@ -70,6 +70,17 @@ function playAudio() {
     }
 
     func(this);
+
+    var elements = document.getElementsByClassName("audio_button");
+    var audioKey = getAudioKey(this);
+    for (var i = 0; i < elements.length; i++) {
+        var element = elements[i];
+        if (getAudioKey(element) == audioKey) {
+            element.style.color = "red";
+        } else {
+            element.style.color = "black";
+        }
+    }
 }
 
 function rawDataViaApi(element) {

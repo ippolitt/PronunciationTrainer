@@ -194,7 +194,7 @@ namespace Pronunciation.Parser
             if (string.IsNullOrEmpty(audioFile))
                 return null;
 
-            return SoundManager.LDOCE_SoundKeyPrefix + Path.GetFileNameWithoutExtension(audioFile);
+            return SoundManager.ConvertLDOCEToLPD(Path.GetFileNameWithoutExtension(audioFile));
         }
     }
 }

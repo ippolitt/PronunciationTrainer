@@ -43,6 +43,11 @@ namespace Pronunciation.Parser
             return _reader.GetData(entry);
         }
 
+        public bool ContainsKey(string soundKey)
+        {
+            return _index.Value.ContainsKey(soundKey);
+        }
+
         public void ValidateIndex()
         {
             Stopwatch watch = new Stopwatch();

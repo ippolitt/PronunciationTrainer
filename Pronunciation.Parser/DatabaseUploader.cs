@@ -172,9 +172,8 @@ namespace Pronunciation.Parser
             int cnt = 0;
             using (SqlCeResultSet soundsSet = cmdTable.ExecuteResultSet(ResultSetOptions.Updatable))
             {
-                // It's important to process LPD sounds first so that LDOCE sound key could be remapped to them 
-                // (but not vice versa)
-                foreach (var soundInfo in sounds.OrderBy(x => x.DictionaryId).ThenBy(x => x.SoundKey))
+                // Sorting sound keys should improve insert performance
+                foreach (var soundInfo in sounds.OrderBy(x => x.SoundKey))
                 {
                     SoundManager.RegisteredSound registeredSound;
                     if (!_soundManager.RegisterSound(soundInfo, out registeredSound))
@@ -263,8 +262,6 @@ namespace Pronunciation.Parser
         {
             _htmlDATBuilder.Flush();
             _soundManager.Flush();
-
-            _dbStats.AppendFormat("Totally '{0}' sound keys have been remapped.\r\n", _soundManager.ReusedKeysCount);
         }
 
         public void Dispose()

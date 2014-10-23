@@ -201,19 +201,44 @@ namespace Pronunciation.Parser
                 {
                     var item = (LDOCEHtmlEntryItem)sourceItem;
                     var items = (IEnumerable<LDOCEHtmlEntryItem>)targetItems;
-                    var matchedItem = items.FirstOrDefault(x => x.SoundFileUK == item.SoundFileUK && x.SoundFileUS == item.SoundFileUS
+
+                    LDOCEHtmlEntryItem matchedItem = null;
+                    var matchedItems = items.Where(x => x.SoundFileUK == item.SoundFileUK && x.SoundFileUS == item.SoundFileUS
                         && (x.TranscriptionUK == item.TranscriptionUK || string.IsNullOrEmpty(item.TranscriptionUK)) 
-                        && (x.TranscriptionUS == item.TranscriptionUS || string.IsNullOrEmpty(item.TranscriptionUS)));
-                    if (matchedItem != null && !matchedItem.Title.IsEqual(item.Title, true))
+                        && (x.TranscriptionUS == item.TranscriptionUS || string.IsNullOrEmpty(item.TranscriptionUS))).ToArray();
+                    if (matchedItems.Length > 0)
                     {
-                        if (!matchedItem.Title.IncludesTitle(item.Title) && !item.Title.IncludesTitle(matchedItem.Title))
+                        matchedItem = FindBestMatch(matchedItems, item, false);
+                        if (matchedItem == null)
                         {
-                            matchedItem = null;
+                            matchedItem = FindBestMatch(matchedItems, item, true);
+                        }
+                    }
+
+                    if (matchedItem == null)
+                    {
+                        matchedItems = items.Where(x => x.Title.IsComplex && x.Title.IsEqual(item.Title)).ToArray();
+                        if (matchedItems.Length > 0)
+                        {
+                            matchedItem = matchedItems[0];
                         }
                     }
 
                     return matchedItem;
                 });
+        }
+
+        private LDOCEHtmlEntryItem FindBestMatch(LDOCEHtmlEntryItem[] items, LDOCEHtmlEntryItem item, bool ignoreCase)
+        {
+            var matchedItem = items.FirstOrDefault(x => x.Title.IsEqual(item.Title, true, ignoreCase));
+            if (matchedItem == null)
+            {
+                matchedItem = items.FirstOrDefault(x =>
+                    x.Title.IncludesText(item.Title.GetStringWithoutStress(), true, ignoreCase)
+                    || item.Title.IncludesText(x.Title.GetStringWithoutStress(), true, ignoreCase));
+            }
+
+            return matchedItem;
         }
 
         private void MergeMWEntry(DicWord word, IExtraEntry entry)

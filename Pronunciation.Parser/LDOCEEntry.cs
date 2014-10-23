@@ -21,6 +21,7 @@ namespace Pronunciation.Parser
         public DisplayName ItemTitle;
         public EnglishVariant? ItemLanguage;
         public List<LDOCEAlternativeSpelling> AlternativeSpellings;
+        public string DuplicateSourceKeyword;
         public string Transcription;
         public List<string> PartsOfSpeech;
         public string Notes;

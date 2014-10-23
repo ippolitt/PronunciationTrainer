@@ -86,13 +86,6 @@ namespace Pronunciation.Trainer.Dictionary
             _alternativeEntries = alternativeEntries.OrderBy(x => x.DisplayName).ToArray();
             _tokens = tokens.OrderBy(x => x.Rank).ThenBy(x => x.Entry.DisplayName).ToArray();
 
-            var bld = new StringBuilder();
-            foreach (var entry in _alternativeEntries)
-            {
-                bld.AppendFormat("{0}\t{1}\r\n", entry.DisplayName, entry.AlternativeName);
-            }
-            System.IO.File.WriteAllText(@"D:\test.txt", bld.ToString());
-
             _isInitialized = true;
         }
 

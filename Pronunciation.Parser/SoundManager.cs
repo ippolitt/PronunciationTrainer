@@ -13,7 +13,6 @@ namespace Pronunciation.Parser
             public int? DATFileId;
         }
 
-        public const string LDOCE_SoundKeyPrefix = "ldoce_";
         public const string MW_SoundKeyPrefix = "mw_";
 
         private const string LDOCE_OriginalPrefixUK = "bre_";
@@ -29,7 +28,6 @@ namespace Pronunciation.Parser
         private readonly Dictionary<string, RegisteredSound> _sounds;
 
         public StringBuilder Stats { get; set; }
-        public int ReusedKeysCount { get; set; }
 
         public SoundManager(IFileLoader fileLoader, DATFileBuilder lpdBuilder, DATFileBuilder mwBuilder)
         {
@@ -39,20 +37,26 @@ namespace Pronunciation.Parser
             _sounds = new Dictionary<string, RegisteredSound>(StringComparer.OrdinalIgnoreCase);
         }
 
-        public static int? GetDictionaryId(string soundKey)
+        public static string ConvertLDOCEToLPD(string ldoceSoundKey)
         {
-            if (soundKey.StartsWith(LDOCE_SoundKeyPrefix))
-            {
-                return DicWord.DictionaryIdLDOCE;
-            }
-            else if (soundKey.StartsWith(MW_SoundKeyPrefix))
-            {
-                return DicWord.DictionaryIdMW;
-            }
-            else
-            {
-                return null;
-            }
+            if (ldoceSoundKey.StartsWith(LDOCE_OriginalPrefixUK))
+                return LPD_OriginalPrefixUK + ldoceSoundKey.Remove(0, LDOCE_OriginalPrefixUK.Length);
+            
+            if (ldoceSoundKey.StartsWith(LDOCE_OriginalPrefixUS))
+                return LPD_OriginalPrefixUS + ldoceSoundKey.Remove(0, LDOCE_OriginalPrefixUS.Length);
+
+            throw new NotSupportedException();
+        }
+
+        public static string ConvertLPDToLDOCE(string lpdSoundKey)
+        {
+            if (lpdSoundKey.StartsWith(LPD_OriginalPrefixUK))
+                return LDOCE_OriginalPrefixUK + lpdSoundKey.Remove(0, LPD_OriginalPrefixUK.Length);
+
+            if (lpdSoundKey.StartsWith(LPD_OriginalPrefixUS))
+                return LDOCE_OriginalPrefixUS + lpdSoundKey.Remove(0, LPD_OriginalPrefixUS.Length);
+
+            throw new NotSupportedException();
         }
 
         public bool RegisterSound(SoundInfo soundInfo, out RegisteredSound registeredSound)
@@ -61,66 +65,19 @@ namespace Pronunciation.Parser
             if (_sounds.TryGetValue(soundKey, out registeredSound))
                 return false;
 
-            string alternativeKey = null;
-            DATFileBuilder datBuilder;
-            if (soundKey.StartsWith(LDOCE_SoundKeyPrefix))
-            {
-                datBuilder = _lpdBuilder;
+            bool isMWSound = soundKey.StartsWith(MW_SoundKeyPrefix);
 
-                // If we find corresponding LPD (e.g. bre_test -> uk_test) we consider that audio is the same
-                string originalKey = soundKey.Remove(0, LDOCE_SoundKeyPrefix.Length);
-                if (originalKey.StartsWith(LDOCE_OriginalPrefixUK))
-                {
-                    alternativeKey = LPD_OriginalPrefixUK + originalKey.Remove(0, LDOCE_OriginalPrefixUK.Length);
-                }
-                else if (originalKey.StartsWith(LDOCE_OriginalPrefixUS))
-                {
-                    alternativeKey = LPD_OriginalPrefixUS + originalKey.Remove(0, LDOCE_OriginalPrefixUS.Length);
-                }
-            }
-            else if (soundKey.StartsWith(MW_SoundKeyPrefix))
-            {
-                datBuilder = _mwBuilder;
-            }
-            else
-            {
-                datBuilder = _lpdBuilder;
-
-                // If we find corresponding LDOCE (e.g. uk_test -> bre_test) we consider that audio is the same
-                if (soundKey.StartsWith(LPD_OriginalPrefixUK))
-                {
-                    alternativeKey = LDOCE_SoundKeyPrefix + LDOCE_OriginalPrefixUK + soundKey.Remove(0, LPD_OriginalPrefixUK.Length);
-                }
-                else if (soundKey.StartsWith(LPD_OriginalPrefixUS))
-                {
-                    alternativeKey = LDOCE_SoundKeyPrefix + LDOCE_OriginalPrefixUS + soundKey.Remove(0, LPD_OriginalPrefixUS.Length);
-                }
-            }
-
-            if (!string.IsNullOrEmpty(alternativeKey))
-            {
-                if (_sounds.TryGetValue(alternativeKey, out registeredSound))
-                {
-                    _sounds.Add(soundKey, registeredSound);
-                    ReusedKeysCount++;
-
-                    return true;
-                }
-            }
-
-            if (datBuilder == null)
-                throw new ArgumentNullException("DAT file builder is not initialized!");
-
-            byte[] audioData = _fileLoader.GetRawData(soundKey);
             DataIndex soundIndex = null;
+            byte[] audioData = _fileLoader.GetRawData(soundKey);
             if (audioData != null && audioData.Length > 0)
             {
+                DATFileBuilder datBuilder = isMWSound ? _mwBuilder : _lpdBuilder;
                 soundIndex = datBuilder.AppendEntity(soundKey, audioData);
             }
 
             registeredSound = new RegisteredSound 
             {
-                DATFileId = ReferenceEquals(datBuilder, _mwBuilder) ? MWFileId : (int?)null,
+                DATFileId = isMWSound ? MWFileId : (int?)null,
                 SoundIndex = soundIndex == null ? null : soundIndex.BuildKey() 
             };
 

@@ -54,6 +54,7 @@ namespace Pronunciation.Parser
             _altWithTranscriptions = new HashSet<string>();
 
             var entries = new List<LDOCEEntry>();
+            var alternativeItems = new List<LDOCEEntryItem>();
             LDOCEEntry entry = null;
             using (var reader = new StreamReader(sourceFile))
             {
@@ -93,7 +94,7 @@ namespace Pronunciation.Parser
                     {
                         if (entry != null)
                         {
-                            ProcessEntry(entry, entries);
+                            ProcessEntry(entry, entries, alternativeItems);
                         }
                         entry = new LDOCEEntry { Keyword = PrepareKeyword(text), Items = new List<LDOCEEntryItem>() };
                     }
@@ -126,7 +127,7 @@ namespace Pronunciation.Parser
 
             if (entry != null)
             {
-                ProcessEntry(entry, entries);
+                ProcessEntry(entry, entries, alternativeItems);
             }
 
             // Group entries by keyword (cut off ", the" ending)
@@ -136,7 +137,7 @@ namespace Pronunciation.Parser
                 var mainEntry = new LDOCEEntry 
                 { 
                     Keyword = group.Key,
-                    Items = MergeGroupedItems(group)
+                    Items = group.SelectMany(x => x.Items).ToList()
                 };
 
                 int itemNumber = 0;
@@ -152,73 +153,37 @@ namespace Pronunciation.Parser
             // Add entries with alternative spelling
             var skippedAlternatives = new List<string>();
             var addedAlternatives = new List<string>();
-            var entriesWithAlternatives = finalEntries.Where(x => x.Items
-                .Any(y => y.AlternativeSpellings != null && y.AlternativeSpellings.Count > 0)).ToArray();
-            foreach (var entryWithAlternatives in entriesWithAlternatives)
+            foreach (var alternativeItem in alternativeItems)
             {
-                bool isAppliedToWholeEntry = entryWithAlternatives.Items.Count == 1;
-                foreach (var item in entryWithAlternatives.Items
-                    .Where(x => x.AlternativeSpellings != null && x.AlternativeSpellings.Count > 0))
+                string groupingKeyword = PrepareGroupingKeyword(alternativeItem.ItemKeyword);
+                LDOCEEntry finalEntry = finalEntries.SingleOrDefault(x => x.Keyword == groupingKeyword);
+                if (finalEntry == null)
                 {
-                    foreach (var alternativeSpelling in item.AlternativeSpellings)
+                    finalEntries.Add(new LDOCEEntry
                     {
-                        string groupingKeyword = PrepareGroupingKeyword(alternativeSpelling.Keyword);
-                        LDOCEEntry finalEntry = finalEntries.SingleOrDefault(x => x.Keyword == groupingKeyword);
-                        LDOCEEntryItem altItem = null;
-                        if (finalEntry == null || AlternativeSpellingsToInject.Contains(alternativeSpelling.Keyword))
-                        {
-                            altItem = new LDOCEEntryItem
-                            {
-                                ItemKeyword = alternativeSpelling.Keyword,
-                                ItemLanguage = alternativeSpelling.Language,
-                                ItemTitle = item.ItemTitle,
-                                Notes = item.Notes,
-                                PartsOfSpeech = item.PartsOfSpeech,
-                                RawData = item.RawData,
-                                SoundFileUK = item.SoundFileUK,
-                                SoundFileUS = item.SoundFileUS,
-                                Transcription = item.Transcription
-                            };
-                        }
+                        Keyword = groupingKeyword,
+                        IsDuplicate = true,
+                        DuplicateSourceKeyword = alternativeItem.DuplicateSourceKeyword,
+                        Items = new List<LDOCEEntryItem> { alternativeItem }
+                    });
 
-                        if (altItem != null)
-                        {
-                            if (finalEntry == null)
-                            {
-                                finalEntries.Add(new LDOCEEntry
-                                {
-                                    Keyword = groupingKeyword,
-                                    IsDuplicate = true,
-                                    DuplicateSourceKeyword = isAppliedToWholeEntry ? PrepareGroupingKeyword(item.ItemKeyword) : null,
-                                    Items = new List<LDOCEEntryItem> { altItem }
-                                });
-
-                                addedAlternatives.Add(string.Format(
-                                    "Added new alternative spelling entry '{0}' (original item '{1}')",
-                                    alternativeSpelling.Keyword, item.KeywordWithNumber));
-                            }
-                            else
-                            {
-                                if (AlternativeSpellingsToInject.Contains(alternativeSpelling.Keyword))
-                                {
-                                    finalEntry.Items.Insert(0, altItem);
-                                }
-                                else
-                                {
-                                    finalEntry.Items.Add(altItem);
-                                }
-                                addedAlternatives.Add(string.Format(
-                                    "Merged alternative spelling entry '{0}' (original item '{1}') with '{2}'",
-                                    alternativeSpelling.Keyword, item.KeywordWithNumber, finalEntry.Keyword));
-                            }
-                        }
-                        else
-                        {
-                            skippedAlternatives.Add(string.Format(
-                                "Skipped alternative spelling item '{0}' (original item '{1}')",
-                                alternativeSpelling.Keyword, item.KeywordWithNumber));
-                        }
-                    }
+                    addedAlternatives.Add(string.Format(
+                        "Added new alternative spelling entry '{0}' (original keyword '{1}')",
+                        alternativeItem.ItemKeyword, alternativeItem.DuplicateSourceKeyword));
+                }
+                else if (AlternativeSpellingsToInject.Contains(alternativeItem.ItemKeyword))
+                {
+                    finalEntry.Items.Insert(0, alternativeItem);
+   
+                    addedAlternatives.Add(string.Format(
+                        "Merged alternative spelling entry '{0}' (original item '{1}') with '{2}'",
+                        alternativeItem.ItemKeyword, alternativeItem.DuplicateSourceKeyword, finalEntry.Keyword));
+                }
+                else
+                {
+                    skippedAlternatives.Add(string.Format(
+                        "Skipped alternative spelling item '{0}' (original item '{1}')",
+                        alternativeItem.ItemKeyword, alternativeItem.DuplicateSourceKeyword));
                 }
             }
 
@@ -273,7 +238,7 @@ namespace Pronunciation.Parser
             return finalEntries.ToArray();
         }
 
-        private void ProcessEntry(LDOCEEntry entry, List<LDOCEEntry> entries)
+        private void ProcessEntry(LDOCEEntry entry, List<LDOCEEntry> entries, List<LDOCEEntryItem> alternativeItems)
         {
             if (entry == null || entry.Items.Count == 0)
             {
@@ -282,13 +247,51 @@ namespace Pronunciation.Parser
                 return;
             }
 
-            var items = new List<LDOCEEntryItem>();
-            foreach (var item in entry.Items)
+            // Check if all items have the same alternative spelling
+            bool isAppliedToWholeEntry = entry.Items.GroupBy(x => BuildAltSpellingsGroupingKey(x.AlternativeSpellings))
+                .Count() == 1;
+
+            // Before merge we must prepare alternative entries
+            var altItems = new List<LDOCEEntryItem>();
+            foreach (var item in entry.Items.Where(x => x.AlternativeSpellings != null && x.AlternativeSpellings.Count > 0))
+            {
+                foreach (var alternativeSpelling in item.AlternativeSpellings)
+                {
+                    altItems.Add(new LDOCEEntryItem
+                    {
+                        ItemKeyword = alternativeSpelling.Keyword,
+                        ItemLanguage = alternativeSpelling.Language,
+                        ItemTitle = item.ItemTitle.Clone(),
+                        Notes = item.Notes,
+                        PartsOfSpeech = item.PartsOfSpeech == null ? null : new List<string>(item.PartsOfSpeech),
+                        RawData = item.RawData,
+                        SoundFileUK = item.SoundFileUK,
+                        SoundFileUS = item.SoundFileUS,
+                        Transcription = item.Transcription,
+                        DuplicateSourceKeyword = isAppliedToWholeEntry ? item.ItemKeyword : null
+                    });
+                }
+            }
+
+            entry.Items = ProcessItems(entry.Items);
+            entries.Add(entry);
+
+            if (altItems.Count > 0)
+            {
+                alternativeItems.AddRange(ProcessItems(altItems));
+            }
+        }
+
+        private List<LDOCEEntryItem> ProcessItems(List<LDOCEEntryItem> sourceItems)
+        {
+            var mergedItems = new List<LDOCEEntryItem>();
+            foreach (var item in sourceItems)
             {
                 LDOCEEntryItem matchedItem = null;
                 if (string.IsNullOrEmpty(item.Transcription))
                 {
-                    matchedItem = items.LastOrDefault(x => string.IsNullOrEmpty(x.Transcription));
+                    matchedItem = mergedItems.LastOrDefault(x => x.ItemKeyword == item.ItemKeyword 
+                        && string.IsNullOrEmpty(x.Transcription));
                     if (matchedItem != null)
                     {
                         if ((item.SoundFileUK != matchedItem.SoundFileUK || item.SoundFileUS != matchedItem.SoundFileUS)
@@ -300,20 +303,13 @@ namespace Pronunciation.Parser
                 }
                 else
                 {
-                    matchedItem = items.FirstOrDefault(x => x.Transcription == item.Transcription);
-                }
-
-                if (matchedItem != null)
-                {
-                    if (!AltSpellingsEqual(matchedItem.AlternativeSpellings, item.AlternativeSpellings))
-                    {
-                        matchedItem = null;
-                    }
+                    matchedItem = mergedItems.FirstOrDefault(x => x.ItemKeyword == item.ItemKeyword 
+                        && x.Transcription == item.Transcription);
                 }
 
                 if (matchedItem == null)
                 {
-                    items.Add(item);
+                    mergedItems.Add(item);
                 }
                 else
                 {
@@ -321,51 +317,15 @@ namespace Pronunciation.Parser
                 }
             }
 
-            entry.Items = items;
-            entries.Add(entry);
+            return mergedItems;
         }
 
-        private List<LDOCEEntryItem> MergeGroupedItems(IEnumerable<LDOCEEntry> groupedEntries)
+        private static string BuildAltSpellingsGroupingKey(List<LDOCEAlternativeSpelling> spellings)
         {
-            var entries = groupedEntries.ToArray();
-            if (entries.Length == 1)
-                return entries[0].Items;
+            if (spellings == null || spellings.Count == 0)
+                return null;
 
-            List<LDOCEEntryItem> items = new List<LDOCEEntryItem>();
-            foreach (var groupedEntry in entries.OrderBy(x => x.Keyword))
-            {
-                if (items.Count == 0)
-                {
-                    items.AddRange(groupedEntry.Items);
-                }
-                else
-                {
-                    foreach (var item in groupedEntry.Items)
-                    {
-                        var matchedItem = items.FirstOrDefault(x => 
-                            item.SoundFileUK == x.SoundFileUK && item.SoundFileUS == x.SoundFileUS
-                            && item.Transcription == x.Transcription);
-                        if (matchedItem != null)
-                        {
-                            if (!AltSpellingsEqual(matchedItem.AlternativeSpellings, item.AlternativeSpellings))
-                            {
-                                matchedItem = null;
-                            }
-                        }
-
-                        if (matchedItem == null)
-                        {
-                            items.Add(item);
-                        }
-                        else
-                        {
-                            MergeItems(matchedItem, item);
-                        }
-                    }
-                }
-            }
-
-            return items;
+            return string.Join("|", spellings.Select(x => x.Keyword));
         }
 
         private bool DifferByStress(DisplayName target, DisplayName source)
@@ -404,27 +364,6 @@ namespace Pronunciation.Parser
             }
 
             MergeTitles(target, source.ItemTitle);
-        }
-
-        private bool AltSpellingsEqual(List<LDOCEAlternativeSpelling> target, List<LDOCEAlternativeSpelling> source)
-        {
-            if (source != null && target != null)
-            {
-                if (source.Count != target.Count)
-                    return false;
-
-                foreach (var item in source)
-                {
-                    if (target.Count(x => x.Keyword == item.Keyword) != 1)
-                        return false;
-                }
-
-                return true;
-            }
-            else
-            {
-                return (source == null && target == null);
-            }
         }
 
         private LDOCEEntryItem ParseNumberedItem(string text, LDOCEEntryItem previousItem)
@@ -749,14 +688,15 @@ namespace Pronunciation.Parser
             if (allSpellings.Count == 0)
                 return;
 
-            List<string> keywordsFilter = null;
+            bool isStrictCheck = false;
+            List<string> previousKeywords = null;
             if (string.IsNullOrEmpty(transcription))
             {
-                // If alternative entry misses a transcription we can add it only if the spelling
-                // matches one of the spellings of the previous item
-                keywordsFilter = (previousItem == null || previousItem.AlternativeSpellings == null)
-                    ? new List<string>() 
-                    : previousItem.AlternativeSpellings.Select(x => x.Keyword).ToList();
+                isStrictCheck = true;
+                if (previousItem != null && previousItem.AlternativeSpellings != null)
+                {
+                    previousKeywords = previousItem.AlternativeSpellings.Select(x => x.Keyword).ToList();
+                }
             }
             else
             {
@@ -774,26 +714,8 @@ namespace Pronunciation.Parser
 
             foreach (var alternativeSpelling in allSpellings)
             {
-                if (alternativeSpelling.Keyword == item.ItemKeyword)
+                if (!IsAlternativeSpelling(item, alternativeSpelling, isStrictCheck, previousKeywords))
                     continue;
-
-                if (alternativeSpelling.Keyword.StartsWithOrdinal("-") && !item.ItemKeyword.StartsWithOrdinal("-"))
-                {
-                    if (alternativeSpelling.Keyword.Remove(0, 1) != item.ItemKeyword)
-                        continue;
-                }
-
-                if (keywordsFilter != null)
-                {
-                    if (!string.Equals(
-                        RemoveSpecialSymbols(alternativeSpelling.Keyword),
-                        RemoveSpecialSymbols(item.ItemKeyword),
-                        StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (!keywordsFilter.Contains(alternativeSpelling.Keyword))
-                            continue;
-                    }
-                }
 
                 if (item.AlternativeSpellings == null)
                 {
@@ -802,6 +724,58 @@ namespace Pronunciation.Parser
                 item.AlternativeSpellings.Add(alternativeSpelling);
                 MergeTitles(item, alternativeSpelling.Title);
             }
+        }
+
+        private bool IsAlternativeSpelling(LDOCEEntryItem item, LDOCEAlternativeSpelling alternativeSpelling, bool isStrictCheck, 
+            List<string> keywordsFilter)
+        {
+            if (alternativeSpelling.Keyword == item.ItemKeyword)
+                return false;
+
+            if (alternativeSpelling.Keyword.StartsWithOrdinal("-") && !item.ItemKeyword.StartsWithOrdinal("-"))
+            {
+                if (alternativeSpelling.Keyword.Remove(0, 1) != item.ItemKeyword)
+                    return false;
+            }
+
+            if (!isStrictCheck)
+                return true;
+
+            if (keywordsFilter != null && keywordsFilter.Contains(alternativeSpelling.Keyword))
+                return true;
+
+            string itemKeyword = RemoveSpecialSymbols(item.ItemKeyword);
+            string altKeyword = RemoveSpecialSymbols(alternativeSpelling.Keyword);
+            if (string.Equals(itemKeyword, altKeyword, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (item.ItemLanguage == EnglishVariant.British && alternativeSpelling.Language == EnglishVariant.American)
+            {
+                string convertedSpelling = itemKeyword
+                    .Replace("grey", "gray")
+                    .Replace("chequer", "checker")
+                    .Replace("cheque", "check")
+                    .Replace("centred", "centered")
+                    .Replace("centre", "center")
+                    .Replace("defence", "defense")
+                    .Replace("dialogue", "dialog")
+                    .Replace("aesthetic", "esthetic")
+                    .Replace("mould", "mold")
+                    .Replace("fibre", "fiber")
+                    .Replace("licence", "license")
+                    .Replace("programme", "program")
+                    .Replace("tyre", "tire")
+                    .Replace("anaemia", "anemia")
+                    .Replace("whizz", "whiz")
+                    .Replace("chilli", "chili")
+                    .Replace("barrell", "barrel")
+                    .Replace("travell", "travel")
+                    .Replace("our", "or");
+                if (string.Equals(convertedSpelling, altKeyword, StringComparison.OrdinalIgnoreCase))
+                    return true;    
+            }
+
+            return false;
         }
 
         private EnglishVariant? ParseEnglishVariant(string wordNote)
@@ -849,16 +823,20 @@ namespace Pronunciation.Parser
             else if (item.AlternativeSpellings.Count > 0)
                 throw new ArgumentException();
 
-            DisplayName alternativeTitle = PrepareTitle(content);
-            string alternativeKeyword = PrepareKeywordFromTitle(alternativeTitle);
-            if (alternativeKeyword == item.ItemKeyword)
+            DisplayName britishTitle = PrepareTitle(content);
+            string britishKeyword = PrepareKeywordFromTitle(britishTitle);
+            if (britishKeyword == item.ItemKeyword)
                 throw new ArgumentException();
 
             if (item.ItemLanguage != null)
                 throw new ArgumentException();
 
             item.ItemLanguage = EnglishVariant.American;
-            MergeTitles(item, alternativeTitle);
+
+            // Put british title first
+            DisplayName americanTitle = item.ItemTitle;
+            item.ItemTitle = britishTitle;
+            MergeTitles(item, americanTitle);
 
             return true;
         }

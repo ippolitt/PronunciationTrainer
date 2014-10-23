@@ -41,20 +41,23 @@ namespace Pronunciation.Parser
         {
             DATIndexReader reader;
             string originalKey;
-            if (fileKey.StartsWith(SoundManager.LDOCE_SoundKeyPrefix))  
-            {
-                reader = _readerLDOCE;
-                originalKey = fileKey.Remove(0, SoundManager.LDOCE_SoundKeyPrefix.Length);
-            }
-            else if (fileKey.StartsWith(SoundManager.MW_SoundKeyPrefix))
+            if (fileKey.StartsWith(SoundManager.MW_SoundKeyPrefix))
             {
                 reader = _readerMW;
                 originalKey = fileKey.Remove(0, SoundManager.MW_SoundKeyPrefix.Length);
             }
-            else
+            else 
             {
-                reader = _readerLPD;
-                originalKey = fileKey;
+                if (_readerLPD.ContainsKey(fileKey))
+                {
+                    reader = _readerLPD;
+                    originalKey = fileKey;
+                }
+                else
+                {
+                    reader = _readerLDOCE;
+                    originalKey = SoundManager.ConvertLPDToLDOCE(fileKey);
+                }
             }
 
             return reader.GetData(originalKey);

@@ -132,28 +132,44 @@ namespace Pronunciation.Parser
 
         public bool IsEqual(DisplayName title)
         {
-            return IsEqual(title, false);
+            return IsEqual(title, false, false);
         }
 
-        public bool IsEqual(DisplayName title, bool ignoreCase)
+        public bool IsEqual(DisplayName title, bool ignoreStress, bool ignoreCase)
         {
-            if (title == null)
-                return false;
-
-            return string.Compare(GetStringWithoutStress(), title.GetStringWithoutStress(), ignoreCase) == 0;
+            if (ignoreStress)
+            {
+                return string.Compare(GetStringWithoutStress(), title.GetStringWithoutStress(), ignoreCase) == 0;
+            }
+            else
+            {
+                return string.Compare(ToString(), title.ToString(), ignoreCase) == 0;
+            }
         }
 
-        public bool IncludesTitle(DisplayName title)
+        public bool IncludesText(string title, bool ignoreStress, bool ignoreCase)
         {
-            if (title == null)
+            if (string.IsNullOrEmpty(title))
                 return false;
 
-            return GetStringWithoutStress().Contains(title.GetStringWithoutStress());
+            if (ignoreStress)
+            {
+                return _titles.Any(x => string.Compare(RemoveStress(x), title, ignoreCase) == 0);
+            }
+            else
+            {
+                return _titles.Any(x => string.Compare(x, title, ignoreCase) == 0);
+            }
         }
 
         public bool ContainsStress
         {
             get { return _titles.Any(x => x.Contains("ˈ") || x.Contains("ˌ")); }
+        }
+
+        public bool IsComplex
+        {
+            get { return _titles.Count > 1; }
         }
 
         private string RemoveStress(string title)
