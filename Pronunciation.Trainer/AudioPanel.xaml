@@ -96,8 +96,8 @@
             </Button>            
             <controls:OnOffButton Height="23" Width="29" Focusable="False" x:Name="btnFavorite" HorizontalAlignment="Stretch" VerticalAlignment="Center" 
                     Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                    StateOnTooltip="Unassign favorite audio from the current word [{0}]" 
-                    StateOffTooltip="Assign the audio as the favorite one for the current word [{0}]">
+                    StateOnTooltip="Unset favorite audio [{0}]" 
+                    StateOffTooltip="Set active audio as the favorite one [{0}]">
                 <Image>
                     <Image.Style>
                         <Style TargetType="Image" BasedOn="{StaticResource AudioImage}">

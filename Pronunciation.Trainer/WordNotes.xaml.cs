@@ -86,7 +86,7 @@ namespace Pronunciation.Trainer
                 }
             }
 
-            if (ControlsHelper.IsModalWindow)
+            if (ControlsHelper.IsModalWindow(this))
             {
                 this.DialogResult = true;
             }

@@ -150,6 +150,7 @@
     <Compile Include="Threading\CancellationTokenSourceExt.cs" />
     <Compile Include="Threading\CancellationTokenState.cs" />
     <Compile Include="Utility\DATFileReader.cs" />
+    <Compile Include="Utility\HtmlHelper.cs" />
     <Compile Include="Utility\Logger.cs" />
   </ItemGroup>
   <ItemGroup>

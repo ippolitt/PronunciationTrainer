@@ -11,7 +11,7 @@ var timeoutId = null;
 var audioMode = 1;
 
 function registerHandlers() {
-    registerDynamicContent();
+    //registerDynamicContent();
     registerAudio();
     registerSubmit();
     adjustOrientation();
@@ -33,9 +33,9 @@ function registerDynamicContent() {
 function adjustOrientation() {
     var div = document.getElementById('navigationContainer');
     if (window.orientation == 0) {
-        div.style.marginTop = "10em";
+        div.style.marginTop = "7em";
     } else {
-        div.style.marginTop = "6em";
+        div.style.marginTop = "4em";
     }
 }
 
@@ -71,13 +71,10 @@ function registerSubmit() {
 }
 
 function playAudio() {
-    playAudioData(GetAudioData(this));
+    playAudioData(getAudioData(this));
     lastPlayedAudio = this;
-}
 
-function GetAudioData(element) {
-
-    return element.attributes[audioMode == 3 ? "data-src" : "raw-data"].value;
+    higlightAudio(getAudioKey(this));
 }
 
 function playAudioData(data) {
@@ -97,6 +94,26 @@ function playAudioData(data) {
     func(data);
 }
 
+function getAudioKey(element) {
+    return element.attributes["data-src"].value;
+}
+
+function getAudioData(element) {
+    return pageAudio[getAudioKey(element)];
+}
+
+function higlightAudio(audioKey) {
+    var elements = document.getElementsByClassName("audio_button");
+    for (var i = 0; i < elements.length; i++) {
+        var element = elements[i];
+        if (getAudioKey(element) == audioKey) {
+            element.style.color = "red";
+        } else {
+            element.style.color = "black";
+        }
+    }
+}
+
 function initRecording() {
     // Stop recording if it's in progress
     if (timeoutId) {
@@ -110,9 +127,9 @@ function initRecording() {
         if (firstAudioUs == null) {
             return;
         }
-        data = GetAudioData(firstAudioUs);
+        data = getAudioData(firstAudioUs);
     } else {
-        data = GetAudioData(lastPlayedAudio);
+        data = getAudioData(lastPlayedAudio);
     }
 
     playAudioData(data);

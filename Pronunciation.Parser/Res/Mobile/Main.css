@@ -1,6 +1,7 @@
 ﻿body
 {
     font-size: xx-large;
+    padding-bottom: 4em;
 }
 
 .navigationRow
@@ -68,7 +69,6 @@ input
 .entry
 {
     padding-left: 1em;
-    padding-bottom: 1em;
 }
 .entry .entry_number
 {
@@ -189,8 +189,13 @@ input
     margin-right: 5px;
 }
 
-.ldoce_fragment, .mw_fragment, .ldoce_page, .mw_page
+.ldoce_page, .mw_page
 {
+    margin-bottom: 10px;
+}
+.ldoce_fragment, .mw_fragment
+{
+    margin-top: 1em;
     margin-bottom: 10px;
 }
 .ldoce_fragment .dic_header:before

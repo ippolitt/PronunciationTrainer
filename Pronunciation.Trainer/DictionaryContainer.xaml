@@ -78,22 +78,11 @@
                     ToolTip="Find current word in the list [{0}]">
                     <Image Source="Resources/SynchronizeList.png" Style="{StaticResource ToolbarImage}" />
                 </Button>
-                <controls:OnOffButton Height="23" Width="23" x:Name="btnEditNotes" Focusable="False" 
+                <Button Height="23" Width="23" Name="btnEditNotes" Focusable="False" 
                     Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                    StateOnTooltip="Edit word notes" StateOffTooltip="Add word notes">
-                    <Image>
-                        <Image.Style>
-                            <Style TargetType="Image" BasedOn="{StaticResource ToolbarImage}">
-                                <Setter Property="Source" Value="Resources/AddWordNotes.png" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ElementName=btnEditNotes, Path=IsOn}" Value="True">
-                                        <Setter Property="Source" Value="Resources/EditWordNotes.png" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Image.Style>
-                    </Image>
-                </controls:OnOffButton>
+                    ToolTip="Add/edit word notes">
+                    <Image Source="Resources/EditWordNotes.png" Style="{StaticResource ToolbarImage}" />
+                </Button>
                 <Button Height="23" Width="23" Name="btnEditCategories" Focusable="False" Click="btnEditCategories_Click" 
                     Margin="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                     ToolTip="Edit list of categories">

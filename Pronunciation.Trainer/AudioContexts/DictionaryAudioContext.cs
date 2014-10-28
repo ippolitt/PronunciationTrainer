@@ -34,7 +34,7 @@ namespace Pronunciation.Trainer.AudioContexts
             _recordingPolicy = recordingPolicy;
         }
 
-        public void RefreshContext(IndexEntry index, bool useBritishSound, bool playImmediately)
+        public string RefreshContext(IndexEntry index, bool useBritishSound, bool playImmediately)
         {
             _index = index;
             _soundKey = string.IsNullOrEmpty(index.Word.FavoriteSoundKey)
@@ -48,6 +48,8 @@ namespace Pronunciation.Trainer.AudioContexts
             {
                 ContextChanged(playImmediately ? PlayAudioMode.PlayReference : PlayAudioMode.None);
             }
+
+            return _soundKey;
         }
 
         public void PlayScriptAudio(string soundKey, string soundText, string audioData)

@@ -18,6 +18,37 @@ function extGetAudioByKey(audioKey) {
             return getAudioData(element);
     }
 }
+
+function extHiglightAudio(audioKey) {
+    var elements = document.getElementsByClassName("audio_button");
+    for (var i = 0; i < elements.length; i++) {
+        var element = elements[i];
+        if (getAudioKey(element) == audioKey) {
+            element.style.color = "red";
+        } else {
+            element.style.color = "black";
+        }
+    }
+}
+
+function extResetNotes() {
+    var container = document.getElementById("customNotesContainer");
+    container.innerHTML = '';
+}
+
+function extRefreshNotes(transcription, notes) {
+    var html = '<div class="custom_notes">';
+    if (transcription) {
+        html += '<div class="pron_favorite">' + transcription + '</div>';
+    }
+    if (notes) {
+        html += '<div class="custom_note">' + notes + '</div>';
+    }
+    html += "</div>";
+
+    var container = document.getElementById("customNotesContainer");
+    container.innerHTML = html;
+}
 // ***********
 
 function registerHandlers() {
@@ -33,7 +64,7 @@ function getAudioKey(element) {
 }
 
 function getAudioData(element) {
-    return element.attributes["raw-data"].value;
+    return pageAudio[getAudioKey(element)];
 }
 
 function getAudioText(element) {
@@ -70,17 +101,7 @@ function playAudio() {
     }
 
     func(this);
-
-    var elements = document.getElementsByClassName("audio_button");
-    var audioKey = getAudioKey(this);
-    for (var i = 0; i < elements.length; i++) {
-        var element = elements[i];
-        if (getAudioKey(element) == audioKey) {
-            element.style.color = "red";
-        } else {
-            element.style.color = "black";
-        }
-    }
+    extHiglightAudio(getAudioKey(this));
 }
 
 function rawDataViaApi(element) {

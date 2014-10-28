@@ -151,7 +151,7 @@ namespace Pronunciation.Parser
                     }
                 }
 
-                if (altSpellings != null && altSpellings.Count > 0)
+                if (word != null && altSpellings != null && altSpellings.Count > 0)
                 {
                     HashSet<string> altKeywords;
                     if (altSpellings.TryGetValue(word.Keyword, out altKeywords))

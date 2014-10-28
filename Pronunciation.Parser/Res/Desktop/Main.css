@@ -55,6 +55,21 @@ iframe
     margin-left: 1em;
 }
 
+.custom_notes
+{
+   margin-top: 10px;
+   margin-left: 1em;
+   padding: 5px;
+   background-color: #FFFFCC;
+   border: 1px solid;
+   border-color: black;
+}
+.custom_note
+{
+    margin-top: 2px;
+    font-style: italic;
+}
+
 .entry
 {
     padding-left: 1em;
@@ -67,7 +82,7 @@ iframe
 }
 .entry_text
 {
-    padding-top: 10px;
+    padding-top: 5px;
 }
 .entry_text strong
 {
@@ -137,7 +152,7 @@ iframe
     font-size: 1em;
 }
 
-.pron, .pron_us
+.pron, .pron_us, .pron_favorite
 {
     font-weight: bold;
     color: blue;

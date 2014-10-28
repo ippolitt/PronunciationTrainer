@@ -99,6 +99,9 @@ namespace Pronunciation.Trainer
         private const int MaxNumberOfSuggestions = 100;
         private const int VisibleNumberOfSuggestions = 30;
         private const string StatisticsTemplate = "Session statistics: viewed {0} pages, recorded {1} audios";
+        private const string HighlighAudioMethodName = "extHiglightAudio";
+        private const string RefreshNotesMethodName = "extRefreshNotes";
+        private const string ResetNotesMethodName = "extResetNotes"; 
 
         public DictionaryContainer()
         {
@@ -315,9 +318,14 @@ namespace Pronunciation.Trainer
 
         private void RefreshAudioContext(IndexEntry index)
         {
-            _audioContext.RefreshContext(index,
+            string activeSoundKey = _audioContext.RefreshContext(index,
                 AppSettings.Instance.StartupMode == StartupPlayMode.British,
                 AppSettings.Instance.StartupMode != StartupPlayMode.None);
+
+            if (AppSettings.Instance.StartupMode != StartupPlayMode.None)
+            {
+                CallScriptMethod(HighlighAudioMethodName, new string[] { activeSoundKey });
+            }
         }
 
         private void UserControl_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -367,13 +375,24 @@ namespace Pronunciation.Trainer
             if (index == null)
             {
                 _commandEditNotes.UpdateState(false);
-                btnEditNotes.IsStateOn = false;
             }
             else
             {
                 _commandEditNotes.UpdateState(true);
-                var info = index.Word;
-                btnEditNotes.IsStateOn = info.HasNotes;
+
+                DictionaryWordInfo word = index.Word;
+                if (word.HasNotes)
+                {
+                    CallScriptMethod(RefreshNotesMethodName, new string[] 
+                    { 
+                        HtmlHelper.PrepareHtmlContent(word.FavoriteTranscription), 
+                        HtmlHelper.PrepareHtmlContent(word.Notes, true) 
+                    });
+                }
+                else
+                {
+                    CallScriptMethod(ResetNotesMethodName, null);
+                }
             }
         }
 

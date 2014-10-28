@@ -16,7 +16,6 @@ namespace Pronunciation.Parser
     class AudioButtonHtmlBuilder
     {
         private readonly HtmlBuilder.GenerationMode _generationMode;
-        private readonly IFileLoader _fileLoader;
         private readonly static Dictionary<AudioButtonStyle, string> _captionMap;
 
         public bool IsContentLoadDisabled { get; set; } 
@@ -32,10 +31,9 @@ namespace Pronunciation.Parser
             };
         }
 
-        public AudioButtonHtmlBuilder(HtmlBuilder.GenerationMode generationMode, IFileLoader fileLoader)
+        public AudioButtonHtmlBuilder(HtmlBuilder.GenerationMode generationMode)
         {
             _generationMode = generationMode;
-            _fileLoader = fileLoader;
         }
 
         public string BuildHtml(AudioButtonStyle buttonStyle, string soundKey)
@@ -53,24 +51,13 @@ namespace Pronunciation.Parser
             string styleName = (buttonStyle == AudioButtonStyle.BigUK || buttonStyle == AudioButtonStyle.SmallUK) 
                 ? "audio_uk" : "audio_us";
             string buttonCaption = string.Format("{0}{1}", _captionMap[buttonStyle], soundNumber > 0 ? " " + soundNumber : null);
-            string titleAttribute = BuildSoundTitleAttribute(targetWord, entryNumber, soundNumber);
+            string titleAttribute = _generationMode == HtmlBuilder.GenerationMode.IPhone 
+                ? null 
+                : BuildSoundTitleAttribute(targetWord, entryNumber, soundNumber);
 
-            if (_generationMode == HtmlBuilder.GenerationMode.Database)
-            {
-                return string.Format(
+            return string.Format(
 @" <button type=""button"" class=""audio_button {0}"" {2}data-src=""{1}"">{3}</button>",
-                    styleName, soundKey, titleAttribute, buttonCaption);
-            }
-            else
-            {
-                return string.Format(
-@" <button type=""button"" class=""audio_button {0}"" {2}data-src=""{1}"" raw-data=""{3}"">{4}</button>",
-                    styleName, 
-                    soundKey, 
-                    _generationMode == HtmlBuilder.GenerationMode.IPhone ? null : titleAttribute,
-                    IsContentLoadDisabled ? null : _fileLoader.GetBase64Content(soundKey), 
-                    buttonCaption);
-            }
+                styleName, soundKey, titleAttribute, buttonCaption);
         }
 
         public void InjectSoundText(HtmlBuilder.ParseResult parseResult, string targetWord, string entryNumber, 
@@ -123,19 +110,19 @@ namespace Pronunciation.Parser
             if (string.IsNullOrEmpty(targetWord))
                 return null;
 
-            string title;
-            if (string.IsNullOrEmpty(entryNumber))
-            {
-                title = string.Format("{0}{1}", targetWord, 
-                    soundNumber > 0 ? ", " + soundNumber : null);
-            }
-            else
-            {
-                title = string.Format("{0}, {1}{2}", targetWord, entryNumber, 
-                    soundNumber > 0 ? "." + soundNumber : null);
-            }
+            //string title;
+            //if (string.IsNullOrEmpty(entryNumber))
+            //{
+            //    title = string.Format("{0}{1}", targetWord, 
+            //        soundNumber > 0 ? ", " + soundNumber : null);
+            //}
+            //else
+            //{
+            //    title = string.Format("{0}, {1}{2}", targetWord, entryNumber, 
+            //        soundNumber > 0 ? "." + soundNumber : null);
+            //}
 
-            return string.Format("audio_title=\"{0}\" ", HtmlHelper.PrepareAttributeValue(title));
+            return string.Format("audio_title=\"{0}\" ", HtmlHelper.PrepareAttributeValue(targetWord));
         }
     }
 }

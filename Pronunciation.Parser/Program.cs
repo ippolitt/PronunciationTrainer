@@ -158,7 +158,7 @@ namespace Pronunciation.Parser
                 string outputHtmlFolder = generationMode == HtmlBuilder.GenerationMode.Database
                     ? HtmlFolderDB
                     : (generationMode == HtmlBuilder.GenerationMode.FileSystem ? HtmlFolderFiles : HtmlFolderIphone);
-                var buttonBuilder = new AudioButtonHtmlBuilder(generationMode, fileLoader);
+                var buttonBuilder = new AudioButtonHtmlBuilder(generationMode);
 
                 var ldoceBuilder = new LDOCEHtmlBuilder(
                     generationMode,
@@ -172,7 +172,7 @@ namespace Pronunciation.Parser
 
                 var usageBuilder = new WordUsageBuilder(Path.Combine(rootFolder, DataFolder, TopWordsFileName));
                 var htmlBuilder = new HtmlBuilder(
-                    generationMode, dbUploader, buttonBuilder, ldoceBuilder, mwBuilder, usageBuilder,
+                    generationMode, dbUploader, buttonBuilder, fileLoader, ldoceBuilder, mwBuilder, usageBuilder,
                     Path.Combine(rootFolder, AnalysisFolder, ImportLogFileName));
 
                 htmlBuilder.ConvertToHtml(

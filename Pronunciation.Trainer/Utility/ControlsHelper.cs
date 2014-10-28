@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.IO;
+using System.Reflection;
 
 namespace Pronunciation.Trainer.Utility
 {
@@ -68,12 +69,21 @@ namespace Pronunciation.Trainer.Utility
         {
             // When window is shown with ShowDialog and there's a button with IsCancel = true we don't need
             // to call the Close explicitly (otherwise it will be called two times)
-            return !(cancelButton.IsCancel && IsModalWindow); 
+            return !(cancelButton.IsCancel && IsModalWindow(GetWindow(cancelButton))); 
         }
 
-        public static bool IsModalWindow
+        public static bool IsModalWindow(Window window)
         {
-            get { return System.Windows.Interop.ComponentDispatcher.IsThreadModal; }
+            Type type = typeof(Window);
+            var field = type.GetField("_showingAsDialog", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (field == null)
+            {
+                return System.Windows.Interop.ComponentDispatcher.IsThreadModal;
+            }
+            else
+            {
+                return (bool)field.GetValue(window);
+            }
         }
 
         public static BitmapImage ImageFromRawData(byte[] data)

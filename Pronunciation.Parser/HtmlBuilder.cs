@@ -51,6 +51,7 @@ namespace Pronunciation.Parser
         private readonly string _binFolder;
         private readonly GenerationMode _generationMode;
         private readonly AudioButtonHtmlBuilder _buttonBuilder;
+        private readonly IFileLoader _fileLoader;
 
         private const string TemplateFilePath = @"Html\FileTemplate.html";
         private const string TopTemplateFilePath = @"Html\TopTemplate.html";
@@ -75,7 +76,8 @@ namespace Pronunciation.Parser
             get { return _generationMode == GenerationMode.IPhone; }
         }
 
-        public HtmlBuilder(GenerationMode generationMode, DatabaseUploader dbUploader, AudioButtonHtmlBuilder buttonBuilder,
+        public HtmlBuilder(GenerationMode generationMode, DatabaseUploader dbUploader, 
+            AudioButtonHtmlBuilder buttonBuilder, IFileLoader fileLoader,
             LDOCEHtmlBuilder ldoce, MWHtmlBuilder mw, WordUsageBuilder usageBuilder, string logFile)
         {
             _generationMode = generationMode;
@@ -85,6 +87,7 @@ namespace Pronunciation.Parser
             _dbUploader = dbUploader;
             _usageBuilder = usageBuilder;
             _buttonBuilder = buttonBuilder;
+            _fileLoader = fileLoader;
 
             _ranks = PrepareRanks(_usageBuilder.GetRanks());
             _replaceMap = new XmlReplaceMap();
@@ -394,6 +397,7 @@ namespace Pronunciation.Parser
                 }
 
                 var pageBuilder = new StringBuilder();
+                var sounds = new Dictionary<string, string>();
                 foreach (var word in group.Words)
                 {
                     WordDescription description = GenerateHtml(word, pageBuilder, soundStats);
@@ -401,6 +405,17 @@ namespace Pronunciation.Parser
                     indexBuilder.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}",
                         description.Text, group.Name, usageRank,
                         description.SoundKeyUK, description.SoundKeyUS, word.DictionaryId));
+
+                    if (description.Sounds != null)
+                    {
+                        foreach (var sound in description.Sounds)
+                        {
+                            if (sounds.ContainsKey(sound.SoundKey))
+                                continue;
+
+                            sounds.Add(sound.SoundKey, _fileLoader.GetBase64Content(sound.SoundKey));
+                        }
+                    }
                 }
 
                 // Generate title
@@ -412,9 +427,9 @@ namespace Pronunciation.Parser
 
                 if (!isFakeMode)
                 {
-                    //File.WriteAllText(Path.Combine(outputFolder, string.Format("{0}.html", group.Name)),
-                    //    string.Format(template, title, pageBuilder),
-                    //    Encoding.UTF8);
+                    File.WriteAllText(Path.Combine(outputFolder, string.Format("{0}.html", group.Name)),
+                        string.Format(template, title, pageBuilder, PrepareJScriptSounds(sounds)),
+                        Encoding.UTF8);
                 }
 
                 letterGroups++;
@@ -532,9 +547,14 @@ namespace Pronunciation.Parser
 @"      <div class=""word_audio"">
             {0}
             {1}
-        </div>
-",
+        </div>",
                     wordAudio.SoundTextUK, wordAudio.SoundTextUS);
+            }
+
+            if (_generationMode == GenerationMode.Database)
+            {
+                pageBuilder.Append(
+@"      <div id=""customNotesContainer""></div>");
             }
 
             pageBuilder.AppendFormat(
@@ -1321,6 +1341,35 @@ namespace Pronunciation.Parser
             }
 
             return names;
+        }
+
+        private string PrepareJScriptSounds(Dictionary<string, string> sounds)
+        {
+            if (sounds == null || sounds.Count == 0)
+                return null;
+
+            var bld = new StringBuilder();
+            bld.AppendLine("var pageAudio = {");
+
+            bool isFirst = true;
+            foreach (var sound in sounds)
+            {
+                if (!isFirst)
+                {
+                    bld.AppendLine(",");
+                }
+                isFirst = false;
+
+                bld.AppendFormat(
+@"      ""{0}"": ""{1}""",
+                    sound.Key, sound.Value);
+            }
+
+            bld.Append(
+@"
+    };");
+
+            return bld.ToString();
         }
     }
 }
