@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Web;
 
 namespace Pronunciation.Parser
 {
@@ -15,12 +16,21 @@ namespace Pronunciation.Parser
             return value.Replace("\"", "&quot;").Replace("&", "&amp;");
         }
 
-        public static string PrepareJScriptString(string value)
+        public static string PrepareJScriptString(string value, bool allowSingleQuote)
         {
             if (string.IsNullOrEmpty(value))
                 return value;
 
-            return value.Replace("'", @"\'");
+            if (allowSingleQuote)
+            {
+                value = value.Replace(@"""", @"\""");
+            }
+            else
+            {
+                value = value.Replace("'", @"\'");
+            }
+
+            return value;
         }
     }
 }

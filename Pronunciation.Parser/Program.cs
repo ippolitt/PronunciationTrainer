@@ -7,6 +7,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Data.SqlServerCe;
 using System.Data;
+using System.Web;
 
 namespace Pronunciation.Parser
 {
@@ -132,12 +133,17 @@ namespace Pronunciation.Parser
                 bool deleteExtraWords = true;
                 var generationMode = HtmlBuilder.GenerationMode.Database;
 
-                fileLoader = new FileLoader(
-                    Path.Combine(rootFolder, DataFolderLPD),
-                    Path.Combine(rootFolder, DataFolderLDOCE),
-                    Path.Combine(rootFolder, DataFolderMW));
-
-                //fileLoader = new FileLoaderMock();
+                if (isFakeMode)
+                {
+                    fileLoader = new FileLoaderMock();
+                }
+                else
+                {
+                    fileLoader = new FileLoader(
+                        Path.Combine(rootFolder, DataFolderLPD),
+                        Path.Combine(rootFolder, DataFolderLDOCE),
+                        Path.Combine(rootFolder, DataFolderMW));
+                }
 
                 DatabaseUploader dbUploader = null;
                 if (generationMode == HtmlBuilder.GenerationMode.Database)

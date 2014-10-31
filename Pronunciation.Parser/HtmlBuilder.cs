@@ -26,6 +26,13 @@ namespace Pronunciation.Parser
             public List<DicWord> Words;
         }
 
+        private class SuggestionIndex
+        {
+            public string Letter;
+            public int LowerIndex;
+            public int UpperIndex;
+        }
+
         public class WordAudio
         {
             public string SoundTextUK;
@@ -55,6 +62,8 @@ namespace Pronunciation.Parser
 
         private const string TemplateFilePath = @"Html\FileTemplate.html";
         private const string TopTemplateFilePath = @"Html\TopTemplate.html";
+        private const string SuggestionsTemplateFilePath = @"Res\Mobile\Suggestions.js";
+        private const string SuggestionsResultFileName = @"Suggestions.js";
         private const string RootPath = "../../";
         private const string ImagesPath = "Images/";
         private const string DicPath = "Dic/";
@@ -66,12 +75,17 @@ namespace Pronunciation.Parser
             get { return _generationMode == GenerationMode.Database; }
         }
 
-        private bool GenerateTopWordsNavigation
+        private bool IsGenerateTopWordsNavigation
         {
             get { return _generationMode == GenerationMode.IPhone; }
         }
 
-        private bool GenerateTopWordsList
+        private bool IsGenerateTopWordsList
+        {
+            get { return _generationMode == GenerationMode.IPhone; }
+        }
+
+        private bool IsGenerateSuggestions
         {
             get { return _generationMode == GenerationMode.IPhone; }
         }
@@ -140,16 +154,9 @@ namespace Pronunciation.Parser
             }
 
             File.AppendAllText(_logFile, "\r\nSound stats:\r\n" + soundStats.ToString());
-
             if (_usageBuilder.Stats != null)
             {
                 File.AppendAllText(_logFile, "\r\nWord usage stats:\r\n" + _usageBuilder.Stats.ToString());
-            }
-
-            if (GenerateTopWordsList)
-            {
-                GenerateTopList(htmlFolder);
-                Console.WriteLine("Generated top words lists");
             }
 
             File.AppendAllText(_logFile, "Ended conversion.\r\n\r\n");
@@ -373,8 +380,11 @@ namespace Pronunciation.Parser
             var titleStats = new StringBuilder();
             var letterStats = new StringBuilder();
             var indexBuilder = new StringBuilder();
+            var keywords = new List<string>();
             foreach (var group in groups.Values.OrderBy(x => x.Name, StringComparer.Ordinal))
             {
+                keywords.Add(group.Name);
+
                 var subFolder = group.Name.Substring(0, 1);
                 if (Path.Combine(dicFolder, subFolder) != outputFolder)
                 {
@@ -448,6 +458,18 @@ namespace Pronunciation.Parser
             // Store index file
             File.WriteAllText(Path.Combine(rootFolder, IndexFileName), indexBuilder.ToString(), Encoding.UTF8);
             Console.WriteLine("Created index file '{0}'", IndexFileName);
+
+            if (IsGenerateTopWordsList)
+            {
+                GenerateTopList(rootFolder);
+                Console.WriteLine("Generated top words lists");
+            }
+
+            if (IsGenerateSuggestions)
+            {
+                GenerateSuggestions(keywords, rootFolder);
+                Console.WriteLine("Generated suggestions");
+            }
         }
 
         private Dictionary<string, WordGroup> GroupWords(List<DicWord> words, StringBuilder nameStats)
@@ -568,7 +590,7 @@ namespace Pronunciation.Parser
 
         private string GenerateUsageInfoHtml(WordUsageInfo rank)
         {
-            if (GenerateTopWordsNavigation)
+            if (IsGenerateTopWordsNavigation)
             {
                 return string.Format(
 @"      <span class=""word_usage"">Usage TOP: <strong>{0}</strong>{1}{2}</span>
@@ -831,7 +853,7 @@ namespace Pronunciation.Parser
         {
             if (IsDatabaseMode)
             {
-                return string.Format("javascript:void(loadPage('{0}'))", HtmlHelper.PrepareJScriptString(keyword));
+                return string.Format("javascript:void(loadPage('{0}'))", HtmlHelper.PrepareJScriptString(keyword, false));
             }
             else
             {
@@ -1235,6 +1257,69 @@ namespace Pronunciation.Parser
 
                 previousRank = rank;
             }
+        }
+
+        private void GenerateSuggestions(IEnumerable<string> keywords, string outputFolder)
+        {
+            string lineSeparator = _generationMode == GenerationMode.IPhone ? "\n" : "\r\n";
+
+            var suggestionsBuilder = new StringBuilder();
+            var indexes = new List<SuggestionIndex>();
+            SuggestionIndex currentIndex = null;
+            int position = 0;
+            foreach (var keyword in keywords.OrderBy(x => x))
+            {
+                if (position > 0)
+                {
+                    suggestionsBuilder.AppendFormat(",{0}", lineSeparator);
+                }
+                suggestionsBuilder.AppendFormat("\"{0}\"", HtmlHelper.PrepareJScriptString(keyword.ToLower(), true));
+
+                var letter = keyword.Substring(0, 1).ToLower();
+                if (currentIndex == null || currentIndex.Letter != letter)
+                {
+                    if (currentIndex != null)
+                    {
+                        currentIndex.UpperIndex = position - 1;
+                        indexes.Add(currentIndex);
+                    }
+
+                    currentIndex = new SuggestionIndex();
+                    currentIndex.Letter = letter;
+                    currentIndex.LowerIndex = position;
+                }
+
+                position++;
+            }
+
+            currentIndex.UpperIndex = position - 1;
+            indexes.Add(currentIndex);
+
+            var indexBuilder = new StringBuilder();
+            position = 0;
+            foreach (var index in indexes)
+            {
+                if (position > 0)
+                {
+                    indexBuilder.AppendFormat(",{0}", lineSeparator);
+                }
+                indexBuilder.AppendFormat("new WordIndex(\"{0}\", {1}, {2})", 
+                    HtmlHelper.PrepareJScriptString(index.Letter, true), index.LowerIndex, index.UpperIndex);
+
+                position++;
+            }
+
+            var template = File.ReadAllText(
+                Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    SuggestionsTemplateFilePath),
+                Encoding.UTF8);
+
+            string result = template
+                .Replace("var suggestionIndex = [];", string.Format("var suggestionIndex = [{0}];", indexBuilder))
+                .Replace("var suggestionWords = [];", string.Format("var suggestionWords = [{0}];", suggestionsBuilder));
+
+            File.WriteAllText(Path.Combine(outputFolder, SuggestionsResultFileName), result, Encoding.UTF8); 
         }
 
         private List<string> PrepareWordNames(string[] contents)

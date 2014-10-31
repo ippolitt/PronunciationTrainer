@@ -1,8 +1,8 @@
 ﻿Top:
 - Try installing video card, then try giving more memory to video adapter
---
+--	
+- Delete recordings for "ldoce_"
 - Add a beep at the start of a recording (configurable, default is false)
-- Learn "ɪn ˈkriːs ⇨ɪŋ-," transition
 - Statistics:
 	- Add total statistics (recorded N words over Y days).
 	- Add a dedicated bar with overall statistics
@@ -11,7 +11,6 @@
 - Assign a shortcut to a category for adding/removing a word
 - Somehow mark the entries from LDOCE/MW in UI (when they present as a dedicated entry because MW phonetic symbols differ)
 - Rethink how active audio is displayed (once we now highlight the button). Highlight active audio on page load (see "hello").
-- Delete recordings for "ldoce_"
 - Lazy load categories (only if tab is visible)
 - Remove some logging
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
@@ -22,6 +21,7 @@ Dictionary:
 		- MW:
 			- don't merge ", the" in MW
 			- why "Mac" is not merged (the same sounds?)
+			- why "refit" 1 doesn't have a speech part (verb)?
 		- LDOCE: 
 			Trim ", Mr and , Mrs"?
 			- preserve meanings if they differ by pronunciation and group during import, preferring sounds that miss in LPD (see "detail")
@@ -34,6 +34,7 @@ Dictionary:
 		- LDOCE: entries like "-meter": maybe show two keywords and allow to see two articles?
 		- LPD: 
 			Fix formatting problem in "say": word form note ("plural") is bigger than transcription note.
+			Fix "media" and similar ("plural of")	
 			Fix "pronounstrong form" in "he"
 			"increase" - why "not kri:z" is bold?
 			If starts with "—" usually begin a new line (see "go" for exception)
@@ -42,6 +43,7 @@ Dictionary:
 			"detail", "direct"- preference poll attached to word form (same in the original entry)
 			"wound" - past participle of
 			"Agar, Adler" - split in two lines
+			- Test ['m] in database (hyperlink to I'm)
 		- Resolve references in LPD ("am" -> see "I'm", except ... -> ... (ref) ), also (go -> "See gonna") and MW
 		- Get word forms from LPD and - in case if it exists as a separate entry in other dictionaries - generate a hypelink to the base form
 		- MW: generate hyperlink for [ref] in transcription and other places (both in file system and database)
@@ -96,6 +98,8 @@ HTML to WPF migration:
 	- Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
 	- Think of another DB engine (SQLLite?). Test it with big databases and storing image/binary/ntext data.  
 - New functionality:
+	- Add ability to zoom Theory topics
+	- Think of algorithm for "resetting the ear" (when I listen to my recording the next day it sounds much worse)
 	- Add "Play recorded" option to play my recordings on page load
 	- Add "Phrase bank" functionality:
 		- Import phrases from LDOCE (match sounds and text).
@@ -166,7 +170,11 @@ Waveforms:
 	- Add ability to move and stretch waveforms with a slider
 	- Add word name to the last played audio
 	- Play sound along with moving a slider on waveform
-	- Add ability to show real amplitude of the sounds (don't stretch them) to compare loudness 
+	- Add ability to show real amplitude of the sounds (don't stretch them) to compare loudness
+Migration to upper version:
+	- WPF:
+		- Check "_isModalWindow" private field 
+		- Start using a brush for inactive focus color in "Categories" panel
 Tests:
 	- Test when there are no custom categories
 Deployment:

@@ -11,7 +11,7 @@ var timeoutId = null;
 var audioMode = 1;
 
 function registerHandlers() {
-    //registerDynamicContent();
+    registerDynamicContent();
     registerAudio();
     registerSubmit();
     adjustOrientation();
@@ -20,14 +20,14 @@ function registerHandlers() {
 function registerDynamicContent() {
     var div = document.getElementById('navigationContainer');
     div.innerHTML =
-    '<div class="navigationRow">Repeat every<input type="text" id="txtInterval"/>seconds.<input type="button" id="btnRecord" value="Start/Stop" /></div>' +
-    '<div class="navigationRow">Search:<input type="text" id="txtSearch"/><input type="submit" value="Go"/></div>';
+    //    '<div class="navigationRow">Repeat every<input type="text" id="txtInterval"/>seconds.<input type="button" id="btnRecord" value="Start/Stop" /></div>' +
+    '<div class="navigationRow">Search:<input type="text" id="txtNavigate" autocapitalize="off" autocorrect="off" /><input type="submit" value="Go"/></div>';
 
-    var button = document.getElementById('btnRecord');
-    button.addEventListener('click', initRecording, false);
+    //    var button = document.getElementById('btnRecord');
+    //    button.addEventListener('click', initRecording, false);
 
-    var txt = document.getElementById('txtInterval');
-    txt.value = repeatDelay;
+    //    var txt = document.getElementById('txtInterval');
+    //    txt.value = repeatDelay;
 }
 
 function adjustOrientation() {
@@ -62,7 +62,7 @@ function registerAudio() {
 function registerSubmit() {
     document.getElementById("mainForm").onsubmit = function () {
 
-        var fileName = document.getElementById("txtSearch").value.toLowerCase();
+        var fileName = document.getElementById("txtNavigate").value.toLowerCase();
         var letter = fileName[0];
         window.location = '../../Dic/' + letter + '/' + fileName + '.html';
 
