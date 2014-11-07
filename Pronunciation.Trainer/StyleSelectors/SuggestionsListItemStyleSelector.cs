@@ -16,9 +16,12 @@ namespace Pronunciation.Trainer.StyleSelectors
         private readonly static Style _serviceItemStyle;
         private readonly static Style _extraItemStyle;
         private readonly static Style _multiPronItemStyle;
+        private readonly static AppSettings _settings;
 
         static SuggestionsListItemStyleSelector()
         {
+            _settings = AppSettings.Instance;
+
             _serviceItemStyle = new Style(typeof(ListBoxItem));
             _serviceItemStyle.Setters.Add(new Setter(ListBoxItem.ForegroundProperty, Brushes.Gray));
             _serviceItemStyle.Setters.Add(new Setter(ListBoxItem.FontStyleProperty, FontStyles.Italic));
@@ -44,7 +47,7 @@ namespace Pronunciation.Trainer.StyleSelectors
                 {
                     st = _extraItemStyle;
                 }
-                else if (((IndexEntry)item).HasMultiplePronunciations == true)
+                else if (((IndexEntry)item).HasMultiplePronunciations == true && _settings.HighlightMultiPronunciationWords)
                 {
                     st = _multiPronItemStyle;
                 }

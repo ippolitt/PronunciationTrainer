@@ -222,9 +222,6 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <None Include="SampleExternal.xaml">
-      <SubType>Designer</SubType>
-    </None>
     <Page Include="Theory.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

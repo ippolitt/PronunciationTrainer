@@ -5,11 +5,12 @@ using System.Text;
 
 namespace Pronunciation.Parser
 {
-    class WordUsageInfo
+    class WordListNode
     {
+        public string PageName;
         public string Keyword;
-        public int CombinedRank;
-        public WordRanks Ranks;
-        public bool IsMapped;
+        public WordListNode PreviousWord;
+        public WordListNode NextWord;
+        public int Rank;
     }
 }

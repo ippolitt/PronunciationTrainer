@@ -34,7 +34,7 @@ namespace Pronunciation.Parser
             get { return _stats; }
         }
 
-        public void AddEntries(LDOCEHtmlBuilder ldoce, bool allowNew)
+        public void AddEntries(LDOCEHtmlBuilder ldoce, HtmlBuilder.GenerationMode generationMode)
         {
             if (ldoce == null)
                 return;
@@ -52,11 +52,11 @@ namespace Pronunciation.Parser
                         LDOCEEntry = (LDOCEHtmlEntry)entry, 
                         IsLDOCEEntry = true
                     },
-                allowNew, 
+                generationMode, 
                 spellings); 
         }
 
-        public void AddEntries(MWHtmlBuilder mw, bool allowNew)
+        public void AddEntries(MWHtmlBuilder mw, HtmlBuilder.GenerationMode generationMode)
         {
             if (mw == null)
                 return;
@@ -70,7 +70,7 @@ namespace Pronunciation.Parser
                     MWEntry = (MWHtmlEntry)entry,
                     IsMWEntry = true
                 },
-                allowNew, 
+                generationMode, 
                 null); 
         }
 
@@ -118,52 +118,80 @@ namespace Pronunciation.Parser
         }
 
         private void AddEntries(IEnumerable<IExtraEntry> entries, Action<DicWord, IExtraEntry> matchAction,
-            Func<IExtraEntry, DicWord> newWordBuilder, bool allowNew, Dictionary<string, HashSet<string>> altSpellings)
+            Func<IExtraEntry, DicWord> newWordBuilder, HtmlBuilder.GenerationMode generationMode, 
+            Dictionary<string, HashSet<string>> altSpellings)
         {
             int addedEntriesCount = 0;
             foreach(var entry in entries)
             {
                 string keyword = DicWord.PrepareKeyword(entry.Keyword);
+                bool isMapped = false;
 
                 // First, trying to find case sensitive match
                 DicWord word;
                 if (_caseSensitiveMap.TryGetValue(keyword, out word))
                 {
                     matchAction(word, entry);
+                    isMapped = true;
                 }
                 else
                 {
                     if (_caseInsensitiveMap.TryGetValue(keyword, out word))
                     {
                         matchAction(word, entry);
+                        isMapped = true;
                     }
                     else
                     {
-                        if (allowNew && newWordBuilder != null)
+                        if (newWordBuilder != null)
                         {
                             word = newWordBuilder(entry);
+                        }
+                    }
+                }
+
+                if (word != null)
+                {
+                    if (altSpellings != null && altSpellings.Count > 0)
+                    {
+                        HashSet<string> altKeywords;
+                        if (altSpellings.TryGetValue(word.Keyword, out altKeywords))
+                        {
+                            if (word.AlternativeSpellings == null)
+                            {
+                                word.AlternativeSpellings = new HashSet<string>();
+                            }
+
+                            foreach (var altKeyword in altKeywords)
+                            {
+                                word.AlternativeSpellings.Add(altKeyword);
+                            }
+                        }
+                    }
+
+                    if (!isMapped)
+                    {
+                        bool canAdd = (generationMode == HtmlBuilder.GenerationMode.Database);
+                        if (!canAdd && word.AlternativeSpellings != null)
+                        {
+                            // We still can add the word if one of its alternative spellings is mapped
+                            foreach (var altKeyword in word.AlternativeSpellings)
+                            {
+                                if (_caseSensitiveMap.ContainsKey(altKeyword) || _caseInsensitiveMap.ContainsKey(altKeyword))
+                                {
+                                    canAdd = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (canAdd)
+                        {
                             _words.Add(word);
                             _caseSensitiveMap.Add(keyword, word);
                             _caseInsensitiveMap.Add(keyword, word);
 
                             addedEntriesCount++;
-                        }
-                    }
-                }
-
-                if (word != null && altSpellings != null && altSpellings.Count > 0)
-                {
-                    HashSet<string> altKeywords;
-                    if (altSpellings.TryGetValue(word.Keyword, out altKeywords))
-                    {
-                        if (word.AlternativeSpellings == null)
-                        {
-                            word.AlternativeSpellings = new HashSet<string>();
-                        }
-
-                        foreach (var altKeyword in altKeywords)
-                        {
-                            word.AlternativeSpellings.Add(altKeyword);
                         }
                     }
                 }

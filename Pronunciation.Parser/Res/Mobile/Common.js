@@ -1,9 +1,7 @@
-var myAudioContext, isWebKit;
-var firstAudioUk, firstAudioUs;
-var lastPlayedAudio;
-
-var repeatDelay = 3; // in seconds
-var timeoutId = null;
+//var firstAudioUk, firstAudioUs;
+//var lastPlayedAudio;
+//var repeatDelay = 3; // in seconds
+//var timeoutId = null;
 
 // 1 - read mp3 data directly from Base64 string and play via Web Audio API (doesn't work in IE)
 // 2 - read mp3 data directly from Base64 string and play via Audio element (doesn't work in mobile browsers)
@@ -45,34 +43,40 @@ function registerAudio() {
         var element = elements[i];
         element.addEventListener('click', playAudio, false);
 
-        if (firstAudioUk == null || firstAudioUs == null) {
-            var className = element.attributes["class"].value;
+        //        if (firstAudioUk == null || firstAudioUs == null) {
+        //            var className = element.attributes["class"].value;
 
-            if (firstAudioUk == null && className.indexOf("audio_uk") >= 0) {
-                firstAudioUk = element;
-            }
+        //            if (firstAudioUk == null && className.indexOf("audio_uk") >= 0) {
+        //                firstAudioUk = element;
+        //            }
 
-            if (firstAudioUs == null && className.indexOf("audio_us") >= 0) {
-                firstAudioUs = element;
-            }
-        }
+        //            if (firstAudioUs == null && className.indexOf("audio_us") >= 0) {
+        //                firstAudioUs = element;
+        //            }
+        //        }
     }
 }
 
 function registerSubmit() {
     document.getElementById("mainForm").onsubmit = function () {
-
         var fileName = document.getElementById("txtNavigate").value.toLowerCase();
-        var letter = fileName[0];
-        window.location = '../../Dic/' + letter + '/' + fileName + '.html';
+        loadPage(fileName);
 
         return false;
     }
 }
 
+function loadPage(fileName) {
+    window.location = '../../Dic/' + fileName[0] + '/' + fileName + '.html';
+}
+
+function loadPageViaContainer(fileName) {
+    window.location = 'Default.html?' + encodeURIComponent(fileName);
+}
+
 function playAudio() {
     playAudioData(getAudioData(this));
-    lastPlayedAudio = this;
+    //lastPlayedAudio = this;
 
     higlightAudio(getAudioKey(this));
 }
@@ -139,42 +143,50 @@ function initRecording() {
 }
 
 function rawDataViaApi(raw_data) {
-
-    if (myAudioContext == null) {
-        if ('AudioContext' in window) {
-            myAudioContext = new AudioContext();
-            isWebKit = false;
-        } else if ('webkitAudioContext' in window) {
-            myAudioContext = new webkitAudioContext();
-            isWebKit = true;
-        } else {
-            alert('Your browser does not support Web Audio API!');
+    try {
+        var myAudioContext = window.parent.sessionAudioContext;
+        if (!myAudioContext) {
+            alert("Audio context is not initialized!");
             return;
         }
-    }
 
-    try {
         var arrayBuff = Base64Binary.decodeArrayBuffer(raw_data);
         var mySource = myAudioContext.createBufferSource();
-        //        myAudioContext.decodeAudioData(arrayBuff, function (audioData) {
-        //            myBuffer = audioData;
-        //        });
-        mySource.buffer = myAudioContext.createBuffer(arrayBuff, false);
-        mySource.connect(myAudioContext.destination);
-
-        if (isWebKit) {
-            mySource.noteOn(0);
-        } else {
-            mySource.start(0);
-        }
+        // Note: for testing purposes we can use older synchronous "myAudioContext.createBuffer(arrayBuff, false)" method 
+        // which gives detailed information about an error.
+        myAudioContext.decodeAudioData(arrayBuff,
+            function (decodedBuffer) {
+                try {
+                    mySource.buffer = decodedBuffer;
+                    mySource.connect(myAudioContext.destination);
+                    mySource.start(0);
+                } catch (e) {
+                    showError(e, "Playback error");
+                }
+            },
+            function (e) {
+                // 'e' is usually 'null'
+                showError(e, "Decoding error");
+            }
+        );
+    } catch (e) {
+        showError(e);
     }
-    catch (e) {
-        var msg = e.message;
+}
+
+function showError(e, title) {
+    var msg = "";
+    if (title) {
+        msg = title + ": ";
+    }
+    if (e) {
+        msg += e.message;
         if (e.stack) {
             msg += "\r\n" + e.stack;
         }
-        alert(msg);
     }
+
+    alert(msg);
 }
 
 function rawDataViaAudio(raw_data) {

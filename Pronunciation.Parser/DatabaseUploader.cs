@@ -72,7 +72,7 @@ namespace Pronunciation.Parser
             DataRecordWrapper wordRecord;
             WordIdInfo wordInfo;
             int currentWordId;
-            bool isUpdate = _wordIdMap.TryGetValue(word.Text, out wordInfo);
+            bool isUpdate = _wordIdMap.TryGetValue(word.Keyword, out wordInfo);
             if (isUpdate)
             {
                 if (wordInfo.IsUsed)
@@ -81,7 +81,7 @@ namespace Pronunciation.Parser
                 if (!_wordsSet.ReadAbsolute(wordInfo.RecordPosition))
                     throw new IndexOutOfRangeException("Failed to locate word record!");
 
-                if ((string)_wordsSet["Keyword"] != word.Text)
+                if ((string)_wordsSet["Keyword"] != word.Keyword)
                     throw new ArgumentException("Words map is corrupted!");
 
                 wordInfo.IsUsed = true;
@@ -96,10 +96,10 @@ namespace Pronunciation.Parser
                 wordInsertRecord = _wordsSet.CreateRecord();
                 wordRecord = new DataRecordWrapper(wordInsertRecord);
                 wordRecord["WordId"] = currentWordId;
-                wordRecord["Keyword"] = word.Text;
+                wordRecord["Keyword"] = word.Keyword;
             }
 
-            var htmlIndex = _htmlDATBuilder.AppendEntity(word.Text, Encoding.UTF8.GetBytes(html));
+            var htmlIndex = _htmlDATBuilder.AppendEntity(word.Keyword, Encoding.UTF8.GetBytes(html));
             wordRecord["HtmlIndex"] = htmlIndex.BuildKey();
             wordRecord["SoundKeyUK"] = word.SoundKeyUK;
             wordRecord["SoundKeyUS"] = word.SoundKeyUS;
@@ -153,7 +153,7 @@ namespace Pronunciation.Parser
             else
             {
                 _wordsSet.Insert(wordInsertRecord);
-                _wordIdMap.Add(word.Text, new WordIdInfo { WordId = currentWordId, RecordPosition = _wordIdMap.Count, IsUsed = true });
+                _wordIdMap.Add(word.Keyword, new WordIdInfo { WordId = currentWordId, RecordPosition = _wordIdMap.Count, IsUsed = true });
             }
         }
 

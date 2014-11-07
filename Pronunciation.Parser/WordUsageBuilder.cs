@@ -9,6 +9,8 @@ namespace Pronunciation.Parser
     class WordUsageBuilder
     {
         private Dictionary<string, WordUsageInfo> _words;
+        private Dictionary<string, WordListNode> _nodes;
+        private Dictionary<int, List<WordListNode>> _nodeLists;
         private string _usageFile;
         private StringBuilder _stats;
 
@@ -134,22 +136,95 @@ namespace Pronunciation.Parser
                 _stats.AppendFormat("Ranks: keyword '{0}' is not mapped.\r\n", keyword);
             }
             _stats.AppendFormat("Ranks: totally '{0}' keywords haven't been mapped.\r\n", count);
+        }
 
-            // Build previous and next words within each rank
-            foreach (var group in _words.Values.Where(x => x.CombinedRank > 0).GroupBy(x => x.CombinedRank))
+        public void BuildUsageLists(IEnumerable<HtmlBuilder.WordGroup> groups)
+        {
+            _nodes = new Dictionary<string, WordListNode>();
+            _nodeLists = new Dictionary<int, List<WordListNode>>();
+            var lastNodes = new Dictionary<int, WordListNode>();
+            foreach (var group in groups)
             {
-                WordUsageInfo previous = null;
-                foreach (var word in group.OrderBy(x => x.Keyword))
+                var secondaryNodes = new Dictionary<int, List<WordListNode>>();
+                var mainNodes = new Dictionary<int, WordListNode>(); 
+                foreach (var word in group.Words)
                 {
-                    if (previous != null)
+                    WordUsageInfo info;
+                    if (!_words.TryGetValue(word.Keyword, out info))
+                        continue;
+
+                    var node = new WordListNode{ PageName = group.Name, Keyword = word.Keyword, Rank = info.CombinedRank };
+                    if (!mainNodes.ContainsKey(node.Rank))
                     {
-                        word.PreviousWord = previous;
-                        previous.NextWord = word;
+                        mainNodes.Add(node.Rank, node);
+
+                        WordListNode previousNode;
+                        if (lastNodes.TryGetValue(node.Rank, out previousNode))
+                        {
+                            node.PreviousWord = previousNode;
+                            previousNode.NextWord = node;
+                        }
+                        lastNodes[node.Rank] = node;
+                    }
+                    else
+                    {
+                        List<WordListNode> rankSecondary;
+                        if (!secondaryNodes.TryGetValue(node.Rank, out rankSecondary))
+                        {
+                            rankSecondary = new List<WordListNode>();
+                            secondaryNodes.Add(node.Rank, rankSecondary);
+                        }
+                        rankSecondary.Add(node);
                     }
 
-                    previous = word;
+                    _nodes.Add(node.Keyword, node);
+
+                    List<WordListNode> rankNotes;
+                    if (!_nodeLists.TryGetValue(node.Rank, out rankNotes))
+                    {
+                        rankNotes = new List<WordListNode>();
+                        _nodeLists.Add(node.Rank, rankNotes);
+                    }
+                    rankNotes.Add(node);
+                }
+
+                foreach (var entry in secondaryNodes)
+                {
+                    var mainNode = mainNodes[entry.Key];
+                    foreach (var secondaryNode in entry.Value)
+                    {
+                        secondaryNode.PreviousWord = mainNode.PreviousWord;
+                        secondaryNode.NextWord = mainNode.NextWord;
+                    }
                 }
             }
+        }
+
+        public WordUsageInfo GetUsage(string keyword)
+        {
+            WordUsageInfo info;
+            if (_words.TryGetValue(keyword, out info))
+                return info;
+
+            return null;
+        }
+
+        public int[] GetRanks()
+        {
+            return new[] { 1000, 2000, 3000, 6000, 9000 };
+        }
+
+        public WordListNode GetListNode(string keyword)
+        {
+            WordListNode node;
+            _nodes.TryGetValue(keyword, out node);
+
+            return node;
+        }
+
+        public List<WordListNode> GetRankNodes(int rank)
+        {
+            return _nodeLists[rank];
         }
 
         private string PrepareMatchingKeyword(string keyword, bool preserveCase)
@@ -198,25 +273,6 @@ namespace Pronunciation.Parser
             }
 
             return words;
-        }
-
-        public WordUsageInfo GetUsage(string keyword)
-        {
-            WordUsageInfo info;
-            if (_words.TryGetValue(keyword, out info))
-                return info;
-
-            return null;
-        }
-
-        public int[] GetRanks()
-        {
-            return new[] { 1000, 2000, 3000, 6000, 9000 };
-        }
-
-        public IEnumerable<WordUsageInfo> GetWords(int rank)
-        {
-            return _words.Values.Where(x => x.CombinedRank == rank);
         }
     }
 }

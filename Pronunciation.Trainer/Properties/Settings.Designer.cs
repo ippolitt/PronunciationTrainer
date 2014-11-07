@@ -133,5 +133,17 @@ namespace Pronunciation.Trainer.Properties {
                 this["ActiveDictionaryIds"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool HighlightMultiPronunciationWords {
+            get {
+                return ((bool)(this["HighlightMultiPronunciationWords"]));
+            }
+            set {
+                this["HighlightMultiPronunciationWords"] = value;
+            }
+        }
     }
 }

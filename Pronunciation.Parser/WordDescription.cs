@@ -7,7 +7,8 @@ namespace Pronunciation.Parser
 {
     class WordDescription
     {
-        public string Text;
+        public string Keyword;
+        public string PageName; 
         public string SoundKeyUK;
         public string SoundKeyUS;
         public WordUsageInfo UsageInfo;

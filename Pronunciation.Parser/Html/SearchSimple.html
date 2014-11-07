@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head>
+    <title>Search page</title>
+    <link type="text/css" rel="stylesheet" href="Main.css"/>
+</head>
+<body>
+    <form id="mainForm" action="">
+      <div id="searchContainer">
+        <div id="searchTitle">Search:</div>
+        <div>
+            <input type="text" id="txtSearch" autocapitalize="off" autocorrect="off"/>
+        </div>
+      </div>
+  </form>
+<script type="text/javascript" language="javascript">
+    registerSubmit();
+
+    function registerSubmit() {
+        document.getElementById("mainForm").onsubmit = function () {
+
+            var fileName = document.getElementById("txtSearch").value.toLowerCase();
+            window.location = '../Dic/' + fileName[0] + '/' + fileName + '.html';
+
+            return false;
+        }
+
+        // Postpone audiocontext initialization
+        window.parent.initAudioContext();
+    }
+</script>
+</body>
+</html>

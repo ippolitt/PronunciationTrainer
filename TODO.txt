@@ -1,16 +1,15 @@
 ﻿Top:
 - Try installing video card, then try giving more memory to video adapter
---	
+-
 - Delete recordings for "ldoce_"
-- Add a beep at the start of a recording (configurable, default is false)
+- Add a beep at the start of a recording (configurable per type (dictionary, training, exercises, quick recorder), default is false)
+- Somehow mark the entries from LDOCE/MW in UI (when they present as a dedicated entry because MW phonetic symbols differ)
 - Statistics:
 	- Add total statistics (recorded N words over Y days).
 	- Add a dedicated bar with overall statistics
 	- Remember the last N words I recorded (or viewed?) the dictionary
 - Add ability to rewind player by 1 or 3 seconds (should be configurable)
 - Assign a shortcut to a category for adding/removing a word
-- Somehow mark the entries from LDOCE/MW in UI (when they present as a dedicated entry because MW phonetic symbols differ)
-- Rethink how active audio is displayed (once we now highlight the button). Highlight active audio on page load (see "hello").
 - Lazy load categories (only if tab is visible)
 - Remove some logging
 - Find the best audio for "American Accent Training" paragraph (ex. 3-39 - read fast)
@@ -18,6 +17,7 @@ Dictionary:
 	- Import
 		- iPhone: 
 			- Should we allow new words from LDOCE and MW? E.g. word forms?
+			- autoplay audio on page load?
 		- MW:
 			- don't merge ", the" in MW
 			- why "Mac" is not merged (the same sounds?)
@@ -69,6 +69,8 @@ Dictionary:
 	- Analyze words that present in LPD but miss in LDOCE
 	- Transform partial transcriptions into full ones and highlight the part
 	- If word note presents - display it along with the dictionary article (as LDOCE does)
+	- Higlight part of speech whith other color?
+	- "PrepareLink" method: ensure that we transform passed keyword into an existing word reference (especially for iPhone)
 HTML to WPF migration:
 	- Find a better way to distinguish buttons with the same audio key than displaying the key in UI
 	- Display a note if a button has an assosiated recording (or display a list with all my recordings for this article?)

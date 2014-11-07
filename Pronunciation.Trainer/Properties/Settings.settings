@@ -32,5 +32,8 @@
     <Setting Name="ActiveDictionaryIds" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="HighlightMultiPronunciationWords" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

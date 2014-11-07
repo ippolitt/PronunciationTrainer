@@ -1,4 +1,4 @@
-﻿var maxSuggestions = 10;
+﻿var maxSuggestions = 15;
 
 function findSuggestions(searchText) {
     if (!searchText)

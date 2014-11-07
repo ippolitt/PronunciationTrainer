@@ -55,6 +55,7 @@
     <Compile Include="StringHelper.cs" />
     <Compile Include="TraceHelper.cs" />
     <Compile Include="UppercaseFirstComparer.cs" />
+    <Compile Include="WordListNode.cs" />
     <Compile Include="WordRanks.cs" />
     <Compile Include="WordUsageInfo.cs" />
     <Compile Include="XmlContentCollector.cs" />
@@ -102,12 +103,13 @@
     <Compile Include="XmlReplaceMap.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Html\SearchSimple.html" />
     <Content Include="Html\DatabaseTemplate.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Html\Default simple.html" />
     <Content Include="Html\Default.html" />
     <Content Include="Html\NavigationTemplate.html" />
+    <Content Include="Html\Search.html" />
     <Content Include="Html\TopTemplate.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

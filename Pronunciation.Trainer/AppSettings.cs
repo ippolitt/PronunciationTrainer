@@ -48,6 +48,7 @@ namespace Pronunciation.Trainer
         public RecordingHistoryMode HistoryMode { get; set; }
         public int HistoryDays { get; set; }
         public float ReferenceDataVolume { get; set; }
+        public bool HighlightMultiPronunciationWords { get; set; }
 
         public AppFolders Folders { get; private set; }
         public AppFiles Files { get; private set; }
@@ -72,6 +73,7 @@ namespace Pronunciation.Trainer
             HistoryMode = (RecordingHistoryMode)Settings.Default.RecordingHistoryMode;
             HistoryDays = Settings.Default.RecordingHistoryDays;
             MaxSamplesInWaveform = Settings.Default.MaxAudioSamplesInWaveform;
+            HighlightMultiPronunciationWords = Settings.Default.HighlightMultiPronunciationWords;
 
             if (!string.IsNullOrEmpty(Settings.Default.ActiveDictionaryIds))
             {
@@ -95,6 +97,7 @@ namespace Pronunciation.Trainer
             Settings.Default.ReferenceDataVolume = ReferenceDataVolume;
             Settings.Default.RecordingHistoryMode = (int)HistoryMode;
             Settings.Default.RecordingHistoryDays = HistoryDays;
+            Settings.Default.HighlightMultiPronunciationWords = HighlightMultiPronunciationWords;
             Settings.Default.Save();
         }
 

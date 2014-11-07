@@ -20,7 +20,7 @@ namespace Pronunciation.Parser
             IPhone
         }
 
-        private class WordGroup
+        public class WordGroup
         {
             public string Name;
             public List<DicWord> Words;
@@ -128,14 +128,11 @@ namespace Pronunciation.Parser
 
             List<DicWord> words = ParseFile(sourceXml);
             SplitSynonyms(words);
-            if (IsDatabaseMode)
-            {
-                AddCollocations(words);
-            }
+            AddCollocations(words);
 
             EntriesMapper mapper = new EntriesMapper(words);
-            mapper.AddEntries(_ldoce, IsDatabaseMode);
-            mapper.AddEntries(_mw, IsDatabaseMode);
+            mapper.AddEntries(_ldoce, _generationMode);
+            mapper.AddEntries(_mw, _generationMode);
             if (mapper.Stats != null)
             {
                 File.AppendAllText(_logFile, "\r\nExtra entries matching stats:\r\n" + mapper.Stats.ToString());
@@ -313,7 +310,7 @@ namespace Pronunciation.Parser
                     foreach (var word in group.Words)
                     {
                         var pageBuilder = new StringBuilder();
-                        WordDescription description = GenerateHtml(word, pageBuilder, soundStats);
+                        WordDescription description = GenerateHtml(word.Keyword, word, pageBuilder, soundStats);
                         description.DictionaryId = word.DictionaryId;
                         if (description.Sounds != null)
                         {
@@ -374,6 +371,8 @@ namespace Pronunciation.Parser
                 Directory.CreateDirectory(dicFolder);
             }
 
+            _usageBuilder.BuildUsageLists(groups.Values.OrderBy(x => x.Name, StringComparer.Ordinal));
+
             int wordsCount = 0;
             int letterGroups = 0;
             string outputFolder = null;
@@ -410,10 +409,10 @@ namespace Pronunciation.Parser
                 var sounds = new Dictionary<string, string>();
                 foreach (var word in group.Words)
                 {
-                    WordDescription description = GenerateHtml(word, pageBuilder, soundStats);
+                    WordDescription description = GenerateHtml(group.Name, word, pageBuilder, soundStats);
                     int? usageRank = description.UsageInfo == null ? (int?)null : description.UsageInfo.CombinedRank;
                     indexBuilder.AppendLine(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}",
-                        description.Text, group.Name, usageRank,
+                        description.Keyword, description.PageName, usageRank,
                         description.SoundKeyUK, description.SoundKeyUS, word.DictionaryId));
 
                     if (description.Sounds != null)
@@ -499,11 +498,12 @@ namespace Pronunciation.Parser
             return groups;
         }
 
-        private WordDescription GenerateHtml(DicWord word, StringBuilder pageBuilder, StringBuilder soundStats)
+        private WordDescription GenerateHtml(string pageName, DicWord word, StringBuilder pageBuilder, StringBuilder soundStats)
         {
             var wordDescription = new WordDescription 
-            { 
-                Text = word.Keyword,
+            {
+                PageName = pageName,
+                Keyword = word.Keyword,
                 IsCollocation = word.IsLPDCollocation,
                 UsageInfo = _usageBuilder.GetUsage(word.Keyword)
             };
@@ -549,7 +549,7 @@ namespace Pronunciation.Parser
 
             if (wordDescription.UsageInfo != null && wordDescription.UsageInfo.CombinedRank > 0)
             {
-                pageBuilder.Append(GenerateUsageInfoHtml(wordDescription.UsageInfo));
+                pageBuilder.Append(GenerateUsageInfoHtml(wordDescription));
             }
 
             if (word.Language != null)
@@ -588,20 +588,25 @@ namespace Pronunciation.Parser
             return wordDescription;
         }
 
-        private string GenerateUsageInfoHtml(WordUsageInfo rank)
+        private string GenerateUsageInfoHtml(WordDescription word)
         {
+            WordUsageInfo rank = word.UsageInfo;
+            if (rank == null || rank.CombinedRank <= 0)
+                return null;
+
             if (IsGenerateTopWordsNavigation)
             {
+                WordListNode node = _usageBuilder.GetListNode(word.Keyword);
                 return string.Format(
 @"      <span class=""word_usage"">Usage TOP: <strong>{0}</strong>{1}{2}</span>
 ",
                     rank.CombinedRank,
-                    rank.PreviousWord == null ? null :
+                    (node == null || node.PreviousWord == null) ? null :
                         string.Format("<a class=\"word_link previous_word\" href=\"{0}\">&lt; [{1}]</a>",
-                        PrepareLink(rank.PreviousWord.Keyword, false), rank.PreviousWord.Keyword),
-                    rank.NextWord == null ? null :
+                        PrepareLink(node.PreviousWord.PageName), node.PreviousWord.Keyword),
+                    (node == null || node.NextWord == null) ? null :
                         string.Format("<a class=\"word_link next_word\" href=\"{0}\">[{1}] &gt;</a>",
-                        PrepareLink(rank.NextWord.Keyword, false), rank.NextWord.Keyword));
+                        PrepareLink(node.NextWord.PageName), node.NextWord.Keyword));
             }
             else
             {
@@ -849,18 +854,23 @@ namespace Pronunciation.Parser
             }
         }
 
-        private string PrepareLink(string keyword, bool isRootedSource)
+        private string PrepareLink(string keyword)
         {
-            if (IsDatabaseMode)
-            {
+            //if (IsDatabaseMode)
+            //{
                 return string.Format("javascript:void(loadPage('{0}'))", HtmlHelper.PrepareJScriptString(keyword, false));
-            }
-            else
-            {
-                var fileName = _nameBuilder.PrepareFileName(keyword, null);
-                return string.Format("{0}{1}{2}/{3}.html",
-                    (isRootedSource ? null : RootPath), DicPath, fileName.Substring(0, 1), fileName);
-            }
+            //}
+            //else
+            //{
+            //    var fileName = _nameBuilder.PrepareFileName(keyword, null);
+            //    return string.Format("{0}{1}{2}/{3}.html",
+            //        (isRootedSource ? null : RootPath), DicPath, fileName.Substring(0, 1), fileName);
+            //}
+        }
+
+        private string PrepareListLink(string keyword)
+        {
+            return string.Format("javascript:void(loadPageViaContainer('{0}'))", HtmlHelper.PrepareJScriptString(keyword, false));
         }
 
         private List<DicWord> ParseFile(string sourceXml)
@@ -1048,7 +1058,7 @@ namespace Pronunciation.Parser
                     if (string.IsNullOrEmpty(data))
                         throw new ArgumentException();
 
-                    result = string.Format(info.AdditionalData, PrepareLink(data, false), data);
+                    result = string.Format(info.AdditionalData, PrepareLink(data), data);
                     break;
 
                 case ReplacementType.ReplaceSoundUK:
@@ -1239,13 +1249,13 @@ namespace Pronunciation.Parser
             {
                 var bld = new StringBuilder();
                 int ordinal = 0;
-                foreach (var word in _usageBuilder.GetWords(rank).OrderBy(x => x.Keyword))
+                foreach(var node in _usageBuilder.GetRankNodes(rank))
                 {
                     ordinal++;
                     bld.AppendFormat(
 @"      <div class=""topword_item""><span class=""topword_number"">{2}. </span><a class=""word_link"" href=""{0}"">{1}</a></div>
 ",
-                    PrepareLink(word.Keyword, true), word.Keyword, ordinal);
+                    PrepareListLink(node.PageName), node.Keyword, ordinal);
                 }
 
                 string rankText = string.Format("{0}{1}",
@@ -1267,7 +1277,8 @@ namespace Pronunciation.Parser
             var indexes = new List<SuggestionIndex>();
             SuggestionIndex currentIndex = null;
             int position = 0;
-            foreach (var keyword in keywords.OrderBy(x => x))
+            // It's important to sort Ordinal so that "a-s level" doesn't go immediately after "as-"
+            foreach (var keyword in keywords.OrderBy(x => x, StringComparer.Ordinal))
             {
                 if (position > 0)
                 {

@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head>
+    <title>Search page</title>
+    <link type="text/css" rel="stylesheet" href="Main.css"/>
+    <script type="text/javascript" src="Suggestions.js"></script>
+</head>
+<body>
+    <form id="mainForm" action="">
+      <div id="searchContainer">
+        <div id="searchTitle">Search:</div>
+        <div>
+            <input type="text" id="txtSearch" autocapitalize="off" autocorrect="off" onkeyup="populateSuggestions();" onclick="synchronizeSuggestions();"/>
+            <input type="submit" value="Go" />
+        </div>
+        <div>
+            <textarea id="txtSuggestions" rows="15" readonly="true" onclick="selectLine(this);"></textarea>
+        </div>
+      </div>
+  </form>
+<script type="text/javascript" language="javascript">
+    registerSubmit();
+    var isSynchronized = false;
+
+    function registerSubmit() {
+        document.getElementById("mainForm").onsubmit = function () {
+            var searchText = null;
+            var searchElement = document.getElementById("txtSearch");
+            if (document.activeElement === searchElement) {
+                searchText = document.getElementById("txtSuggestions").value;
+                if (searchText) {
+                    searchText = searchText.split("\n")[0].trim();
+                }
+            }
+            if (!searchText) {
+                searchText = searchElement.value;
+            }
+            if (!searchText)
+                return false;
+
+            var fileName = searchText.toLowerCase();
+            window.location = '../Dic/' + fileName[0] + '/' + fileName + '.html';
+
+            return false;
+        }
+
+        // Postpone audiocontext initialization
+        window.parent.initAudioContext();
+    }
+
+    function populateSuggestions() {
+        var searchText = document.getElementById("txtSearch").value;
+        var txtSuggestions = document.getElementById('txtSuggestions');
+        if (!searchText) {
+            txtSuggestions.value = "";
+            return;
+        }
+
+        txtSuggestions.value = findSuggestions(searchText);
+        isSynchronized = true;
+    }
+
+    function synchronizeSuggestions() {
+        if (!isSynchronized) {
+            populateSuggestions();
+        }
+    }
+
+    function selectLine(textarea) {
+        var content = textarea.value;
+        if (!content)
+            return;
+
+        var startIndex = 0;
+        for (var i = textarea.selectionStart - 1; i >= 0; i--) {
+            if (content.charAt(i) == '\n') {
+                startIndex = i + 1;
+                break;
+            }
+        }
+
+        var endIndex = content.length - 1;
+        for (var i = textarea.selectionStart; i < content.length; i++) {
+            if (content.charAt(i) == '\n') {
+                endIndex = i;
+                break;
+            }
+        }
+
+        if (startIndex >= endIndex || startIndex < 0 || endIndex <= 0 || endIndex >= content.length)
+            return;
+
+        document.getElementById("txtSearch").value = content.substring(startIndex, endIndex);
+        isSynchronized = false;
+    }
+</script>
+</body>
+</html>
