@@ -127,7 +127,7 @@ namespace Pronunciation.Parser
 
                 //return;
 
-                bool isFakeMode = false;
+                bool isFakeMode = true;
                 bool preserveSounds = true;
                 int numberOfRecords = -1;
                 bool deleteExtraWords = true;

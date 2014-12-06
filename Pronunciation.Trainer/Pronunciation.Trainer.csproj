@@ -298,6 +298,34 @@
       <Link>lame.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\Lib\SQLCompact\x86\sqlceca35.dll">
+      <Link>x86\sqlceca35.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Lib\SQLCompact\x86\sqlcecompact35.dll">
+      <Link>x86\sqlcecompact35.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Lib\SQLCompact\x86\sqlceer35EN.dll">
+      <Link>x86\sqlceer35EN.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Lib\SQLCompact\x86\sqlceme35.dll">
+      <Link>x86\sqlceme35.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Lib\SQLCompact\x86\sqlceoledb35.dll">
+      <Link>x86\sqlceoledb35.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Lib\SQLCompact\x86\sqlceqp35.dll">
+      <Link>x86\sqlceqp35.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Lib\SQLCompact\x86\sqlcese35.dll">
+      <Link>x86\sqlcese35.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Resource Include="Resources\EditWordNotes.png" />
     <Resource Include="Resources\Favorites.png" />
     <Resource Include="Resources\EditCategories.png" />

@@ -1,6 +1,9 @@
 ﻿Top:
 - Try installing video card, then try giving more memory to video adapter
 -
+- There should be two lists: words with notes and words with custom pronunciation
+- Top categories should also be on top in the right panel
+ "÷" sign in MW transcription?
 - Delete recordings for "ldoce_"
 - Add a beep at the start of a recording (configurable per type (dictionary, training, exercises, quick recorder), default is false)
 - Somehow mark the entries from LDOCE/MW in UI (when they present as a dedicated entry because MW phonetic symbols differ)
@@ -22,6 +25,7 @@ Dictionary:
 			- don't merge ", the" in MW
 			- why "Mac" is not merged (the same sounds?)
 			- why "refit" 1 doesn't have a speech part (verb)?
+			- "pretty" (adverb): word "nearly" should be in parentheses
 		- LDOCE: 
 			Trim ", Mr and , Mrs"?
 			- preserve meanings if they differ by pronunciation and group during import, preferring sounds that miss in LPD (see "detail")
@@ -36,6 +40,7 @@ Dictionary:
 			Fix formatting problem in "say": word form note ("plural") is bigger than transcription note.
 			Fix "media" and similar ("plural of")	
 			Fix "pronounstrong form" in "he"
+			"probably": sign || is not replaced with "AmE" in comments
 			"increase" - why "not kri:z" is bold?
 			If starts with "—" usually begin a new line (see "go" for exception)
 			Images - shouldn't be inside any frames?
@@ -100,6 +105,8 @@ HTML to WPF migration:
 	- Specify max DB size in the connection string - calculate it based on file size (max is 4000 Mb)
 	- Think of another DB engine (SQLLite?). Test it with big databases and storing image/binary/ntext data.  
 - New functionality:
+	- Make keyboard shortcuts configurable (mostly because of the left-handed people)
+	- Add ability to hide categories that I don't use right now (do we need the Top categories then?)
 	- Add ability to zoom Theory topics
 	- Think of algorithm for "resetting the ear" (when I listen to my recording the next day it sounds much worse)
 	- Add "Play recorded" option to play my recordings on page load
@@ -191,3 +198,6 @@ Possible problems:
 Generation of the pages:
 - check errors in "don't" - AmE is not separated 
 - 'pause' transcript is incorrect in Lingvo
+
+Ideas:
+- For each word choose what explanation is better: russian translation or english description (e.g. "sheer" is better described in LDOCE)
