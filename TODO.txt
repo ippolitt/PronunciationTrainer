@@ -1,6 +1,7 @@
 ﻿Top:
-- Try installing video card, then try giving more memory to video adapter
 -
+- Upgrade to .NET 4.5 and SQL compact 4
+- Add STOP button
 - There should be two lists: words with notes and words with custom pronunciation
 - Top categories should also be on top in the right panel
  "÷" sign in MW transcription?
@@ -82,6 +83,7 @@ HTML to WPF migration:
 	- Allow to play the associated recording by clicking on the button (CTRL ?)
 	- Change visual looks of buttons 
 - Bugs
+	- If there are problems with SQLCE deployment no exception is shown (empty list of exercises). No error in the log file.
 	- Alt+left/right arrow doesn't work when focus is inside the browser
 	- When doubleclick on the item in audio list, refresh context is called two times: selection changed and double click
 	- Add handling for "EntityValidationErrors" (too long text etc)
@@ -187,6 +189,7 @@ Migration to upper version:
 Tests:
 	- Test when there are no custom categories
 Deployment:
+	- path to root folder is hardcoded in .config
 	- Add logic to check if it's an updated version and call some migration logic (MUST be done before deployment!)
 	- Think how a new changes to the database will be deployed (consider that all audio/html index will be broken)
 	- Deploy also "Index.txt" to speedup first start
