@@ -123,7 +123,11 @@
             SelectionChanged="lstSuggestions_SelectionChanged" ItemsSourceChanged="lstSuggestions_ItemsSourceChanged" />
         <TabControl Name="tabsHistory" DockPanel.Dock="Right" Width="170" Margin="10,5,0,0" TabStripPlacement="Top" Focusable="False">
             <controls:TabItemExt Header="Recent words" x:Name="tabRecent" IsTabStop="False">
-                <controls:ListBoxExt x:Name="lstRecentWords" TabIndex="50" BorderThickness="0" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown" />
+                <controls:ListBoxExt x:Name="lstRecentWords" TabIndex="50" BorderThickness="0" MouseLeftButtonUp="lstRecentWords_MouseLeftButtonUp" PreviewKeyDown="lstRecentWords_PreviewKeyDown">
+                    <ListBox.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="White"/>
+                    </ListBox.Resources>
+                </controls:ListBoxExt>
             </controls:TabItemExt>
             <controls:TabItemExt Header="Categories" x:Name="tabCategories" IsTabStop="False">
                 <DataGrid Name="categoriesDataGrid" AutoGenerateColumns="False" EnableRowVirtualization="True" BorderThickness="0"
@@ -137,8 +141,8 @@
                     </DataGrid.Columns>
                     <DataGrid.Resources>
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="White"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="White"/>                        
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black"/>
-                        <!-- in .NET 4.5 there's "InactiveSelectionHighlightBrushKey" -->
                     </DataGrid.Resources>
                 </DataGrid>
             </controls:TabItemExt>

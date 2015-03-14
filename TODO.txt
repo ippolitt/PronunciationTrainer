@@ -185,9 +185,7 @@ Waveforms:
 	- Play sound along with moving a slider on waveform
 	- Add ability to show real amplitude of the sounds (don't stretch them) to compare loudness
 Migration to upper version:
-	- WPF:
-		- Check "_isModalWindow" private field 
-		- Start using a brush for inactive focus color in "Categories" panel
+	- WPF: Check if "_showingAsDialog" private field still exists in Window object
 Tests:
 	- Test when there are no custom categories
 Deployment:
