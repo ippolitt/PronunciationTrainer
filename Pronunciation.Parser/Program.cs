@@ -623,7 +623,6 @@ VALUES(@id, '8c3d00db-4787-48a5-b807-9d5fd0246e51', @word)", conn);
         private class WordIdInfo
         {
             public int WordId;
-            public bool IsUsed;
             public int RecordPosition;
 
             public WordIdInfo(int wordId, int recordPosition)

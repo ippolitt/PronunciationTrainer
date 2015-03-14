@@ -83,7 +83,7 @@ HTML to WPF migration:
 	- Allow to play the associated recording by clicking on the button (CTRL ?)
 	- Change visual looks of buttons 
 - Bugs
-	- If there are problems with SQLCE deployment no exception is shown (empty list of exercises). No error in the log file.
+	- If there are problems with SQLCE deployment no exception is shown (empty list of exercises - delete "System.Data.SqlServerCe.Entity1.dll"). No error in the log file.
 	- Alt+left/right arrow doesn't work when focus is inside the browser
 	- When doubleclick on the item in audio list, refresh context is called two times: selection changed and double click
 	- Add handling for "EntityValidationErrors" (too long text etc)
@@ -140,6 +140,8 @@ HTML to WPF migration:
 	- Ability to backup and restore data
 - Usability improvements
 	- Favorite audio caption and logic is confusing
+	- Navigate with play in Exercise using alt + down/up arrow
+	- I don't see whether I have some recordings for a dictionary article
 	- Ask confirmation in Training if I delete an audio. "Cancel" shouldn't delete my unsaved recordings?
 	- Add detailed information on ranks
 	- Main pronunciation in LPD: esnure main AmE pronunciation is shown in full (not partially)

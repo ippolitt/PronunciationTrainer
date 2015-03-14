@@ -19,7 +19,8 @@ namespace Pronunciation.Trainer.Utility
             public double YMin;
         }
 
-        private const int Algorithm = 1;
+        private delegate void AlgorithmDelegate(float[] data, int startIndex, int endIndex, out float max, out float min);
+        private readonly static AlgorithmDelegate Algorithm = AlgorithmMax;
 
         public List<AudioSamplePoint> DrawNormalizedAudio(float[] data, double maxWidth, double maxHeight)
         {
@@ -39,15 +40,7 @@ namespace Pronunciation.Trainer.Utility
 
                 float max;
                 float min;
-                if (Algorithm == 1)
-                {
-                    AlgorithmMax(data, start, end, out max, out min);
-                }
-                else
-                {
-                    AlgorithmAverage(data, start, end, out max, out min);
-                }
-
+                Algorithm(data, start, end, out max, out min);
                 samplePoints.Add(new AudioSamplePoint { X = iPixel, YMax = max, YMin = min});
 
                 if (Math.Abs(max) > maxSample)
@@ -87,47 +80,6 @@ namespace Pronunciation.Trainer.Utility
 
             return samplePoints;
         }
-
-        //public Bitmap DrawNormalizedAudio(double[] data, Color foreColor, Color backColor, Size imageSize)
-        //{
-        //    Bitmap bmp = new Bitmap(imageSize.Width, imageSize.Height);
-        //    double width = bmp.Width - (2 * BorderWidth);
-        //    double height = bmp.Height - (2 * BorderWidth);
-        //    double dataToSize = (double)data.Length / width;
-
-        //    using (Graphics g = Graphics.FromImage(bmp))
-        //    {
-        //        g.Clear(backColor);
-        //        Pen pen = new Pen(foreColor);
-
-        //        for (int iPixel = 0; iPixel < width; iPixel++)
-        //        {
-        //            // determine start and end points within WAV
-        //            int start = (int)((double)iPixel * dataToSize);
-        //            int end = (int)((double)(iPixel + 1) * dataToSize);
-        //            if (end > data.Length)
-        //            {
-        //                end = data.Length;
-        //            }
-
-        //            double max, min;
-        //            if (Algorithm == 1)
-        //            {
-        //                AlgorithmMax(data, start, end, out max, out min);
-        //            }
-        //            else
-        //            {
-        //                AlgorithmAverage(data, start, end, out max, out min);
-        //            }
-
-        //            int yMax = (int)(BorderWidth + height - ((max + 1) * .5 * height));
-        //            int yMin = (int)(BorderWidth + height - ((min + 1) * .5 * height));
-        //            g.DrawLine(pen, iPixel + BorderWidth, yMax, iPixel + BorderWidth, yMin);
-        //        }
-        //    }
-
-        //    return bmp;
-        //}
 
         private static void AlgorithmMax(float[] data, int startIndex, int endIndex, out float max, out float min)
         {

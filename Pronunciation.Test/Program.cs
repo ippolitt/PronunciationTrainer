@@ -67,8 +67,6 @@ namespace Pronunciation.Test
                 List<int> l2 = new List<int> { 8, 4, 2, 9, 4 };
 
                 l1.AddRange(l2.Where(x => !l1.Contains(x)));
-                return;
-
 
                 bool? rr = null;
 
@@ -94,6 +92,30 @@ namespace Pronunciation.Test
             {
                 Console.WriteLine("Finished");
                 Console.ReadLine();
+            }
+        }
+
+        private  static void RenameAudios()
+        {
+            using (SqlCeConnection conn = new SqlCeConnection(TrainerConnectionString))
+            {
+                conn.Open();
+
+                SqlCeCommand cmdRead = new SqlCeCommand("SELECT ExerciseId FROM Exercise WHERE Title = 'Exercise 4-6: Rule 4 - \"Held T\" Before N'", conn);
+                var exerciseId = (Guid)cmdRead.ExecuteScalar();
+
+                SqlCeCommand cmdRecorded = new SqlCeCommand(string.Format("SELECT AudioId, TargetKey FROM RecordedAudio WHERE TargetKey like '{0}|%'", exerciseId), conn);
+                var resultset = cmdRecorded.ExecuteResultSet(ResultSetOptions.Updatable | ResultSetOptions.Scrollable);
+                foreach(SqlCeUpdatableRecord row in resultset)
+                {
+                    var key = row.GetString(1).Split('|')[1];
+                   // resultset.SetString(1, string.Format("{0}|B{1}", exerciseId, key));
+                    //resultset.Update();
+                }
+                //
+                //SqlCeCommand cmdUpd = new SqlCeCommand("UPDATE ExerciseAudio SET AudioName = 'B' + AudioName WHERE ExerciseId=@id", conn);
+                //cmdUpd.Parameters.AddWithValue("@id", exerciseId);
+                //int records = cmdUpd.ExecuteNonQuery();
             }
         }
 

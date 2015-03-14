@@ -910,7 +910,6 @@ namespace Pronunciation.Parser
 
             // same as
             var items = new List<MWEntryItem>();
-            MWEntryItem lastItem = null;
             foreach (var item in entry.Items)
             {
                 if (item.IsRawTranscription)

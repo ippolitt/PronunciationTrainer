@@ -11,7 +11,6 @@ namespace Pronunciation.Parser
         private readonly Dictionary<string, MWHtmlEntry> _entries;
         private readonly AudioButtonHtmlBuilder _buttonBuilder;
         private readonly HtmlBuilder.GenerationMode _generationMode;
-        private readonly bool _embedSoundTitle;
 
         public MWHtmlBuilder(HtmlBuilder.GenerationMode generationMode, MWHtmlEntry[] entries,
             AudioButtonHtmlBuilder buttonBuilder)

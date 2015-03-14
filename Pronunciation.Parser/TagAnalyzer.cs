@@ -416,7 +416,6 @@ namespace Pronunciation.Parser
                 return text;
 
             var reader = new TagReader(text);
-            int k = 0;
             var bld = new StringBuilder();
             string openTag = string.Format("<{0}>", StrongTag);
             string closeTag = string.Format("</{0}>", StrongTag);

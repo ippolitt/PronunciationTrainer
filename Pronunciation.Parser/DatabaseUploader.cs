@@ -22,7 +22,6 @@ namespace Pronunciation.Parser
         private readonly bool _preserveSounds;
 
         private int _maxWordId;
-        private int _collocationId;
         private StringBuilder _dbStats;       
         private Dictionary<string, WordIdInfo> _wordIdMap;
 
