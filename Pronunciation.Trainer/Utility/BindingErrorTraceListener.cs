@@ -3,62 +3,40 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using Pronunciation.Core.Utility;
 
 namespace Pronunciation.Trainer.Utility
 {
     public class BindingErrorTraceListener : DefaultTraceListener
     {
-        private static BindingErrorTraceListener _listener;
         private StringBuilder _builder = new StringBuilder();
-        private const int MaxMessageLength = 500;
-        
-        private BindingErrorTraceListener()
-        { 
-        }
 
-        public static void SetTrace()
-        { 
-            SetTrace(SourceLevels.Error, TraceOptions.None); 
-        }
-
-        public static void SetTrace(SourceLevels level, TraceOptions options)
+        public static void Configure()
         {
-            if (_listener == null)
-            {
-                _listener = new BindingErrorTraceListener();
-                PresentationTraceSources.DataBindingSource.Listeners.Add(_listener);
+            // As a side effect of this method WPF will enable tracing (by default, it's enabled only if attached 
+            // to the debugger or ManagedTracing[REG_DWORD] = 1 in the registry key HKCU\software\microsoft\tracing\wpf)
+            PresentationTraceSources.Refresh();
+        }
+
+        public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, 
+            string format, params object[] args)
+        {
+            TraceEvent(eventCache, source, eventType, id, string.Format(format, args));
+        }
+
+        public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, 
+            string message)
+        {
+            if (eventType == TraceEventType.Error || eventType == TraceEventType.Critical)
+            {             
+                ProcessError(message);
             }
-
-            _listener.TraceOutputOptions = options;
-            PresentationTraceSources.DataBindingSource.Switch.Level = level;
         }
 
-        public static void CloseTrace()
+        private void ProcessError(string errorMessage)
         {
-            if (_listener == null)
-                return;
-
-            _listener.Flush();
-            _listener.Close();
-            PresentationTraceSources.DataBindingSource.Listeners.Remove(_listener);
-            _listener = null;
+            // Note, we can't show message box here - the dispatcher could be suspended because of this
+            Logger.Error("WPF binding error:\r\n" + errorMessage);
         }
-
-        public override void Write(string message)
-        { 
-            _builder.Append(message); 
-        }
-
-        public override void WriteLine(string message)
-        {
-            _builder.Append(message);
-
-            var final = _builder.ToString();
-            _builder.Length = 0;
-
-            throw new InvalidOperationException(final.Length <= MaxMessageLength 
-                ? final 
-                : final.Substring(0, MaxMessageLength) + "...");
-        }
-  }
+    }
 }

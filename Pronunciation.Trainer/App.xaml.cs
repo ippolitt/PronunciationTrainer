@@ -41,7 +41,7 @@ namespace Pronunciation.Trainer
                 typeof(FrameworkElement), 
                 new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
 
-            BindingErrorTraceListener.SetTrace();
+            BindingErrorTraceListener.Configure();
 
             Logger.Initialize(AppSettings.Instance.Files.Log);
             Logger.Info("\r\n\r\n*** Application started. ***");
