@@ -16,14 +16,14 @@
             throw new UnintentionalCodeFirstException();
         }
 
-        public DbSet<Book> Books { get; set; }
-        public DbSet<Exercise> Exercises { get; set; }
-        public DbSet<ExerciseType> ExerciseTypes { get; set; }
-        public DbSet<Topic> Topics { get; set; }
-        public DbSet<RecordedAudio> RecordedAudios { get; set; }
-        public DbSet<ExerciseAudio> ExerciseAudios { get; set; }
-        public DbSet<Training> Trainings { get; set; }
-        public DbSet<DictionaryCategory> DictionaryCategories { get; set; }
-        public DbSet<DictionaryWord> DictionaryWords { get; set; }
+        public virtual DbSet<Book> Books { get; set; }
+        public virtual DbSet<Exercise> Exercises { get; set; }
+        public virtual DbSet<ExerciseType> ExerciseTypes { get; set; }
+        public virtual DbSet<Topic> Topics { get; set; }
+        public virtual DbSet<RecordedAudio> RecordedAudios { get; set; }
+        public virtual DbSet<ExerciseAudio> ExerciseAudios { get; set; }
+        public virtual DbSet<Training> Trainings { get; set; }
+        public virtual DbSet<DictionaryCategory> DictionaryCategories { get; set; }
+        public virtual DbSet<DictionaryWord> DictionaryWords { get; set; }
     }
 }

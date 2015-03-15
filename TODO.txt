@@ -140,7 +140,7 @@ HTML to WPF migration:
 - Usability improvements
 	- Favorite audio caption and logic is confusing
 	- Navigate with play in Exercise using alt + down/up arrow
-	- Display some message if binding errors have been registered
+	- Improve error handling. Display some message if binding errors have been registered (note that displaying a message may cause another exception - because of binding retry)
 	- I don't see whether I have some recordings for a dictionary article
 	- Ask confirmation in Training if I delete an audio. "Cancel" shouldn't delete my unsaved recordings?
 	- Add detailed information on ranks
@@ -190,12 +190,14 @@ Migration to upper version:
 		- Check BindingErrorTraceListener: PresentationTraceSources.Refresh() enables tracing and methods are called
 Tests:
 	- Test when there are no custom categories
+	- Test on x64 platform (will SQL 32 binaries fail?)
 Deployment:
 	- path to root folder is hardcoded in .config
 	- Add logic to check if it's an updated version and call some migration logic (MUST be done before deployment!)
 	- Think how a new changes to the database will be deployed (consider that all audio/html index will be broken)
 	- Deploy also "Index.txt" to speedup first start
 	- Would "<base href="D:\Learn\English\Pronunciation\Trainer\Dictionary/" />" work with low priviledges?
+	- Think of company name (AssemblyInfo.cs) - it affects name of the folder where user settings are saved
 
 Possible problems:
 - Deleting many exercises may cause an exception because IN statement would be too long (when deleting recorded audios)
@@ -206,3 +208,10 @@ Generation of the pages:
 
 Ideas:
 - For each word choose what explanation is better: russian translation or english description (e.g. "sheer" is better described in LDOCE)
+
+
+Notes:
+- ---------------------------
+SQL Server Compact 3.5 SP2 Runtime
+---------------------------
+WARNING - On a 64-bit Computer, install both 32-bit and 64-bit versions of the SQL Server Compact 3.5 SP2 MSI files. Existing SQL Server Compact 3.5 applications will fail if only the 32-bit version is installed on the 64-bit computer. Developers should chain both the 32-bit and the 64-bit MSI files with their applications and install both of them on the 64-bit Computer. See Install.txt file for more information. 

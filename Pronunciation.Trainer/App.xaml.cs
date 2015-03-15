@@ -50,11 +50,13 @@ namespace Pronunciation.Trainer
         private void Application_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             e.Handled = true;
+            Logger.Error(e.Exception);
             MessageHelper.ShowError(e.Exception);
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
+            Logger.Error(e.ExceptionObject as Exception);
             MessageHelper.ShowError(e.ExceptionObject as Exception);
         }
     }
