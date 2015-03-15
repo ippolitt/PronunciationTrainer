@@ -33,7 +33,7 @@ namespace Pronunciation.Core.Providers.Dictionary
             _datReader = new DictionaryDATReader(databaseFolder);
         }
 
-        public void WarmUp()
+        public void WarmUpSoundsStore()
         {
             _datReader.WarmUp();
         }

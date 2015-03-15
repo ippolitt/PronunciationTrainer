@@ -23,10 +23,10 @@ namespace Pronunciation.Trainer.Dictionary
             _provider = provider;
         }
 
-        public void InitializeAsync()
+        public void InitializeAsync(Task continuation)
         {
             var action = new BackgroundActionWithoutArgs(BuildIndex, BuildIndexCompleted);
-            action.StartAction();
+            action.StartAction(continuation, null);
         }
 
         public bool IsInitialized
@@ -58,7 +58,7 @@ namespace Pronunciation.Trainer.Dictionary
             }
         }
 
-        private void BuildIndex()
+        private void BuildIndex(ActionContext context)
         {
             Logger.Info("Build index started...");
 
@@ -68,19 +68,10 @@ namespace Pronunciation.Trainer.Dictionary
             Logger.Info("Build index completed.");
         }
 
-        private void Warmup()
-        {
-            Logger.Info("Warming up...");
-            _provider.WarmUp();
-            Logger.Info("Warmup completed.");
-        }
-
-        private void BuildIndexCompleted(ActionResult result)
+        private void BuildIndexCompleted(ActionContext context, ActionResult result)
         {
             if (result.Error != null)
                 throw result.Error;
-
-            Task.Factory.StartNew(Warmup);
 
             Action action = null;
             lock (_syncLock)
@@ -93,6 +84,11 @@ namespace Pronunciation.Trainer.Dictionary
             if (action != null)
             {
                 action();
+            }
+
+            if (context.ContextData != null)
+            {
+                ((Task)context.ContextData).Start();
             }
         }
     }

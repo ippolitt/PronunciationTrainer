@@ -99,6 +99,7 @@
     <Compile Include="Database\DbExtensions.cs" />
     <Compile Include="Database\DictionaryWord.cs" />
     <Compile Include="Database\Entities.cs" />
+    <Compile Include="Utility\EntityFrameworkHelper.cs" />
     <Compile Include="Database\Exercise.cs" />
     <Compile Include="Database\ExerciseAudio.cs" />
     <Compile Include="Database\ExerciseType.cs" />

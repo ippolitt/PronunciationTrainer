@@ -29,7 +29,7 @@ namespace Pronunciation.Core.Providers.Dictionary
             _scriptMethodInvoker = scriptMethodInvoker;
         }
 
-        public void WarmUp()
+        public void WarmUpSoundsStore()
         {
             // Do nothing
         }

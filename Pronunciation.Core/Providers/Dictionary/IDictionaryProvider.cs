@@ -16,6 +16,6 @@ namespace Pronunciation.Core.Providers.Dictionary
         PageInfo PrepareGenericPage(Uri pageUrl);
         DictionarySoundInfo GetAudio(string soundKey);
         DictionarySoundInfo GetAudioFromScriptData(string soundKey, string scriptData);
-        void WarmUp();
+        void WarmUpSoundsStore();
     }
 }

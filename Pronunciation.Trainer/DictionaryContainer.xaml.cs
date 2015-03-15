@@ -178,7 +178,18 @@ namespace Pronunciation.Trainer
                 lstSuggestions.AttachItemsSource(new[] { GetHintSuggestion() });
             }
 
-            _dictionaryLoader.InitializeAsync();
+            _dictionaryLoader.InitializeAsync(new Task(Warmup));
+        }
+
+        private void Warmup()
+        {
+            Logger.Info("Warming up sounds store...");
+            _dictionaryProvider.WarmUpSoundsStore();
+
+            Logger.Info("Warming up entity framework...");
+            EntityFrameworkHelper.WarmUpFramework();
+
+            Logger.Info("Warmup completed.");
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
