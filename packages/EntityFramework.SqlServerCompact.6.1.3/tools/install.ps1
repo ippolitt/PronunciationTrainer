@@ -1,13 +1,13 @@
 param($installPath, $toolsPath, $package, $project)
 
-Add-EFDefaultConnectionFactory $project 'System.Data.Entity.Infrastructure.SqlCeConnectionFactory, EntityFramework' -ConstructorArguments 'System.Data.SqlServerCe.3.5'
-Add-EFProvider $project 'System.Data.SqlServerCe.3.5' 'System.Data.Entity.SqlServerCompact.Legacy.SqlCeProviderServices, EntityFramework.SqlServerCompact.Legacy'
+Add-EFDefaultConnectionFactory $project 'System.Data.Entity.Infrastructure.SqlCeConnectionFactory, EntityFramework' -ConstructorArguments 'System.Data.SqlServerCe.4.0'
+Add-EFProvider $project 'System.Data.SqlServerCe.4.0' 'System.Data.Entity.SqlServerCompact.SqlCeProviderServices, EntityFramework.SqlServerCompact'
 
 # SIG # Begin signature block
 # MIIa4AYJKoZIhvcNAQcCoIIa0TCCGs0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUxuv8yCU/2XVHIwAjA7eE4KMk
-# lMegghWCMIIEwzCCA6ugAwIBAgITMwAAAGJBL8dNiq4TJgAAAAAAYjANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUPLZuXmbMY6RVu/rHFK+d50lj
+# dvegghWCMIIEwzCCA6ugAwIBAgITMwAAAGJBL8dNiq4TJgAAAAAAYjANBgkqhkiG
 # 9w0BAQUFADB3MQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4G
 # A1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSEw
 # HwYDVQQDExhNaWNyb3NvZnQgVGltZS1TdGFtcCBQQ0EwHhcNMTUwMjEwMTgzMzM3
@@ -126,26 +126,26 @@ Add-EFProvider $project 'System.Data.SqlServerCe.3.5' 'System.Data.Entity.SqlSer
 # VQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xIzAh
 # BgNVBAMTGk1pY3Jvc29mdCBDb2RlIFNpZ25pbmcgUENBAhMzAAAAymzVMhI1xOFV
 # AAEAAADKMAkGBSsOAwIaBQCggeEwGQYJKoZIhvcNAQkDMQwGCisGAQQBgjcCAQQw
-# HAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJKoZIhvcNAQkEMRYEFGid
-# HrIrd/4ikGVVHMrfy/ShRIGxMIGABgorBgEEAYI3AgEMMXIwcKBSgFAARQBuAHQA
+# HAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJKoZIhvcNAQkEMRYEFHzh
+# RKZaCR016AXtFeLfuFqG8IALMIGABgorBgEEAYI3AgEMMXIwcKBSgFAARQBuAHQA
 # aQB0AHkAIABGAHIAYQBtAGUAdwBvAHIAawAgAFQAbwBvAGwAcwAgAGYAbwByACAA
 # VgBpAHMAdQBhAGwAIABTAHQAdQBkAGkAb6EagBhodHRwOi8vbXNkbi5jb20vZGF0
-# YS9lZiAwDQYJKoZIhvcNAQEBBQAEggEAQVZmRV6Y7asSXGMyCM0YOiWB2Ahihq/8
-# FddvcuG5c98QRqG3rsYUR4xJ/AcZWrf4/fKx2kmscVRne/5vdlxw63dgvV9Q7Pzf
-# oYdG14NWsxUjLbAhpHya0VaXWuR/+dKFr3rYXA3HhlXa4mS6n1eiyZb3XrF7gDP0
-# 20Usmg5TIDbFirKGxd0b6/3HAy+DoujONoFU/iiHR0HzDZO/8Rq0LN1G5hYlyItR
-# Uy+RkDe/0uFtgeYQGHHq9Hv3XyXBdjv0kD0+fehlw/nZhMHBTF+7j64eGR3jL6B8
-# ThP/nGqCIaZOvTFLlCLn67zZ7YhifXCTPP1GRinCKUFk+7sWcgyL6aGCAigwggIk
+# YS9lZiAwDQYJKoZIhvcNAQEBBQAEggEAgqpTPOGJHgCLiBGPPW/lkhZYGpPFDPJI
+# tkl6qQJwBLXB24CIXUqteKJbglpin/4ndKelMQpxohSEsnFo/lkr+wIvz4pXA6Rs
+# HrmY5fxc1ZUFytqg5tHiB1IYI2qbsd/I+kp8dpQOhMqufLAxJOuj+PMCG7/gaHK6
+# /XwoEFjSTTownQy8irUHCVME2FhkwuTLIS6nMMfMCOSffjU+Y5hoa08KoOyLAbVL
+# jIRaSro44/BDw2HJaPdhAcc0CCK/F1hTCtuUAeaIChcFJAo7Zli+WE1WFeXoiJKy
+# 8IAipjjahILIy/tWZ0c50tezrvjGbAadlA7L4aIDs9Br9PKK4SChqaGCAigwggIk
 # BgkqhkiG9w0BCQYxggIVMIICEQIBATCBjjB3MQswCQYDVQQGEwJVUzETMBEGA1UE
 # CBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9z
 # b2Z0IENvcnBvcmF0aW9uMSEwHwYDVQQDExhNaWNyb3NvZnQgVGltZS1TdGFtcCBQ
 # Q0ECEzMAAABiQS/HTYquEyYAAAAAAGIwCQYFKw4DAhoFAKBdMBgGCSqGSIb3DQEJ
 # AzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE1MDMwMjE3Mjk1OFowIwYJ
-# KoZIhvcNAQkEMRYEFBs0Cn4+e+oH2bvlm8DxFSKkfr1uMA0GCSqGSIb3DQEBBQUA
-# BIIBAIbG7KLvJc6W/45XYfgHGq5l0gs7OCHRouUFfSLkWkzGk0TQmiz8n92dJRZ4
-# GzDVB9BhdnLNDpgFFg/jbl9PoTlEd+v8p2EiAokz2eb2e2+e+ElGFqNS1WQvyuI/
-# ye1isSg+gLMOmz3Bh9aSc6XKikDKXSRdEnaqg3impeYpjwkXsF5QQYDjOhJNyGwO
-# 9hF8ekhifox7Y7PiK5FOfzWg1RK+qVKKa0AhbFUPtYP66FXQEnpKNHo6clCilHGm
-# qZ/F/5TVVXEEmux1NvlP5pu+J4wNnIu3Zn1DJ7Sd2qUN2RKoBfegvcW0a9twont7
-# i3trbsD8wyUbKOabzRC7IlZcIIw=
+# KoZIhvcNAQkEMRYEFN4FLoxan67qApJowh1w13hb99ybMA0GCSqGSIb3DQEBBQUA
+# BIIBAKIN+U+U1mKvSBvs39GbVNZo39yGhFXzncBtZL167BBoyAHk8enl2emADxLo
+# mFvPOXRDQ2Yud/bsLGeqa1Kl+Q8Sc+ehuQxXx1mPkaClYmjOdDlxrqfsxmKlpn2s
+# xiDcw//+6eD5QoF7XOKXHTxdXTcO2I92ZUJunQJGMBW5hwCMrWZvXKVuIFNO80gr
+# ukBa/F6D6qBqTMDxRuDnmXuDomWTen6geojsWTDkRg3HG0jKO3AqJMIqhiGF+ypZ
+# 001OrbSBDcUaPSdX+s/+Hu+AqGQPVz6dLlgH/nF5kJS9yNw1WndhgJz6Z0clMNvu
+# +TM1nhDIpHSNNvJhYpabT7PGC/M=
 # SIG # End signature block
