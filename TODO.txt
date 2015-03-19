@@ -1,6 +1,6 @@
 ﻿Top:
 -
-- Upgrade to .NET 4.5 and SQL compact 4
+- Run in x86 mode only (otherwise it eats too much memory: 95MB vs. 55MB). Delete AMD64 binaries
 - Add STOP button
 - There should be two lists: words with notes and words with custom pronunciation
 - Top categories should also be on top in the right panel
