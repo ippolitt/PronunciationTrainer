@@ -1,7 +1,9 @@
 ﻿Top:
 -
-- Run in x86 mode only (otherwise it eats too much memory: 95MB vs. 55MB). Delete AMD64 binaries
 - Add STOP button
+- Icon is lost
+- Try removing NativeImages and measure performance
+- Ability to specify relative "base" path. Separate path for sounds?
 - There should be two lists: words with notes and words with custom pronunciation
 - Top categories should also be on top in the right panel
  "÷" sign in MW transcription?
